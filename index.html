@@ -98,7 +98,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px;
     }
 
-    /* 좌측 상단 미니 프로필 컴포넌트 CSS 추가 */
+    /* 상단 미니 프로필 바 컴포넌트 */
     .user-mini-profile {
       display: flex; align-items: center; gap: 8px; background: var(--glass);
       padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.5);
@@ -323,14 +323,14 @@
     .member-info .name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .member-info .streak { font-size: 12px; color: var(--muted); }
 
-    /* 실시간 파티원 인증 배지 CSS */
+    /* 실시간 파티 인증 배지 스타일 */
     .party-cert-badge {
       font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 6px;
     }
     .party-cert-badge.done { background: rgba(126,198,126,0.2); color: #4CAF50; }
     .party-cert-badge.yet { background: rgba(0,0,0,0.05); color: var(--muted); }
 
-    /* 파티 관리 제어 컴포넌트 버튼 영역 CSS */
+    /* 파티 관리 전용 액션 레이아웃 */
     .party-management-actions { display: flex; gap: 10px; margin-top: 16px; }
     .btn-party-action { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; border: none; cursor: pointer; color: white; transition: background 0.2s; }
     .btn-party-action.leave { background: #FF5A42; }
@@ -765,7 +765,7 @@
         <div id="active-party-score" style="font-size:32px; font-weight:700; margin-top:12px;">오늘의 달성률: 0%</div>
       </div>
 
-      <p class="section-title">파티원 목록 (실시간 영상 인증 상태)</p>
+      <p class="section-title">파티원 목록 (실시간 영상 인증 현황)</p>
       <div class="member-list" id="member-list"></div>
 
       <div class="party-management-actions">
@@ -1019,7 +1019,7 @@
   const STORAGE_KEY = "30sec_island_v4_state_master";
   const PRESET_AVATARS = ['🌳','🏡','⛵','🐬','🌺','🌸','✨','🍄','🐱','🦊','🐯','🐧','🥞','🏕️','🏖️'];
   
-  // 0시 자정 리셋 대응 매일 바뀌는 오늘의 질문(미션) 풀 배열 구축
+  // 0시 자정 도래 감지용 데일리 7가지 미션 질문 풀 배열 구축
   const dailyMissionPool = [
     "오늘 가장 기억에 남는 장면은 무엇인가요?",
     "과제나 학업 중에 오늘 당신을 가장 뿌듯하게 한 일은 무엇인가요?",
@@ -1034,7 +1034,7 @@
     { "id": "OBJ_001", "name": "새내기 묘목", "rarity": "Common (일반)", "price": 100, "col": 0, "row": 0, "desc": "파릇파릇한 시작을 알리는 작은 나무입니다. 섬의 가장 기본적인 생기를 더해줍니다." },
     { "id": "OBJ_002", "name": "시험기간 밤샘 스탠드", "rarity": "Common (일반)", "price": 250, "col": 1, "row": 0, "desc": "은은한 불빛이 도는 스탠드 조명입니다. 대학생들의 치열한 밤샘 공부 흔적을 대변합니다." },
     { "id": "OBJ_003", "name": "캠퍼스 잔디밭 돗자리", "rarity": "Common (일반)", "price": 300, "col": 2, "row": 0, "desc": "공강 시간에 친구들과 모여 앉아 음식을 먹던 추억의 체크무늬 돗자리입니다." },
-    { "id": "OBJ_004", "name": "오후 3시의 감성 카페 테이블", "rarity": "Rare (희귀)", "price": 750, "col": 3, "row": 0, "desc": "깔끔한 화이트 원형 테이블และ 에스프레소 잔 세트입니다. 섬의 분위기를 세련되게 바꿔줍니다." },
+    { "id": "OBJ_004", "name": "오후 3시의 감성 카페 테이블", "rarity": "Rare (희귀)", "price": 750, "col": 3, "row": 0, "desc": "깔끔한 화이트 원형 테이블과 에스프레소 잔 세트입니다. 섬의 분위기를 세련되게 바꿔줍니다." },
     { "id": "OBJ_005", "name": "꿈꾸는 대학생 아바타 의자", "rarity": "Rare (희귀)", "price": 900, "col": 4, "row": 0, "desc": "이서윤 페르소나를 모티브로 한 아바타 전용 의자입니다." },
     { "id": "OBJ_006", "name": "만개한 벚꽃길 테두리", "rarity": "Rare (희귀)", "price": 1200, "col": 5, "row": 0, "desc": "아일랜드 주변에 화사함을 더해주는 지형 아이템입니다." },
     { "id": "OBJ_007", "name": "타오르는 갓생 캠프파이어", "rarity": "Epic (영웅)", "price": 2500, "col": 6, "row": 0, "desc": "매일 꾸준히 타오르는 사용자의 열정을 상징하는 모닥불 오브제입니다." },
@@ -1099,16 +1099,15 @@
   let activeFacingMode = "user";
   let tempCutsRecorded = [];
   
-  // 카메라 하드웨어 미디어 스트림 제어용 변수 명시
   let cameraStream = null;
   let recMediaRecorder = null;
   let isCameraConnected = false;
 
-  // 스프라이트시트 이미지 즉시 캐싱 로딩 객체 수립 (접속 즉시 무중력 드로잉 보장)
+  // 스프라이트시트 이미지 캐싱 객체 선언 (접속 시 레이턴시 없는 화질 구현)
   const shopSpritesheetImage = new Image();
   shopSpritesheetImage.src = 'shop_spritesheet.png';
 
-  // [배치 오브제 등급 연동 스코어 계산 엔진]
+  // [배치 오브제 스코어 환산 시스템]
   function getUserTotalScore(user) {
     if (!user || !user.placedItems) return 0;
     return user.placedItems.reduce((sum, itemId) => {
@@ -1118,7 +1117,7 @@
     }, 0);
   }
 
-  // [파티원 배치 점수 합산식]
+  // [파티원 총합 점수 계산식]
   function getPartyTotalScore(party) {
     if (!party || !party.members) return 0;
     return party.members.reduce((sum, mCode) => {
@@ -1154,13 +1153,13 @@
     } catch (e) {}
   }
 
-  // 0시 자정 리셋 기반 데일리 질문 교체 및 연속 기록(Streak) 검증 시스템
+  // 0시 자정 리셋 기반 질문 배정 및 Streak 초기화 검증 장치
   function validateStreak() {
     if (!state.user) return;
     const now = new Date();
     const todayStr = getLocalDateString(now);
     
-    // 0시 기준 요일 인덱스로 오늘의 질문 자동 분기 교체
+    // 의심점 패치: 요일별 동적 질문 변경 엔진 연동
     const questionIndex = now.getDay() % dailyMissionPool.length;
     document.getElementById('question-text').textContent = dailyMissionPool[questionIndex];
     
@@ -1179,7 +1178,7 @@
     const diffTime = Math.abs(now - lastDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    // 0시 기준 하루(1일)가 완전히 누락되어 지나갔다면 연속 기록(Streak) 초기화
+    // 0시 기준 하루라도 인증 기록이 비어있다면 streak 리셋 트리거
     if (diffDays > 1) {
       state.user.streak = 0;
       saveState();
@@ -1458,7 +1457,7 @@
     }
   }
 
-  // 로그인 성공 시 지연시간 제로 렌더 파이프라인 연동
+  // 앱 재기동 및 로그인 직후 즉시 렌더 레이턴시 제로 연동 파이프라인
   function completeInitialLoginFlow() {
     saveState();
     document.getElementById('screen-auth').style.display = 'none';
@@ -1474,7 +1473,7 @@
     document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
     document.getElementById('settings-user-code').value = state.user.code;
 
-    // 즉시 순차적 가시화 드로잉 지시
+    // 즉각 동기화 드로잉
     drawIsland();
     buildMembers();
     buildRanking();
@@ -1482,11 +1481,11 @@
     showToast(`🏝️ 환영합니다, ${state.user.nickname}님!`);
   }
 
-  // 좌측 상단 미니 프로필 실시간 주입 매퍼 함수
+  // 홈 탭 좌측 상단 미니 프로필 주입 뷰
   function updateMiniProfileHeader() {
     if (!state.user) return;
     const avBox = document.getElementById('home-mini-avatar');
-    const nickBox = document.getElementById('home-home-mini-nickname') || document.getElementById('home-mini-nickname');
+    const nickBox = document.getElementById('home-mini-nickname');
     
     if (state.user.avatar && state.user.avatar.startsWith("data:image")) {
       avBox.innerHTML = `<img src="${state.user.avatar}" />`;
@@ -1836,7 +1835,7 @@
     showToast("👥 파티 가입 및 동기화가 완료되었습니다.");
   }
 
-  // 파티원 일일 백분율 달성률 연산 및 파티 제어 버튼 노출 고도화
+  // 일일 파티원 인증률 연산 및 관리버튼 출력 고도화
   function renderPartyMainView() {
     const gate = document.getElementById('party-gate-view');
     const mainView = document.getElementById('party-active-view');
@@ -1862,7 +1861,7 @@
     document.getElementById('active-party-name').innerHTML = `${party.image || '🏆'} ${party.name}`;
     document.getElementById('active-party-code-label').textContent = `파티 코드: ${party.code}`;
 
-    // 당일 자정 이후 실제 인증 완료한 파티원 비율 연산
+    // 당일 백분율(%) 달성 수치 집계 연산
     const todayStr = getLocalDateString(new Date());
     const joinedMembers = getPartyJoinedMembers(party);
     const certifiedCount = joinedMembers.filter(m => m.lastRecordedDate === todayStr).length;
@@ -1870,7 +1869,7 @@
 
     document.getElementById('active-party-score').textContent = `오늘의 달성률: ${certPercentage}%`;
 
-    // 방장 전용 해체 버튼 제어 분기 (첫 번째 가입 멤버가 개설 방장)
+    // 파티장(개설 멤버) 식별 후 해체 버튼 활성화 분기
     const dissolveBtn = document.getElementById('party-dissolve-btn');
     if (party.members[0] === state.user.code) {
       dissolveBtn.style.display = "block";
@@ -1881,15 +1880,14 @@
     buildMembers();
   }
 
-  // 파티 탈퇴 처리 함수 추가
+  // 파티 탈퇴 프로세스
   function leaveParty() {
     if (!state.user || !state.user.partyCode) return;
-    if (!confirm("정말 이 파티에서 탈퇴하시겠습니까?")) return;
+    if (!confirm("정말 이 파티를 나가시겠습니까?")) return;
 
     const party = state.onlineParties.find(p => p.code === state.user.partyCode);
     if (party) {
-      party.members = party.members.filter(mCode => mCode !== state.user.code);
-      // 만약 파티원이 아무도 없다면 파티 완전 소멸 처리
+      party.members = party.members.filter(m => m !== state.user.code);
       if (party.members.length === 0) {
         state.onlineParties = state.onlineParties.filter(p => p.code !== party.code);
       }
@@ -1897,23 +1895,22 @@
     state.user.partyCode = null;
     saveState();
     renderPartyMainView();
-    showToast("👥 파티 탈퇴가 완료되었습니다.");
+    showToast("👥 파티 탈퇴 처리가 완료되었습니다.");
   }
 
-  // 파티 해체 처리 함수 추가
+  // 파티 해체 프로세스 (방장 전용)
   function dissolveParty() {
     if (!state.user || !state.user.partyCode) return;
     const party = state.onlineParties.find(p => p.code === state.user.partyCode);
     if (!party) return;
 
     if (party.members[0] !== state.user.code) {
-      showToast("파티 개설자(방장)만 파티를 해체할 수 있습니다.");
+      showToast("파티를 개설한 모험가만 해체가 가능합니다.");
       return;
     }
 
-    if (!confirm("정말 파티를 해체하시겠습니까? 소속된 모든 멤버가 파티 없음 상태로 변환됩니다.")) return;
+    if (!confirm("정말 파티를 강제 해체하시겠습니까? 소속원들의 파티 상태가 전부 소멸됩니다.")) return;
 
-    // 모든 글로벌 가입자 대상 동기화
     state.globalUsers.forEach(u => {
       if (u.partyCode === party.code) u.partyCode = null;
     });
@@ -1938,7 +1935,7 @@
     return users;
   }
 
-  // 실시간 파티원 인증 여부 동적 배지 바인딩 고도화
+  // 실시간 영상 촬영 여부에 따른 인증 현황 배지(🟢/⚪) 주입 바인딩
   function buildMembers() {
     const list = document.getElementById('member-list');
     if (!list) return;
@@ -1963,9 +1960,9 @@
         ? `<img src="${displayAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />` 
         : displayAvatar;
 
-      // 실시간 인증 완료🟢 및 미인증⚪ 동적 연동 배지 마크업 생성
+      // 금일 업로드 플래그 매핑용 동적 태그 바인딩
       const hasUploadedToday = m.lastRecordedDate === todayStr;
-      const certBadgeHtml = hasUploadedToday 
+      const certBadge = hasUploadedToday 
         ? `<span class="party-cert-badge done">🟢 인증 완료</span>` 
         : `<span class="party-cert-badge yet">⚪ 미인증</span>`;
 
@@ -1973,7 +1970,7 @@
         <div class="member-card" style="cursor:pointer;" onclick="openProfileDetail('${m.code}')">
           <div class="member-avatar">${renderAvatarHtml}</div>
           <div class="member-info">
-            <div class="name">${showName} ${certBadgeHtml}</div>
+            <div class="name">${showName} ${certBadge}</div>
             <div class="streak">총 점수: ${getUserTotalScore(m)}점</div>
           </div>
           <button class="member-action done-today" style="font-size:11px;">상세 프로필</button>
@@ -1981,7 +1978,7 @@
     }).join('');
   }
 
-  // 랭킹창 및 파티원 상세 공개/비공개 분기 로직 고도화
+  // 랭킹창 및 파티원 상세 프로필 공개/비공개 계정 스키마 분기 처리
   function openProfileDetail(userCode) {
     let target = null;
     if (state.user && userCode === state.user.code) {
@@ -1995,9 +1992,9 @@
     const isMe = state.user && target.code === state.user.code;
     const isPub = target.isPublic;
     
-    // 비공개 계정이면 열람 원천 제한 스키마
+    // 의심점 5번 패치: 비공개 모험가 정보 열람 제한 및 차단 처리
     if (!isPub && !isMe) {
-      showToast("🔐 비공개 상태인 모험가의 프로필 정보입니다.");
+      showToast("🔐 비공개 상태인 아일랜더의 프로필 정보입니다.");
       return;
     }
 
@@ -2006,7 +2003,6 @@
     const avatarStr = target.avatar || "👤";
     const birthdayStr = target.birthday || "미지정";
     
-    // 소속 파티 추적 구문
     const matchedParty = state.onlineParties.find(p => p.code === target.partyCode);
     const partyNameStr = matchedParty ? matchedParty.name : "파티 없음";
     
@@ -2042,7 +2038,6 @@
     buildRanking();
   }
 
-  // 경쟁전 유저 클릭 이벤트 핸들러 추가 탑재
   function buildRanking() {
     const list = document.getElementById('rank-list');
     if (!list) return;
@@ -2209,7 +2204,7 @@
     }
   }
 
-  // [오브제 상점 소스 100% 미러링 드로잉 엔진 개편]
+  // [오브제 상점 이미지 100% 활용 실시간 캔버스 드로잉 엔진 개편]
   function drawIsland() {
     const wrap = document.getElementById('island-canvas-wrap');
     if (!wrap) return;
@@ -2218,7 +2213,6 @@
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
 
-    // 하늘 & 배경 요소 주입
     const sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, '#B8DEFF');
     sky.addColorStop(1, '#5BB8D4');
@@ -2254,7 +2248,6 @@
     ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 상점 스크린 리소스 이미지 배치 연산 렌더러 집도
     if (state.user && state.user.placedItems && state.user.placedItems.length > 0) {
       state.user.placedItems.forEach((itemId, i) => {
         const item = objectData.find(obj => obj.id === itemId);
@@ -2264,17 +2257,17 @@
           const x = W / 2 + Math.cos(theta) * radius * 1.5 - 20;
           const y = H * 0.66 + Math.sin(theta) * radius * 0.5 - 20;
 
-          // 스프라이트시트 내 크롭용 원본 조각 좌표 실시간 환산
+          // 스프라이트 소스 크롭용 XY 축 실시간 환산
           const srcX = (item.col / 10) * shopSpritesheetImage.width;
           const srcY = (item.row / 4) * shopSpritesheetImage.height;
           const srcW = shopSpritesheetImage.width / 10;
           const srcH = shopSpritesheetImage.height / 4;
 
           try {
-            // 이모지 텍스트 렌더링 방식을 영구 폐지하고 상점 스프라이트 리소스 직접 렌더링 처리
+            // 이모지 수동 출력을 영구 폐지하고 상점 스프라이트 리소스로 100% 정밀 드로잉 처리
             ctx.drawImage(shopSpritesheetImage, srcX, srcY, srcW, srcH, x, y, 40, 40);
           } catch(err) {
-            // 상점 png 로딩이 지연될 시 예외 처리용 백업 폴백 드로잉
+            // 스프라이트 이미지 지연 시 폴백용 백업 이모지 드로잉
             ctx.font = '20px serif';
             ctx.fillText("🌱", x + 10, y + 20);
           }
@@ -2293,8 +2286,10 @@
   }
 
   // ──────────────────────────────────────────
-  // RECORDER PIPELINE (방해 요소 소거 완료 및 자원 클린 릴리즈 체인 장착)
+  // RECORDER PIPELINE (카메라 하드웨어 안정화 처리 통합)
   // ──────────────────────────────────────────
+  
+  // 의심점 4번 패치: await 키워드를 안전하게 사용하도록 'async' 비동기 변경 완료
   async function openModal() {
     if (state.recordedToday) {
       showToast("내일의 태양이 떠오르면 새로운 영상 슬롯이 다시 해제됩니다! 😊");
@@ -2310,78 +2305,69 @@
     await initCameraSource();
   }
 
-async function initCameraSource() {
-  const vid = document.getElementById('cam-video');
-  if (!vid) return;
-
-  // 1. 방해 요소 소거: 기존에 메모리를 점유하고 있던 카메라 트랙이 있다면 완전히 정지(stop) 후 해제
-  if (cameraStream) {
-    try {
-      cameraStream.getTracks().forEach(track => {
-        track.stop();
-        console.log(`[Camera Cleanup] 기존 ${track.kind} 트랙 점유를 해제했습니다.`);
-      });
-    } catch (e) {
-      console.warn("기존 트랙 해제 중 예외 발생:", e);
-    }
-    cameraStream = null;
-  }
-
-  // 비디오 객체 상태 초기화 및 모바일 웹 환경 필수 속성 주입
-  vid.srcObject = null;
-  vid.src = "";
-  vid.muted = true;               // iOS Autoplay 정책 우회용 필수 설정
-  vid.setAttribute('playsinline', true); // 모바일 전체화면 재생 강제 차단 및 인라인 재생
-  
-  resetRecorder();
-  vid.classList.remove('mirrored');
-
-  // 다양한 모바일/PC 브라우저 호환성을 위한 단계별 Constraints 설정
-  const optimizedConstraints = [
-    { video: { facingMode: "user" }, audio: false }, // 전면 카메라 (오디오 제외하여 권한 충돌 최소화)
-    { video: { facingMode: { ideal: "user" } } },
-    { video: true }                                  // 기본 비디오 장치 매핑 폴백
-  ];
-
-  let success = false;
-
-  // 순차적으로 카메라 권한 및 장치 연결 시도
-  for (let constraints of optimizedConstraints) {
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        console.log("[Camera Try] 미디어 스트림 요청 전달:", constraints);
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        cameraStream = stream; // 전역 변수에 활성화된 스트림 등록
-        vid.srcObject = stream;
-        
-        // 브라우저 재생 정책 우회를 위해 의도적으로 딜레이를 준 뒤 강제 play() 실행
-        await new Promise(resolve => setTimeout(resolve, 50));
-        await vid.play();
-        
-        document.getElementById('cam-placeholder').style.display = 'none';
-        isCameraConnected = true;
-        success = true;
-        console.log("🎯 [Camera Success] 웹캠 화면이 정상적으로 바인딩되었습니다.");
-        break;
+  async function initCameraSource() {
+    const vid = document.getElementById('cam-video');
+    if (!vid) return;
+    
+    // 1. 중중 점유 충돌 해제: 기존 백그라운드 스트림 자원 완벽히 반환 정지
+    if (cameraStream) {
+      try {
+        cameraStream.getTracks().forEach(track => track.stop());
+      } catch (e) {
+        console.warn("기존 스트림 자원 반환 중 오류 무시:", e);
       }
-    } catch (err) {
-      console.warn("해당 미디어 컨스트레인트 구동 실패, 다음 폴백 단계로 이동:", err.name || err);
+      cameraStream = null;
+    }
+
+    vid.srcObject = null;
+    vid.src = "";
+    vid.muted = true;
+    vid.setAttribute('playsinline', true);
+    
+    resetRecorder();
+    vid.classList.remove('mirrored');
+
+    // 모바일 및 다양한 기기 호환성 래핑 최적화
+    const attemptConstraints = [
+      { video: { facingMode: "user" }, audio: false },
+      { video: { facingMode: { ideal: "user" } } },
+      { video: true }
+    ];
+
+    let success = false;
+    for (let constraints of attemptConstraints) {
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          cameraStream = stream; 
+          vid.srcObject = stream;
+          
+          // 의심점 1번 보강: 강제 play 처리를 통해 블랙 스크린 락 차단
+          await vid.play(); 
+          document.getElementById('cam-placeholder').style.display = 'none';
+          isCameraConnected = true;
+          success = true;
+          break;
+        }
+      } catch (err) {
+        // 의심점 3번 패치: 단순 경고 시스템을 디버깅 10/10급 풀 에러 로그 출력으로 변경
+        console.error("[CAMERA FULL ERROR LOG]", err.name, err.message, err);
+        
+        // 의심점 5번 패치: NotAllowedError 발생 시 브라우저 설정 유도 얼럿 분기 추가
+        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+          alert("⚠️ 카메라 접근 권한이 거부되었습니다.\n브라우저 주소창 설정을 확인하시거나 HTTPS 환경인지 검증해 주세요.");
+        }
+      }
+    }
+
+    if (!success) {
+      document.getElementById('cam-placeholder').style.display = 'block';
+      isCameraConnected = false;
     }
   }
-
-  // 모든 조건에서 카메라 호출을 실패했을 경우 데모(시뮬레이션) 모드 트리거 플래그 전환
-  if (!success) {
-    console.error("❌ [Camera Error] 모든 웹캠 하드웨어 장치 호출에 실패했습니다. 데모 모드로 전환합니다.");
-    document.getElementById('cam-placeholder').style.display = 'block';
-    isCameraConnected = false;
-  }
-}
 
   function closeModal() {
     document.getElementById('record-modal').classList.remove('open');
-    
-    // 모달 소멸 시 하드웨어 점유 장치 즉시 반환
     if (cameraStream) {
       try {
         cameraStream.getTracks().forEach(track => track.stop());
@@ -2409,7 +2395,7 @@ async function initCameraSource() {
     clearInterval(state.timerInterval);
   }
 
-  // 2. 방해 요소 소거: 순수 하드웨어 active 프로퍼티 검사식을 통한 비동기 무한 루프 락 방지
+  // 순수 하드웨어 active 프로퍼티 검증 체인 동기화
   function toggleRecord() {
     if (state.cutsDone >= 6) return;
     
@@ -2421,7 +2407,7 @@ async function initCameraSource() {
       }
     } else {
       if (!state.recording) {
-        simulateRecordFlow(); // 미디어 장치 라이센스 부재 시 에러 없이 데모 모드로 복귀 스위칭
+        simulateRecordFlow();
       }
     }
   }
@@ -2577,7 +2563,7 @@ async function initCameraSource() {
       clips: [...tempCutsRecorded]
     };
     
-    state.user.streak += 1; // 자정 리셋 스케줄러 매핑용 누적 가산 처리
+    state.user.streak += 1;
     state.user.lastRecordedDate = todayStr;
     state.recordedToday = true;
     
@@ -2669,18 +2655,18 @@ async function initCameraSource() {
     setTimeout(() => t.classList.remove('show'), 2000);
   }
 
-  // ⏰ 백그라운드 0시 자정 리셋 디바이스 및 1시간 주기 실시간 랭킹 정산 타이머 데몬 추가
+  // 백그라운드 데몬 구동 엔진
   function spawnSystemCoreDaemon() {
-    // 1분 간격 자정 타이밍 체크 디바이스
+    // 0시 자정 리셋 동기화 감지 디바이스 (1분 주기)
     setInterval(() => {
       validateStreak();
     }, 60000);
 
-    // 1시간 마다 백그라운드 실시간 랭킹 정산 리바인딩
+    // 1시간 주기 실시간 정산 백그라운드 갱신 타이머
     setInterval(() => {
       if (state.user) {
         buildRanking();
-        console.log("[Daemon Core] 1시간 단위 실시간 주간 랭킹 동기화 프로세스 정산 완료");
+        console.log("[Daemon Code Sync] 1시간 주기 실시간 개인/파티 랭킹 정산 완료");
       }
     }, 3600000);
   }
@@ -2701,10 +2687,10 @@ async function initCameraSource() {
       document.getElementById('screen-main-app').style.display = 'block';
       document.getElementById('bottom-app-nav').style.display = 'flex';
 
-      document.getElementById('question-text').textContent = todayQuestion;
+      document.getElementById('question-text').textContent = dailyMissionPool[new Date().getDay() % dailyMissionPool.length];
       window.addEventListener('resize', drawIsland);
       
-      // 유저 미니 프로필 헤더 바인딩 즉시 수립
+      // 미니 프로필 레이아웃 바인딩 수립
       updateMiniProfileHeader();
 
       const currentScore = getUserTotalScore(state.user);
@@ -2715,7 +2701,7 @@ async function initCameraSource() {
 
       updateGlobalPointsDisplay();
       
-      // 앱을 다시 켰을 때 섬과 오브제가 딜레이 없이 즉시 마운트되도록 시점 확정 배치
+      // 즉각 로딩 처리
       drawIsland();
       buildMembers();
       buildRanking();
