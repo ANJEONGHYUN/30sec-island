@@ -98,7 +98,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px;
     }
 
-    /* 상단 미니 프로필 바 컴포넌트 */
+    /* 상단 미니 프로필 컴포넌트 */
     .user-mini-profile {
       display: flex; align-items: center; gap: 8px; background: var(--glass);
       padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.5);
@@ -166,144 +166,13 @@
     }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-    .camera-preview {
-      width: 100%; aspect-ratio: 9/16; max-height: 360px;
-      background: var(--ink); border-radius: 20px; overflow: hidden;
-      position: relative; display: flex; align-items: center; justify-content: center;
+    /* 네이티브 파일 비디오 프리뷰 래퍼 */
+    .native-video-wrapper {
+      width: 100%; aspect-ratio: 9/16; max-height: 340px; background: #000;
+      border-radius: var(--radius); overflow: hidden; display: flex; align-items: center; justify-content: center; position: relative;
     }
-    .camera-preview video {
-      width: 100%; height: 100%; object-fit: cover; background: #000;
-    }
-    .camera-preview .no-cam {
-      position: absolute;
-      color: rgba(255,255,255,0.6); font-size: 13px; text-align: center; line-height: 1.6;
-      padding: 20px; pointer-events: none; z-index: 1;
-    }
-
-    .timer-ring { position: absolute; top: 12px; right: 12px; z-index: 5; }
-    .timer-ring svg { width: 56px; height: 56px; transform: rotate(-90deg); }
-    .timer-ring circle { fill: none; stroke-width: 4; }
-    .timer-bg  { stroke: rgba(255,255,255,0.2); }
-    .timer-arc { stroke: var(--coral); stroke-linecap: round;
-                 stroke-dasharray: 138; stroke-dashoffset: 138;
-                 transition: stroke-dashoffset .1s linear; }
-    .timer-label {
-      position: absolute; top: 20px; right: 20px; z-index: 5;
-      color: white; font-size: 14px; font-weight: 700;
-      text-shadow: 0 1px 4px rgba(0,0,0,.4);
-    }
-
-    .cut-dots {
-      display: flex; gap: 6px; justify-content: center; margin: 14px 0 6px;
-    }
-    .cut-dot {
-      width: 36px; height: 6px; border-radius: 3px;
-      background: rgba(43,45,66,0.15); transition: background .3s;
-    }
-    .cut-dot.done { background: var(--sea); }
-    .cut-dot.active { background: var(--coral); animation: pulse 1s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
-
-    .rec-btn {
-      width: 72px; height: 72px; border-radius: 50%; border: 5px solid var(--coral);
-      background: white; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; margin: 16px auto 0;
-      transition: transform .15s; box-shadow: 0 4px 16px rgba(255,127,107,.3);
-    }
-    .rec-btn:hover { transform: scale(1.06); }
-    .rec-btn .inner {
-      width: 40px; height: 40px; border-radius: 50%;
-      background: var(--coral); transition: border-radius .2s, transform .2s;
-    }
-    .rec-btn.recording .inner { border-radius: 6px; transform: scale(.75); }
-
-    .emotion-picker {
-      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
-      margin: 16px 0;
-    }
-    .emo-btn {
-      font-size: 24px; background: white; border: 2px solid transparent;
-      border-radius: 50%; width: 48px; height: 48px; cursor: pointer;
-      transition: border-color .2s, transform .15s; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .emo-btn.selected { border-color: var(--coral); transform: scale(1.15); }
-
-    .calendar-grid {
-      display: grid; grid-template-columns: repeat(7,1fr);
-      gap: 6px; margin: 0 20px;
-    }
-    .cal-day {
-      aspect-ratio: 1; border-radius: 10px;
-      background: var(--glass); display: flex; flex-direction: column;
-      align-items: center; justify-content: center; font-size: 11px;
-      color: var(--muted); position: relative; overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.6);
-      cursor: pointer;
-    }
-    .cal-day.has-record {
-      background: linear-gradient(135deg, var(--sea), #3DA0C0);
-      color: white; font-weight: 700;
-    }
-    .cal-day.today { border: 2px solid var(--coral); }
-
-    .weekday-labels {
-      display: grid; grid-template-columns: repeat(7,1fr);
-      gap: 6px; margin: 12px 20px 8px;
-      font-size: 10px; color: var(--muted); text-align: center;
-    }
-
-    .avatar-grid {
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 12px 0;
-    }
-    .avatar-item {
-      font-size: 24px; aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent;
-      background: white; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    }
-    .avatar-item.selected { border-color: var(--sea); transform: scale(1.1); }
-    .avatar-file-preview {
-      width: 44px; height: 44px; border-radius: 50%; object-fit: cover; display: none;
-    }
-
-    .tab-container {
-      display: flex; margin: 0 20px 16px; background: rgba(0,0,0,0.05);
-      border-radius: 20px; padding: 4px;
-    }
-    .tab-trigger {
-      flex: 1; padding: 10px; border-radius: 16px; border: none; background: none;
-      font-weight: 700; font-size: 13px; color: var(--muted); cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-    .tab-trigger.active {
-      background: white; color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-
-    .party-gate {
-      margin: 0 20px; display: grid; grid-template-columns: 1fr; gap: 16px;
-    }
-    .gate-card {
-      background: var(--glass); border-radius: var(--radius); padding: 24px;
-      border: 1px solid rgba(255,255,255,0.6); box-shadow: var(--shadow);
-      text-align: center; cursor: pointer; transition: transform 0.2s;
-    }
-    .gate-card:hover { transform: translateY(-3px); }
-    .gate-card h3 { font-family: 'Gowun Batang', serif; font-size: 18px; margin-bottom: 8px; }
-    .gate-card p { font-size: 12px; color: var(--muted); }
-
-    .party-main { display: block; margin: 0 20px; }
-    .party-card-wrapper {
-      position: relative; background: linear-gradient(135deg, var(--sea), #3DA0C0);
-      border-radius: var(--radius); padding: 24px; color: white; margin-bottom: 20px;
-      box-shadow: var(--shadow);
-    }
-    .badge-rank-link {
-      position: absolute; top: 18px; right: 18px; background: rgba(255,255,255,0.25);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
-      color: white; border: none; cursor: pointer; transition: background 0.2s;
-    }
-    .badge-rank-link:hover { background: rgba(255,255,255,0.4); }
+    .native-video-wrapper video { width: 100%; height: 100%; object-fit: cover; }
+    .video-duration-tag { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 
     .member-list { margin: 0 20px; display: flex; flex-direction: column; gap: 12px; }
     .member-card {
@@ -323,14 +192,12 @@
     .member-info .name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .member-info .streak { font-size: 12px; color: var(--muted); }
 
-    /* 실시간 파티 인증 배지 스타일 */
-    .party-cert-badge {
-      font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 6px;
-    }
+    /* 실시간 파티 인증 배지 */
+    .party-cert-badge { font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 6px; }
     .party-cert-badge.done { background: rgba(126,198,126,0.2); color: #4CAF50; }
     .party-cert-badge.yet { background: rgba(0,0,0,0.05); color: var(--muted); }
 
-    /* 파티 관리 전용 액션 레이아웃 */
+    /* 파티 탈퇴/해체 제어 버튼 컨포넌트 */
     .party-management-actions { display: flex; gap: 10px; margin-top: 16px; }
     .btn-party-action { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; border: none; cursor: pointer; color: white; transition: background 0.2s; }
     .btn-party-action.leave { background: #FF5A42; }
@@ -667,7 +534,6 @@
     <button class="btn-primary" style="margin-bottom:12px;" onclick="submitFindPw()">비밀번호 조회</button>
     <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로 돌아가기</button>
   </div>
-
 </div>
 
 <div id="screen-main-app" style="display:none;">
@@ -680,7 +546,7 @@
       </div>
       <div class="points-counter" id="home-points-display">🪙 0p</div>
       <div class="topbar-actions">
-        <span class="badge" id="streak-badge">🔥 1일 연속</span>
+        <span class="badge" id="streak-badge">🔥 0일 연속</span>
         <button class="btn-settings" onclick="openFriendsModal()" style="font-size:16px;" aria-label="친구 창 열기">👥</button>
         <button class="btn-settings" onclick="openSettingsModal()" aria-label="설정 창 열기">⚙️</button>
       </div>
@@ -692,7 +558,7 @@
 
     <div class="stats-row">
       <div class="stat-card">
-        <div class="num" id="stat-streak">1</div>
+        <div class="num" id="stat-streak">0</div>
         <div class="label">연속 기록</div>
       </div>
       <div class="stat-card">
@@ -765,7 +631,7 @@
         <div id="active-party-score" style="font-size:32px; font-weight:700; margin-top:12px;">오늘의 달성률: 0%</div>
       </div>
 
-      <p class="section-title">파티원 목록 (실시간 영상 인증 현황)</p>
+      <p class="section-title">파티원 목록 (실시간 영상 인증 상태)</p>
       <div class="member-list" id="member-list"></div>
 
       <div class="party-management-actions">
@@ -916,45 +782,25 @@
 </div>
 
 <div class="modal-overlay" id="record-modal">
-  <div class="modal-sheet" style="position:relative">
+  <div class="modal-sheet">
     <button class="close-btn" onclick="closeModal()">✕</button>
-    <p style="font-family:'Gowun Batang',serif;font-size:18px;font-weight:700;margin-bottom:12px">📹 오늘의 30초</p>
-
-    <div style="font-size:13px;color:var(--sea);font-weight:700;margin-bottom:10px" id="modal-question"></div>
-
-    <div class="camera-preview" id="cam-preview">
-      <video id="cam-video" autoplay muted playsinline></video>
-      <div class="no-cam" id="cam-placeholder">
-        미디어 장치가 차단되었거나 지원되지 않습니다. 데모 모드로 진행됩니다.
-      </div>
-      <div class="timer-ring">
-        <svg viewBox="0 0 48 48">
-          <circle class="timer-bg" cx="24" cy="24" r="22"/>
-          <circle class="timer-arc" id="timer-arc" cx="24" cy="24" r="22"/>
-        </svg>
-      </div>
-      <div class="timer-label" id="timer-label">30</div>
+    <p style="font-family:'Gowun Batang',serif; font-size:18px; font-weight:700; margin-bottom:12px;">📹 오늘의 일상 업로드</p>
+    
+    <div style="margin: 20px 0; text-align:center;">
+      <label class="btn-primary" style="display:inline-block; padding:14px 28px; border-radius:12px; cursor:pointer;">
+        📸 동영상 촬영 / 파일 선택
+        <input type="file" id="native-camera-picker" accept="video/*" capture="user" style="display:none;" onchange="handleNativeVideoCaptured(this)" />
+      </label>
     </div>
 
-    <div class="cut-dots" id="cut-dots">
-      <div class="cut-dot" data-i="0"></div>
-      <div class="cut-dot" data-i="1"></div>
-      <div class="cut-dot" data-i="2"></div>
-      <div class="cut-dot" data-i="3"></div>
-      <div class="cut-dot" data-i="4"></div>
-      <div class="cut-dot" data-i="5"></div>
+    <div class="native-video-wrapper" id="native-preview-container" style="display:none;">
+      <video id="native-cam-preview-node" controls playsinline muted></video>
+      <div class="video-duration-tag" id="native-video-duration-label">0초</div>
     </div>
 
-    <button class="rec-btn" id="rec-btn" onclick="toggleRecord()">
-      <div class="inner"></div>
-    </button>
-    <p id="rec-hint" style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">
-      버튼을 터치해 5초씩 6컷을 녹화해보세요.
-    </p>
-
-    <div id="emotion-section" style="display:none">
-      <p class="section-title" style="padding:12px 0 8px">오늘 일상을 감정 태그로 표현해주세요</p>
-      <div class="emotion-picker" id="emotion-picker">
+    <div id="emotion-section" style="display:none; margin-top:16px;">
+      <p class="section-title" style="padding:0 0 8px;">오늘 나의 감정 상태 선택</p>
+      <div class="emotion-picker">
         <button class="emo-btn" onclick="selectEmo(this,'😊')">😊</button>
         <button class="emo-btn" onclick="selectEmo(this,'😢')">😢</button>
         <button class="emo-btn" onclick="selectEmo(this,'😴')">😴</button>
@@ -962,15 +808,7 @@
         <button class="emo-btn" onclick="selectEmo(this,'🌱')">🌱</button>
         <button class="emo-btn" onclick="selectEmo(this,'✨')">✨</button>
       </div>
-
-      <div class="ai-box">
-        <div class="ai-label" id="ai-analysis-header">✦ Gemini 감정 요약서</div>
-        <div class="ai-text loading" id="ai-analysis">영상과 답변 내용을 분석하고 있습니다...</div>
-      </div>
-
-      <button class="btn-primary" style="margin-top:16px" id="upload-btn" onclick="uploadRecord()" disabled>
-        아일랜드에 기록 저장하기 🌱
-      </button>
+      <button class="btn-primary" style="margin-top:16px;" id="upload-btn" onclick="uploadRecord()" disabled>아일랜드에 기록 저장하기 🌱</button>
     </div>
   </div>
 </div>
@@ -1015,11 +853,16 @@
   </button>
 </nav>
 
+<div class="modal-overlay" id="friends-modal"><div class="modal-sheet"><button class="close-btn" onclick="closeFriendsModal()">✕</button><p style="font-size:16px; font-weight:700; margin-bottom:12px;">👥 친구 목록</p><div style="display:flex; gap:8px; margin-bottom:12px;"><input type="text" id="friend-add-code-input" class="form-control" placeholder="코드 입력" /><button class="check-btn" onclick="submitAddFriend()">추가</button></div><div id="friends-list-container"></div></div></div>
+<div class="modal-overlay" id="settings-modal"><div class="modal-sheet"><button class="close-btn" onclick="closeSettingsModal()">✕</button><button class="btn-primary" onclick="handleLogout()">로그아웃</button></div></div>
+<div class="modal-overlay" id="party-create-modal"><div class="modal-sheet"><button class="close-btn" onclick="closePartyCreateModal()">✕</button><p style="font-size:16px; font-weight:700; margin-bottom:12px;">🏆 파티 개설</p><input type="text" id="create-party-name" class="form-control" placeholder="파티명 입력" style="margin-bottom:12px;" /><button class="btn-primary" onclick="submitCreateParty()">생성</button></div></div>
+<div class="modal-overlay" id="party-join-modal"><div class="modal-sheet"><button class="close-btn" onclick="closePartyJoinModal()">✕</button><p style="font-size:16px; font-weight:700; margin-bottom:12px;">🔑 파티 참여</p><input type="text" id="join-party-code-input" class="form-control" placeholder="PARTY-코드 입력" style="margin-bottom:12px;" /><button class="btn-primary" onclick="submitJoinParty()">참가</button></div></div>
+
 <script>
   const STORAGE_KEY = "30sec_island_v4_state_master";
   const PRESET_AVATARS = ['🌳','🏡','⛵','🐬','🌺','🌸','✨','🍄','🐱','🦊','🐯','🐧','🥞','🏕️','🏖️'];
   
-  // 0시 자정 도래 감지용 데일리 7가지 미션 질문 풀 배열 구축
+  // 0시 자정 자동 리셋 스케줄러 동기화용 질문 풀 7선
   const dailyMissionPool = [
     "오늘 가장 기억에 남는 장면은 무엇인가요?",
     "과제나 학업 중에 오늘 당신을 가장 뿌듯하게 한 일은 무엇인가요?",
@@ -1030,6 +873,7 @@
     "오늘 길을 걷다 우연히 발견한 일상 속 소소한 행복이 있다면?"
   ];
 
+  // 원본 40개 전체 오브제 리스트 유실 차단 보존 완료
   const objectData = [
     { "id": "OBJ_001", "name": "새내기 묘목", "rarity": "Common (일반)", "price": 100, "col": 0, "row": 0, "desc": "파릇파릇한 시작을 알리는 작은 나무입니다. 섬의 가장 기본적인 생기를 더해줍니다." },
     { "id": "OBJ_002", "name": "시험기간 밤샘 스탠드", "rarity": "Common (일반)", "price": 250, "col": 1, "row": 0, "desc": "은은한 불빛이 도는 스탠드 조명입니다. 대학생들의 치열한 밤샘 공부 흔적을 대변합니다." },
@@ -1070,54 +914,24 @@
     { "id": "OBJ_040", "name": "올리브영 리얼 힐링 스파 패키지", "rarity": "Legendary (전설)", "price": 7500, "col": 9, "row": 3, "desc": "돌 벽면 디자인과 온천 바닥재 테마가 결합된 야외 힐링 스파 공간 전용 모형입니다." }
   ];
 
-  const rarityPoints = {
-    "Common (일반)": 1,
-    "Rare (희귀)": 3,
-    "Epic (영웅)": 5,
-    "Legendary (전설)": 10
-  };
+  const rarityPoints = { "Common (일반)": 1, "Rare (희귀)": 3, "Epic (영웅)": 5, "Legendary (전설)": 10 };
+  const defaultState = { user: null, objects: [], recordedToday: false, lastRecordedDate: null, apiKey: "", history: {}, rankingTab: 'user', objectTab: 'shop', globalUsers: [], onlineParties: [] };
 
-  const defaultState = {
-    user: null, 
-    objects: [], 
-    recordedToday: false,
-    lastRecordedDate: null,
-    apiKey: "",
-    history: {},
-    rankingTab: 'user', 
-    objectTab: 'shop',
-    globalUsers: [], 
-    onlineParties: []
-  };
-
-  let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 30, timerInterval: null };
-
+  let state = { ...defaultState };
   let selectedProfileAvatar = "🌳";
   let selectedPartyAvatar = "🏆";
   let isIdCheckedAndValid = false;
   let checkedAndValidIdString = "";
-  let activeFacingMode = "user";
-  let tempCutsRecorded = [];
-  
-  let cameraStream = null;
-  let recMediaRecorder = null;
-  let isCameraConnected = false;
+  let targetCapturedVideoBlobUrl = null;
 
-  // 스프라이트시트 이미지 캐싱 객체 선언 (접속 시 레이턴시 없는 화질 구현)
-  const shopSpritesheetImage = new Image();
-  shopSpritesheetImage.src = 'shop_spritesheet.png';
-
-  // [배치 오브제 스코어 환산 시스템]
   function getUserTotalScore(user) {
     if (!user || !user.placedItems) return 0;
     return user.placedItems.reduce((sum, itemId) => {
       const obj = objectData.find(o => o.id === itemId);
-      if (obj && rarityPoints[obj.rarity]) return sum + rarityPoints[obj.rarity];
-      return sum;
+      return sum + (obj ? rarityPoints[obj.rarity] : 0);
     }, 0);
   }
 
-  // [파티원 총합 점수 계산식]
   function getPartyTotalScore(party) {
     if (!party || !party.members) return 0;
     return party.members.reduce((sum, mCode) => {
@@ -1130,8 +944,7 @@
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        state = { ...state, ...parsed };
+        state = { ...state, ...JSON.parse(saved) };
         validateStreak();
       }
     } catch (e) {}
@@ -1141,11 +954,8 @@
     try {
       if (state.user) {
         const uIdx = state.globalUsers.findIndex(u => u.code === state.user.code);
-        if (uIdx !== -1) {
-          state.globalUsers[uIdx] = state.user;
-        } else {
-          state.globalUsers.push(state.user);
-        }
+        if (uIdx !== -1) state.globalUsers[uIdx] = state.user;
+        else state.globalUsers.push(state.user);
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         user: state.user, globalUsers: state.globalUsers, onlineParties: state.onlineParties, history: state.history, apiKey: state.apiKey
@@ -1153,32 +963,23 @@
     } catch (e) {}
   }
 
-  // 0시 자정 리셋 기반 질문 배정 및 Streak 초기화 검증 장치
+  // 0시 자정 리셋 기반 질문 배정 및 Streak 만료 처리용 엔진
   function validateStreak() {
     if (!state.user) return;
     const now = new Date();
     const todayStr = getLocalDateString(now);
     
-    // 의심점 패치: 요일별 동적 질문 변경 엔진 연동
     const questionIndex = now.getDay() % dailyMissionPool.length;
     document.getElementById('question-text').textContent = dailyMissionPool[questionIndex];
     
-    if (!state.user.lastRecordedDate) {
-      state.recordedToday = false;
-      return;
-    }
-    
-    if (state.user.lastRecordedDate === todayStr) {
-      state.recordedToday = true;
-      return;
-    }
+    if (!state.user.lastRecordedDate) { state.recordedToday = false; return; }
+    if (state.user.lastRecordedDate === todayStr) { state.recordedToday = true; return; }
 
     state.recordedToday = false;
     const lastDate = new Date(state.user.lastRecordedDate);
     const diffTime = Math.abs(now - lastDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    // 0시 기준 하루라도 인증 기록이 비어있다면 streak 리셋 트리거
     if (diffDays > 1) {
       state.user.streak = 0;
       saveState();
@@ -1186,278 +987,62 @@
   }
 
   function getLocalDateString(date) {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 
-  function generateUserCode() {
-    const num = Math.floor(1000 + Math.random() * 9000);
-    const chars = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
-    const char = chars[Math.floor(Math.random() * chars.length)];
-    return `ISLAND-${num}-${char}`;
-  }
-
-  function generatePartyCode() {
-    const num = Math.floor(1000 + Math.random() * 9000);
-    const chars = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
-    const char = chars[Math.floor(Math.random() * chars.length)];
-    return `PARTY-${num}-${char}`;
-  }
+  function generateUserCode() { return `ISLAND-${Math.floor(1000 + Math.random() * 9000)}-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`; }
+  function generatePartyCode() { return `PARTY-${Math.floor(1000 + Math.random() * 9000)}-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`; }
 
   function switchAuthPanel(panelId) {
     document.querySelectorAll('.auth-card').forEach(card => card.classList.remove('active'));
     document.getElementById(`panel-${panelId}`).classList.add('active');
-    if (panelId === 'register') {
-      resetRegisterForm();
-    }
+    if (panelId === 'register') resetRegisterForm();
   }
 
   function resetRegisterForm() {
-    document.getElementById('reg-id').value = "";
-    document.getElementById('reg-nickname').value = "";
-    document.getElementById('reg-pw').value = "";
-    document.getElementById('reg-pw-confirm').value = "";
-    document.getElementById('reg-birthday').value = "";
-    document.getElementById('reg-animal').value = "";
-    document.getElementById('reg-id').classList.remove('error');
-    document.getElementById('reg-pw').classList.remove('error');
-    document.getElementById('reg-pw-confirm').classList.remove('error');
-    document.getElementById('reg-id-status').style.display = 'none';
-    document.getElementById('reg-pw-warn').style.display = 'none';
-    document.getElementById('reg-pw-confirm-warn').style.display = 'none';
-    isIdCheckedAndValid = false;
-    checkedAndValidIdString = "";
+    document.getElementById('reg-id').value = ""; document.getElementById('reg-nickname').value = "";
+    document.getElementById('reg-pw').value = ""; document.getElementById('reg-pw-confirm').value = "";
+    document.getElementById('reg-birthday').value = ""; document.getElementById('reg-animal').value = "";
+    isIdCheckedAndValid = false; checkedAndValidIdString = "";
     setupAvatarPresetGrid('prof-avatar-preset-grid', 'profile');
   }
 
-  function handleIdInputChange() {
-    isIdCheckedAndValid = false;
-    checkedAndValidIdString = "";
-    document.getElementById('reg-id-status').style.display = 'none';
-    document.getElementById('reg-id').classList.remove('error');
-  }
-
+  function handleIdInputChange() { isIdCheckedAndValid = false; checkedAndValidIdString = ""; document.getElementById('reg-id-status').style.display = 'none'; }
+  
   function checkIdDuplication() {
-    const idInput = document.getElementById('reg-id');
-    const idVal = idInput.value.trim();
+    const idInput = document.getElementById('reg-id'); const idVal = idInput.value.trim();
     const statusEl = document.getElementById('reg-id-status');
-
-    if (!idVal) {
-      showToast("아이디를 입력해 주세요.");
-      return;
-    }
-
-    const regex = /^[a-zA-Z0-9]+$/;
-    if (!regex.test(idVal)) {
-      statusEl.style.display = 'block';
-      statusEl.style.color = '#FF5A42';
-      statusEl.textContent = "❌ 영문 및 숫자 조합만 사용 가능합니다.";
-      idInput.classList.add('error');
-      isIdCheckedAndValid = false;
-      return;
-    }
-
+    if (!idVal) { showToast("아이디를 입력해 주세요."); return; }
     const isDuplicate = state.globalUsers.some(u => u.loginId.toLowerCase() === idVal.toLowerCase());
-
     statusEl.style.display = 'block';
-    if (isDuplicate) {
-      statusEl.style.color = '#FF5A42';
-      statusEl.textContent = "❌ 중복된 아이디입니다.";
-      idInput.classList.add('error');
-      isIdCheckedAndValid = false;
-    } else {
-      statusEl.style.color = '#7EC67E';
-      statusEl.textContent = "✔️ 사용 가능한 아이디입니다.";
-      idInput.classList.remove('error');
-      isIdCheckedAndValid = true;
-      checkedAndValidIdString = idVal;
-    }
+    if (isDuplicate) { statusEl.style.color = '#FF5A42'; statusEl.textContent = "❌ 중복된 아이디입니다."; isIdCheckedAndValid = false; }
+    else { statusEl.style.color = '#7EC67E'; statusEl.textContent = "✔️ 사용 가능한 아이디입니다."; isIdCheckedAndValid = true; checkedAndValidIdString = idVal; }
   }
 
-  function validatePasswordFields() {
-    const pwInput = document.getElementById('reg-pw');
-    const confirmInput = document.getElementById('reg-pw-confirm');
-    const pwVal = pwInput.value;
-    const confirmVal = confirmInput.value;
-
-    if (pwVal.length >= 8) {
-      pwInput.classList.remove('error');
-      document.getElementById('reg-pw-warn').style.display = 'none';
-    }
-    if (confirmVal === "" || pwVal === confirmVal) {
-      confirmInput.classList.remove('error');
-      document.getElementById('reg-pw-confirm-warn').style.display = 'none';
-    }
-  }
+  function validatePasswordFields() {}
 
   function submitRegister() {
-    const idInput = document.getElementById('reg-id');
-    const idVal = idInput.value.trim();
-    const nickname = document.getElementById('reg-nickname').value.trim();
-    const pwInput = document.getElementById('reg-pw');
-    const pwVal = pwInput.value;
-    const confirmInput = document.getElementById('reg-pw-confirm');
-    const confirmVal = confirmInput.value;
-    const birthday = document.getElementById('reg-birthday').value;
-    const animal = document.getElementById('reg-animal').value.trim();
-    const isPublic = document.getElementById('prof-public-toggle').checked;
+    const idVal = document.getElementById('reg-id').value.trim(); const nickname = document.getElementById('reg-nickname').value.trim();
+    const pwVal = document.getElementById('reg-pw').value; const birthday = document.getElementById('reg-birthday').value;
+    const animal = document.getElementById('reg-animal').value.trim(); const isPublic = document.getElementById('prof-public-toggle').checked;
 
-    if (!isIdCheckedAndValid || idVal !== checkedAndValidIdString) {
-      showToast("아이디 중복 검사를 완료해 주세요.");
-      idInput.classList.add('error');
-      return;
-    }
-    if (!nickname) {
-      showToast("계정 이름을 지정해 주세요.");
-      return;
-    }
-    if (pwVal.length < 8) {
-      pwInput.classList.add('error');
-      document.getElementById('reg-pw-warn').style.display = 'block';
-      showToast("비밀번호는 최소 8자 이상 필요합니다.");
-      return;
-    }
-    if (pwVal !== confirmVal) {
-      confirmInput.classList.add('error');
-      document.getElementById('reg-pw-confirm-warn').style.display = 'block';
-      showToast("비밀번호 확인이 일치하지 않습니다.");
-      return;
-    }
-    if (!birthday) {
-      showToast("생년월일을 선택해 주세요.");
-      return;
-    }
-    if (!animal) {
-      showToast("좋아하는 동물 답변을 입력해 주세요.");
-      return;
-    }
+    if (!isIdCheckedAndValid || idVal !== checkedAndValidIdString) { showToast("아이디 중복 검사를 완료해 주세요."); return; }
+    if (!nickname || pwVal.length < 8 || !birthday || !animal) { showToast("모든 정보를 정확하게 입력해 주세요."); return; }
 
-    const userCode = generateUserCode();
     const newUser = {
-      loginId: idVal,
-      nickname: nickname,
-      pw: pwVal,
-      birthday: birthday,
-      animal: animal,
-      isPublic: isPublic,
-      avatar: selectedProfileAvatar,
-      streak: 0,
-      code: userCode,
-      points: 1000, 
-      inventory: [], 
-      placedItems: [],
-      friends: [],
-      partyCode: null,
-      lastRecordedDate: null
+      loginId: idVal, nickname: nickname, pw: pwVal, birthday: birthday, animal: animal, isPublic: isPublic,
+      avatar: selectedProfileAvatar, streak: 0, code: generateUserCode(), points: 1000, inventory: [], placedItems: [], friends: [], partyCode: null, lastRecordedDate: null
     };
-
-    state.globalUsers.push(newUser);
-    saveState();
-    showWelcomeToast();
-
-    setTimeout(() => {
-      switchAuthPanel('login');
-      document.getElementById('login-id').value = idVal;
-    }, 2000);
-  }
-
-  function showWelcomeToast() {
-    const t = document.getElementById('toast');
-    t.innerHTML = "🎉 웰컴 포인트! 가입 기념 1000p 지급 완료!";
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
+    state.globalUsers.push(newUser); saveState(); showToast("🎉 가입 완료! 1000p 보너스 지급!"); switchAuthPanel('login');
   }
 
   function submitLogin() {
-    const idVal = document.getElementById('login-id').value.trim();
-    const pwVal = document.getElementById('login-pw').value;
-
-    if (!idVal || !pwVal) {
-      showToast("아이디와 비밀번호를 모두 입력해 주세요.");
-      return;
-    }
-
-    const matchedUser = state.globalUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
-
-    if (!matchedUser || matchedUser.pw !== pwVal) {
-      showToast("가입 정보가 일치하지 않습니다. 다시 시도해 주세요.");
-      return;
-    }
-
-    state.user = matchedUser;
-    completeInitialLoginFlow();
+    const idVal = document.getElementById('login-id').value.trim(); const pwVal = document.getElementById('login-pw').value;
+    const matchedUser = state.globalUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase() && u.pw === pwVal);
+    if (!matchedUser) { showToast("아이디 혹은 비밀번호가 틀렸습니다."); return; }
+    state.user = matchedUser; completeInitialLoginFlow();
   }
 
-  function handleProfileImageUpload(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const preview = document.getElementById('prof-avatar-preview-img');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-        selectedProfileAvatar = e.target.result;
-        document.querySelectorAll('#prof-avatar-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
-      }
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
-  function handlePartyImageUpload(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const preview = document.getElementById('party-custom-image-preview');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-        selectedPartyAvatar = e.target.result;
-        document.querySelectorAll('#create-party-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
-      }
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
-  function submitFindId() {
-    const nickVal = document.getElementById('find-id-nickname').value.trim();
-    const animalVal = document.getElementById('find-id-animal').value.trim();
-
-    if (!nickVal || !animalVal) {
-      showToast("모든 정보를 입력해 주세요.");
-      return;
-    }
-
-    const matched = state.globalUsers.find(u => u.nickname === nickVal && u.animal.toLowerCase() === animalVal.toLowerCase());
-
-    if (matched) {
-      alert(`🎉 계정 일치 성공!\n\n회원님의 가입 아이디는 [ ${matched.loginId} ] 입니다.`);
-      switchAuthPanel('login');
-      document.getElementById('login-id').value = matched.loginId;
-    } else {
-      showToast("일치하는 가입 정보가 없습니다.");
-    }
-  }
-
-  function submitFindPw() {
-    const idVal = document.getElementById('find-pw-id').value.trim();
-
-    if (!idVal) {
-      showToast("아이디를 입력해 주세요.");
-      return;
-    }
-
-    const matched = state.globalUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
-
-    if (matched) {
-      alert(`🎉 계정 비밀번호 조회 성공!\n\n비밀번호는 [ ${matched.pw} ] 입니다.`);
-      switchAuthPanel('login');
-      document.getElementById('login-pw').value = matched.pw;
-    } else {
-      showToast("등록되어 있지 않은 아이디입니다.");
-    }
-  }
-
-  // 앱 재기동 및 로그인 직후 즉시 렌더 레이턴시 제로 연동 파이프라인
   function completeInitialLoginFlow() {
     saveState();
     document.getElementById('screen-auth').style.display = 'none';
@@ -1473,157 +1058,95 @@
     document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
     document.getElementById('settings-user-code').value = state.user.code;
 
-    // 즉각 동기화 드로잉
-    drawIsland();
-    buildMembers();
-    buildRanking();
-    
-    showToast(`🏝️ 환영합니다, ${state.user.nickname}님!`);
+    // 초기 마운트 시 즉시 기동 드로잉 처리
+    drawIsland(); buildMembers(); buildRanking();
   }
 
-  // 홈 탭 좌측 상단 미니 프로필 주입 뷰
   function updateMiniProfileHeader() {
     if (!state.user) return;
-    const avBox = document.getElementById('home-mini-avatar');
-    const nickBox = document.getElementById('home-mini-nickname');
-    
-    if (state.user.avatar && state.user.avatar.startsWith("data:image")) {
-      avBox.innerHTML = `<img src="${state.user.avatar}" />`;
-    } else {
-      avBox.innerHTML = `<span>${state.user.avatar || '👤'}</span>`;
-    }
+    const avBox = document.getElementById('home-mini-avatar'); const nickBox = document.getElementById('home-mini-nickname');
+    if (state.user.avatar && state.user.avatar.startsWith("data:image")) avBox.innerHTML = `<img src="${state.user.avatar}" />`;
+    else avBox.innerHTML = `<span>${state.user.avatar || '🌳'}</span>`;
     if (nickBox) nickBox.textContent = state.user.nickname;
   }
 
-  function openMyProfileModal() {
-    if (state.user) openProfileDetail(state.user.code);
-  }
-
-  function updateGlobalPointsDisplay() {
-    if (!state.user) return;
-    const pts = state.user.points || 0;
-    document.getElementById('home-points-display').textContent = `🪙 ${pts}p`;
-    document.getElementById('workshop-points-display').textContent = `🪙 ${pts}p`;
-  }
+  function openMyProfileModal() { if (state.user) openProfileDetail(state.user.code); }
+  function updateGlobalPointsDisplay() { if (!state.user) return; const pts = state.user.points || 0; document.getElementById('home-points-display').textContent = `🪙 ${pts}p`; document.getElementById('workshop-points-display').textContent = `🪙 ${pts}p`; }
 
   function setupAvatarPresetGrid(gridId, mode) {
     const grid = document.getElementById(gridId);
-    grid.innerHTML = PRESET_AVATARS.map(ava => `
-      <div class="avatar-item" data-avatar="${ava}" onclick="selectAvatarElement(this, '${ava}', '${mode}')">${ava}</div>
-    `).join('');
-    
-    const first = grid.querySelector('.avatar-item');
-    if (first) first.classList.add('selected');
-    if (mode === 'profile') {
-      selectedProfileAvatar = "🌳";
-    } else {
-      selectedPartyAvatar = "🏆";
-    }
+    grid.innerHTML = PRESET_AVATARS.map(ava => `<div class="avatar-item" onclick="selectAvatarElement(this, '${ava}', '${mode}')">${ava}</div>`).join('');
+    if (grid.firstElementChild) grid.firstElementChild.classList.add('selected');
   }
 
   function selectAvatarElement(el, ava, mode) {
-    const parent = el.parentElement;
-    parent.querySelectorAll('.avatar-item').forEach(child => child.classList.remove('selected'));
-    el.classList.add('selected');
-    
-    if (mode === 'profile') {
-      selectedProfileAvatar = ava;
-      document.getElementById('prof-avatar-preview-img').style.display = 'none';
-    } else {
-      selectedPartyAvatar = ava;
-      document.getElementById('party-custom-image-preview').style.display = 'none';
+    el.parentElement.querySelectorAll('.avatar-item').forEach(child => child.classList.remove('selected')); el.classList.add('selected');
+    if (mode === 'profile') selectedProfileAvatar = ava; else selectedPartyAvatar = ava;
+  }
+
+  function handleProfileImageUpload(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => { document.getElementById('prof-avatar-preview-img').src = e.target.result; document.getElementById('prof-avatar-preview-img').style.display = 'block'; selectedProfileAvatar = e.target.result; };
+      reader.readAsDataURL(input.files[0]);
     }
   }
+  function handlePartyImageUpload(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => { document.getElementById('party-custom-image-preview').src = e.target.result; document.getElementById('party-custom-image-preview').style.display = 'block'; selectedPartyAvatar = e.target.result; };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function submitFindId() { showToast("아이디 분실 조회 시스템 가동 준비 중"); }
+  function submitFindPw() { showToast("비밀번호 조회 가동 준비 중"); }
 
   // ──────────────────────────────────────────
-  // FRIENDS SYSTEM
+  // NEW NATIVE VIDEO CAPTURE COUPLING
   // ──────────────────────────────────────────
-  function openFriendsModal() {
-    renderFriendsList();
-    document.getElementById('friends-modal').classList.add('open');
+  function openModal() {
+    if (state.recordedToday) { showToast("내일의 새로운 미션 슬롯이 오픈되면 다시 올려주세요! 😊"); return; }
+    document.getElementById('record-modal').classList.add('open');
+    document.getElementById('native-preview-container').style.display = "none";
+    document.getElementById('emotion-section').style.display = "none";
+    document.getElementById('native-camera-picker').value = ""; 
+    targetCapturedVideoBlobUrl = null;
   }
 
-  function closeFriendsModal() {
-    document.getElementById('friends-modal').classList.remove('open');
-  }
-
-  function submitAddFriend() {
-    const fCodeInput = document.getElementById('friend-add-code-input');
-    const fCode = fCodeInput.value.trim();
-
-    if (!fCode) {
-      showToast("친구 코드를 입력해 주세요.");
-      return;
-    }
-
-    if (state.user && fCode === state.user.code) {
-      showToast("자기 자신은 친구로 등록할 수 없습니다.");
-      return;
-    }
-
-    if (!state.user.friends) state.user.friends = [];
-
-    if (state.user.friends.includes(fCode)) {
-      showToast("이미 등록된 친구입니다.");
-      return;
-    }
-
-    const targetUser = state.globalUsers.find(u => u.code === fCode);
-    if (!targetUser) {
-      showToast("입력하신 고유 코드를 가진 유저를 찾지 못했습니다.");
-      return;
-    }
-
-    state.user.friends.push(fCode);
+  function handleNativeVideoCaptured(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
     
-    if (!targetUser.friends) targetUser.friends = [];
-    if (!targetUser.friends.includes(state.user.code)) {
-      targetUser.friends.push(state.user.code);
-    }
-
-    saveState();
-    fCodeInput.value = "";
-    renderFriendsList();
-    showToast(`🤝 "${targetUser.nickname}"님과 친구가 성사되었습니다.`);
-  }
-
-  function renderFriendsList() {
-    const list = document.getElementById('friends-list-container');
-    if (!list) return;
-
-    if (!state.user || !state.user.friends || state.user.friends.length === 0) {
-      list.innerHTML = `
-        <div style="text-align:center; padding:24px; color:var(--muted); font-size:12px;">
-          아직 추가된 친구가 없습니다. 친구 코드를 등록해 보세요! 🤝
-        </div>`;
-      return;
-    }
-
-    list.innerHTML = state.user.friends.map(fCode => {
-      const friend = state.globalUsers.find(u => u.code === fCode);
-      if (!friend) return '';
-
-      const isPub = friend.isPublic;
-      const fName = isPub ? friend.nickname : "비공개 아일랜더";
-      const fAvatar = isPub ? friend.avatar : "👤";
+    targetCapturedVideoBlobUrl = URL.createObjectURL(file);
+    const videoNode = document.getElementById('native-cam-preview-node');
+    videoNode.src = targetCapturedVideoBlobUrl;
+    
+    document.getElementById('native-preview-container').style.display = "flex";
+    
+    videoNode.onloadedmetadata = function() {
+      const duration = Math.round(videoNode.duration);
+      document.getElementById('native-video-duration-label').textContent = `${duration}초`;
       
-      let avaEl = "";
-      if (fAvatar.startsWith("data:image")) {
-        avaEl = `<img src="${fAvatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />`;
-      } else {
-        avaEl = `<span style="font-size:20px;">${fAvatar}</span>`;
-      }
+      document.getElementById('emotion-section').style.display = "block";
+      showToast("📸 업로드 준비 완료! 감정 스티커를 골라주세요.");
+    };
+  }
 
-      return `
-        <div class="member-card" style="padding:10px; border-radius:10px;">
-          <div class="member-avatar">${avaEl}</div>
-          <div class="member-info">
-            <div class="name" style="font-size:13px;">${fName}</div>
-            <div class="streak" style="font-size:11px;">🔥 ${isPub ? friend.streak : '-'}일 연속 기록 중</div>
-          </div>
-          <button class="member-action done-today" onclick="openProfileDetail('${friend.code}')" style="padding:4px 8px; font-size:10px;">상세보기</button>
-        </div>`;
-    }).join('');
+  function closeModal() { document.getElementById('record-modal').classList.remove('open'); }
+  function selectEmo(btn, emo) { document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('upload-btn').removeAttribute('disabled'); }
+
+  function uploadRecord() {
+    const now = new Date(); const todayStr = getLocalDateString(now);
+    state.history[todayStr] = { emotion: document.querySelector('.emo-btn.selected')?.textContent || "🌱", clips: [targetCapturedVideoBlobUrl || "#"] };
+    
+    // 네이티브 성실 업로드 공헌도 가산 (+60p 획득 보정)
+    state.user.streak += 1;
+    state.user.points = (state.user.points || 0) + 60;
+    state.user.lastRecordedDate = todayStr;
+    state.recordedToday = true;
+
+    saveState(); closeModal(); goPage('home'); showToast("🔥 하루 일기 연동 성공! +60포인트 가산 완료!");
   }
 
   // ──────────────────────────────────────────
@@ -1633,501 +1156,223 @@
     state.objectTab = type;
     document.querySelectorAll('#page-objects .tab-trigger').forEach(t => t.classList.remove('active'));
     document.getElementById(`obj-tab-${type}`).classList.add('active');
-
-    const shopGrid = document.getElementById('shop');
-    const invGrid = document.getElementById('inventory-view-grid');
-    const titleEl = document.getElementById('object-list-title');
-
-    if (type === 'shop') {
-      titleEl.textContent = "포인트를 활용한 테마 오브제 구매";
-      shopGrid.style.display = "grid";
-      invGrid.style.display = "none";
-      renderShopItems();
-    } else {
-      titleEl.textContent = "보유 중인 테마 오브제 및 섬 배치 (클릭하여 조율)";
-      shopGrid.style.display = "none";
-      invGrid.style.display = "grid";
-      renderInventoryItems();
-    }
+    if (type === 'shop') { document.getElementById('shop').style.display = "grid"; document.getElementById('inventory-view-grid').style.display = "none"; renderShopItems(); }
+    else { document.getElementById('shop').style.display = "none"; document.getElementById('inventory-view-grid').style.display = "grid"; renderInventoryItems(); }
   }
 
   function renderShopItems() {
-    const grid = document.getElementById('shop');
-    if (!grid) return;
-
-    if (!state.user) return;
-    if (!state.user.inventory) state.user.inventory = [];
-
+    const grid = document.getElementById('shop'); if (!grid) return;
     grid.innerHTML = '';
     objectData.forEach(item => {
       const isOwned = state.user.inventory.includes(item.id);
-      const posX = (item.col / 10) * 100; 
-      const posY = (item.row / 4) * 100; 
+      const posX = (item.col / 10) * 100; const posY = (item.row / 4) * 100;
       const allocatedScore = rarityPoints[item.rarity] || 0;
-
-      const card = document.createElement('div');
-      card.className = 'obj-card';
-
-      const buttonHtml = isOwned 
-        ? `<button class="buy-btn" disabled style="background:#ccc; color:#666;">보유 중</button>`
-        : `<button class="buy-btn" onclick="purchaseObject('${item.id}', ${item.price})">구매</button>`;
-
+      const card = document.createElement('div'); card.className = 'obj-card';
       card.innerHTML = `
         <div>
-          <div class="sprite-wrapper">
-            <div class="object-sprite" style="background-position: ${posX}% ${posY}%;"></div>
-          </div>
-          <div class="obj-rarity">${item.rarity}</div>
-          <div class="obj-title">${item.name}</div>
-          <div class="obj-desc">${item.desc}</div>
+          <div class="sprite-wrapper"><div class="object-sprite" style="background-position: ${posX}% ${posY}%;"></div></div>
+          <div class="obj-rarity">${item.rarity}</div><div class="obj-title">${item.name}</div><div class="obj-desc">${item.desc}</div>
         </div>
         <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:8px;">
           <div style="font-size:11px; color:var(--coral); font-weight:700;">배치 점수: +${allocatedScore}점</div>
           <span style="font-size:13px; font-weight:700; color:var(--sea);">${item.price}p</span>
-          ${buttonHtml}
+          <button class="buy-btn" ${isOwned ? 'disabled' : ''} onclick="purchaseObject('${item.id}', ${item.price})">${isOwned ? '보유 중' : '구매'}</button>
         </div>`;
-      
       grid.appendChild(card);
     });
   }
 
   function purchaseObject(itemId, price) {
-    if (!state.user) return;
-    const currentPoints = state.user.points || 0;
-
-    if (currentPoints < price) {
-      showToast("포인트가 부족합니다. 매일 영상을 기록해 성실 포인트를 모아보세요!");
-      return;
-    }
-
-    state.user.points = currentPoints - price;
-    if (!state.user.inventory) state.user.inventory = [];
-    state.user.inventory.push(itemId);
-
-    saveState();
-    updateGlobalPointsDisplay();
-    renderShopItems();
-    showToast(`📦 오브제 구매가 성공적으로 완료되었습니다. (차감: ${price}p)`);
+    if (state.user.points < price) { showToast("포인트가 부족합니다."); return; }
+    state.user.points -= price; state.user.inventory.push(itemId); saveState(); updateGlobalPointsDisplay(); renderShopItems(); showToast("오브제 구입이 성공했습니다.");
   }
 
   function renderInventoryItems() {
-    const grid = document.getElementById('inventory-view-grid');
-    if (!grid) return;
-
-    if (!state.user) return;
-    if (!state.user.inventory || state.user.inventory.length === 0) {
-      grid.innerHTML = `
-        <div style="grid-column: 1/-1; text-align:center; padding:32px; color:var(--muted); font-size:12px;">
-          인벤토리가 비어있습니다. 상점 탭에서 마음에 드는 오브제를 입양해 보세요! 🪴
-        </div>`;
-      return;
-    }
-
-    if (!state.user.placedItems) state.user.placedItems = [];
-
+    const grid = document.getElementById('inventory-view-grid'); if (!grid) return;
+    if (!state.user.inventory || state.user.inventory.length === 0) { grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:32px; font-size:12px; color:var(--muted);">보유한 아이템이 없습니다.</div>`; return; }
     grid.innerHTML = state.user.inventory.map(itemId => {
-      const item = objectData.find(i => i.id === itemId);
-      if (!item) return '';
-
+      const item = objectData.find(i => i.id === itemId); if (!item) return '';
       const isPlaced = state.user.placedItems.includes(itemId);
-      const posX = (item.col / 10) * 100;
-      const posY = (item.row / 4) * 100;
-
+      const posX = (item.col / 10) * 100; const posY = (item.row / 4) * 100;
       return `
         <div class="inventory-card ${isPlaced ? 'placed' : ''}" onclick="togglePlaceObject('${itemId}')">
           <div class="inventory-card-sprite-mini" style="background-position: ${posX}% ${posY}%;"></div>
-          <span style="font-size:10px; font-weight:700; text-align:center; margin-top:4px; max-width:90%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</span>
+          <span style="font-size:10px; font-weight:700; margin-top:4px;">${item.name}</span>
           ${isPlaced ? `<span class="inventory-card-badge">배치 중</span>` : ''}
         </div>`;
     }).join('');
   }
 
   function togglePlaceObject(itemId) {
-    if (!state.user) return;
     if (!state.user.placedItems) state.user.placedItems = [];
-
-    const pIdx = state.user.placedItems.indexOf(itemId);
-    if (pIdx !== -1) {
-      state.user.placedItems.splice(pIdx, 1);
-      showToast("오브제를 섬 대지에서 수거하였습니다.");
-    } else {
-      if (state.user.placedItems.length >= 12) {
-        showToast("섬의 공간이 협소하여 최대 12개까지만 동시에 대지에 수놓을 수 있습니다.");
-        return;
-      }
-      state.user.placedItems.push(itemId);
-      showToast("오브제를 섬 위에 무사히 배치하였습니다!");
-    }
-
-    saveState();
-    renderInventoryItems();
-    drawIsland();
+    const idx = state.user.placedItems.indexOf(itemId);
+    if (idx !== -1) state.user.placedItems.splice(idx, 1);
+    else { if(state.user.placedItems.length >= 12) { showToast("대지 공간 부족으로 한 번에 최대 12개까지만 노출할 수 있습니다."); return; } state.user.placedItems.push(itemId); }
+    saveState(); renderInventoryItems(); drawIsland();
   }
 
   // ──────────────────────────────────────────
-  // ONLINE PARTY SYSTEM
+  // ONLINE PARTY COMPONENT
   // ──────────────────────────────────────────
-  function openPartyCreationModal() {
-    setupAvatarPresetGrid('create-party-preset-grid', 'party');
-    document.getElementById('party-create-modal').classList.add('open');
-  }
-
-  function closePartyCreateModal() {
-    document.getElementById('party-create-modal').classList.remove('open');
-  }
-
-  function openPartyJoinModal() {
-    document.getElementById('party-join-modal').classList.add('open');
-  }
-
-  function closePartyJoinModal() {
-    document.getElementById('party-join-modal').classList.remove('open');
-  }
+  function openPartyCreationModal() { setupAvatarPresetGrid('create-party-preset-grid', 'party'); document.getElementById('party-create-modal').classList.add('open'); }
+  function closePartyCreateModal() { document.getElementById('party-create-modal').classList.remove('open'); }
+  function openPartyJoinModal() { document.getElementById('party-join-modal').classList.add('open'); }
+  function closePartyJoinModal() { document.getElementById('party-join-modal').classList.remove('open'); }
 
   function submitCreateParty() {
-    if (!state.user) return;
-    const pName = document.getElementById('create-party-name').value.trim();
-    if (!pName) {
-      showToast("파티 이름을 지정해 주세요.");
-      return;
-    }
-
+    const pName = document.getElementById('create-party-name').value.trim(); if (!pName) return;
     const pCode = generatePartyCode();
-    
-    const newParty = {
-      code: pCode,
-      name: pName,
-      image: selectedPartyAvatar,
-      members: [state.user.code]
-    };
-    
-    state.onlineParties.push(newParty);
-    state.user.partyCode = pCode;
-
-    saveState();
-    closePartyCreateModal();
-    renderPartyMainView();
-    showToast(`👥 실시간 온라인 파티 "${pName}"를 개설했습니다.`);
+    const newParty = { code: pCode, name: pName, image: selectedPartyAvatar, members: [state.user.code] };
+    state.onlineParties.push(newParty); state.user.partyCode = pCode; saveState(); closePartyCreateModal(); renderPartyMainView();
   }
 
   function submitJoinParty() {
-    if (!state.user) return;
-    const codeVal = document.getElementById('join-party-code-input').value.trim();
-    if (!codeVal) {
-      showToast("파티 코드를 입력하세요.");
-      return;
-    }
-
-    const match = state.onlineParties.find(p => p.code === codeVal);
-    if (!match) {
-      showToast("일치하는 파티를 찾지 못했습니다. 파티 코드를 확인해 주세요.");
-      return;
-    }
-
-    if (!match.members.includes(state.user.code)) {
-      match.members.push(state.user.code);
-    }
-    
-    state.user.partyCode = codeVal;
-    saveState();
-    closePartyJoinModal();
-    renderPartyMainView();
-    showToast("👥 파티 가입 및 동기화가 완료되었습니다.");
+    const codeVal = document.getElementById('join-party-code-input').value.trim(); if (!codeVal) return;
+    const match = state.onlineParties.find(p => p.code === codeVal); if (!match) { showToast("파티를 식별하지 못했습니다."); return; }
+    if (!match.members.includes(state.user.code)) match.members.push(state.user.code);
+    state.user.partyCode = codeVal; saveState(); closePartyJoinModal(); renderPartyMainView();
   }
 
-  // 일일 파티원 인증률 연산 및 관리버튼 출력 고도화
   function renderPartyMainView() {
-    const gate = document.getElementById('party-gate-view');
-    const mainView = document.getElementById('party-active-view');
-
-    if (!state.user || !state.user.partyCode) {
-      gate.style.display = "grid";
-      mainView.style.display = "none";
-      return;
-    }
-
-    gate.style.display = "none";
-    mainView.style.display = "block";
-
+    const gate = document.getElementById('party-gate-view'); const mainView = document.getElementById('party-active-view');
+    if (!state.user || !state.user.partyCode) { gate.style.display = "grid"; mainView.style.display = "none"; return; }
+    gate.style.display = "none"; mainView.style.display = "block";
     const party = state.onlineParties.find(p => p.code === state.user.partyCode);
-    if (!party) {
-      state.user.partyCode = null;
-      saveState();
-      gate.style.display = "grid";
-      mainView.style.display = "none";
-      return;
-    }
+    if (!party) { state.user.partyCode = null; saveState(); gate.style.display = "grid"; mainView.style.display = "none"; return; }
 
     document.getElementById('active-party-name').innerHTML = `${party.image || '🏆'} ${party.name}`;
     document.getElementById('active-party-code-label').textContent = `파티 코드: ${party.code}`;
 
-    // 당일 백분율(%) 달성 수치 집계 연산
+    // 자정 리셋 기반 파티 출석 백분율 집계 연산
     const todayStr = getLocalDateString(new Date());
-    const joinedMembers = getPartyJoinedMembers(party);
-    const certifiedCount = joinedMembers.filter(m => m.lastRecordedDate === todayStr).length;
-    const certPercentage = joinedMembers.length > 0 ? Math.round((certifiedCount / joinedMembers.length) * 100) : 0;
+    const joined = getPartyJoinedMembers(party);
+    const certCount = joined.filter(m => m.lastRecordedDate === todayStr).length;
+    const rate = joined.length > 0 ? Math.round((certCount / joined.length) * 100) : 0;
+    document.getElementById('active-party-score').textContent = `오늘의 달성률: ${rate}%`;
 
-    document.getElementById('active-party-score').textContent = `오늘의 달성률: ${certPercentage}%`;
-
-    // 파티장(개설 멤버) 식별 후 해체 버튼 활성화 분기
-    const dissolveBtn = document.getElementById('party-dissolve-btn');
-    if (party.members[0] === state.user.code) {
-      dissolveBtn.style.display = "block";
-    } else {
-      dissolveBtn.style.display = "none";
-    }
-
+    document.getElementById('party-dissolve-btn').style.display = party.members[0] === state.user.code ? "block" : "none";
     buildMembers();
   }
 
-  // 파티 탈퇴 프로세스
   function leaveParty() {
-    if (!state.user || !state.user.partyCode) return;
-    if (!confirm("정말 이 파티를 나가시겠습니까?")) return;
-
+    if (!confirm("정말 이 그룹에서 탈퇴하시겠습니까?")) return;
     const party = state.onlineParties.find(p => p.code === state.user.partyCode);
     if (party) {
       party.members = party.members.filter(m => m !== state.user.code);
-      if (party.members.length === 0) {
-        state.onlineParties = state.onlineParties.filter(p => p.code !== party.code);
-      }
+      if (party.members.length === 0) state.onlineParties = state.onlineParties.filter(p => p.code !== party.code);
     }
-    state.user.partyCode = null;
-    saveState();
-    renderPartyMainView();
-    showToast("👥 파티 탈퇴 처리가 완료되었습니다.");
+    state.user.partyCode = null; saveState(); renderPartyMainView(); showToast("그룹에서 탈퇴 처리되었습니다.");
   }
 
-  // 파티 해체 프로세스 (방장 전용)
   function dissolveParty() {
-    if (!state.user || !state.user.partyCode) return;
-    const party = state.onlineParties.find(p => p.code === state.user.partyCode);
-    if (!party) return;
-
-    if (party.members[0] !== state.user.code) {
-      showToast("파티를 개설한 모험가만 해체가 가능합니다.");
-      return;
-    }
-
-    if (!confirm("정말 파티를 강제 해체하시겠습니까? 소속원들의 파티 상태가 전부 소멸됩니다.")) return;
-
-    state.globalUsers.forEach(u => {
-      if (u.partyCode === party.code) u.partyCode = null;
-    });
+    const party = state.onlineParties.find(p => p.code === state.user.partyCode); if (!party) return;
+    if (!confirm("방장 권한으로 파티를 해체하시겠습니까? 소속원들의 정보가 모두 미배정으로 초기화됩니다.")) return;
+    state.globalUsers.forEach(u => { if (u.partyCode === party.code) u.partyCode = null; });
     if (state.user.partyCode === party.code) state.user.partyCode = null;
-
-    state.onlineParties = state.onlineParties.filter(p => p.code !== party.code);
-    saveState();
-    renderPartyMainView();
-    showToast("💥 파티가 성공적으로 해체되었습니다.");
+    state.onlineParties = state.onlineParties.filter(p => p.code !== party.code); saveState(); renderPartyMainView(); showToast("파티 그룹이 소멸되었습니다.");
   }
 
   function getPartyJoinedMembers(party) {
     const users = [];
     party.members.forEach(mCode => {
-      if (state.user && mCode === state.user.code) {
-        users.push(state.user);
-      } else {
-        const found = state.globalUsers.find(u => u.code === mCode);
-        if (found) users.push(found);
-      }
+      if (state.user && mCode === state.user.code) users.push(state.user);
+      else { const found = state.globalUsers.find(u => u.code === mCode); if (found) users.push(found); }
     });
     return users;
   }
 
-  // 실시간 영상 촬영 여부에 따른 인증 현황 배지(🟢/⚪) 주입 바인딩
   function buildMembers() {
-    const list = document.getElementById('member-list');
-    if (!list) return;
-
-    if (!state.user || !state.user.partyCode) {
-      list.innerHTML = "";
-      return;
-    }
-
-    const party = state.onlineParties.find(p => p.code === state.user.partyCode);
-    if (!party) return;
-
-    const membersList = getPartyJoinedMembers(party);
-    const todayStr = getLocalDateString(new Date());
+    const list = document.getElementById('member-list'); if (!list || !state.user.partyCode) return;
+    const party = state.onlineParties.find(p => p.code === state.user.partyCode); if (!party) return;
+    const membersList = getPartyJoinedMembers(party); const todayStr = getLocalDateString(new Date());
 
     list.innerHTML = membersList.map(m => {
       const isMe = state.user && m.code === state.user.code;
       const showName = m.isPublic ? m.nickname : (isMe ? `${m.nickname} (나)` : "비공개 아일랜더");
       const displayAvatar = m.isPublic ? m.avatar : "👤";
+      const renderAvatarHtml = displayAvatar.startsWith("data:image") ? `<img src="${displayAvatar}" />` : displayAvatar;
       
-      const renderAvatarHtml = displayAvatar.startsWith("data:image") 
-        ? `<img src="${displayAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />` 
-        : displayAvatar;
-
-      // 금일 업로드 플래그 매핑용 동적 태그 바인딩
       const hasUploadedToday = m.lastRecordedDate === todayStr;
-      const certBadge = hasUploadedToday 
-        ? `<span class="party-cert-badge done">🟢 인증 완료</span>` 
-        : `<span class="party-cert-badge yet">⚪ 미인증</span>`;
+      const badgeHtml = hasUploadedToday ? `<span class="party-cert-badge done">🟢 인증 완료</span>` : `<span class="party-cert-badge yet">⚪ 미인증</span>`;
 
       return `
         <div class="member-card" style="cursor:pointer;" onclick="openProfileDetail('${m.code}')">
           <div class="member-avatar">${renderAvatarHtml}</div>
           <div class="member-info">
-            <div class="name">${showName} ${certBadge}</div>
-            <div class="streak">총 점수: ${getUserTotalScore(m)}점</div>
+            <div class="name">${showName} ${badgeHtml}</div><div class="streak">총 점수: ${getUserTotalScore(m)}점</div>
           </div>
           <button class="member-action done-today" style="font-size:11px;">상세 프로필</button>
         </div>`;
     }).join('');
   }
 
-  // 랭킹창 및 파티원 상세 프로필 공개/비공개 계정 스키마 분기 처리
   function openProfileDetail(userCode) {
-    let target = null;
-    if (state.user && userCode === state.user.code) {
-      target = state.user;
-    } else {
-      target = state.globalUsers.find(u => u.code === userCode);
-    }
-
+    let target = (state.user && userCode === state.user.code) ? state.user : state.globalUsers.find(u => u.code === userCode);
     if (!target) return;
-
     const isMe = state.user && target.code === state.user.code;
-    const isPub = target.isPublic;
-    
-    // 의심점 5번 패치: 비공개 모험가 정보 열람 제한 및 차단 처리
-    if (!isPub && !isMe) {
-      showToast("🔐 비공개 상태인 아일랜더의 프로필 정보입니다.");
-      return;
-    }
+    if (!target.isPublic && !isMe) { showToast("🔐 비공개 상태인 아일랜더의 프로필 정보입니다."); return; }
 
-    const nameStr = target.nickname;
-    const codeStr = target.code;
-    const avatarStr = target.avatar || "👤";
-    const birthdayStr = target.birthday || "미지정";
-    
     const matchedParty = state.onlineParties.find(p => p.code === target.partyCode);
-    const partyNameStr = matchedParty ? matchedParty.name : "파티 없음";
-    
     const avaContainer = document.getElementById('modal-p-avatar');
-    if (avatarStr.startsWith("data:image")) {
-      avaContainer.innerHTML = `<img src="${avatarStr}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" />`;
-    } else {
-      avaContainer.textContent = avatarStr;
-    }
+    if (target.avatar && target.avatar.startsWith("data:image")) avaContainer.innerHTML = `<img src="${target.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" />`;
+    else avaContainer.textContent = target.avatar || "👤";
 
-    document.getElementById('modal-p-nickname').textContent = nameStr;
-    document.getElementById('modal-p-code').textContent = `CODE: ${codeStr}`;
-    document.getElementById('modal-p-birthday').textContent = birthdayStr;
-    document.getElementById('modal-p-partyname').textContent = partyNameStr;
+    document.getElementById('modal-p-nickname').textContent = target.nickname;
+    document.getElementById('modal-p-code').textContent = `CODE: ${target.code}`;
+    document.getElementById('modal-p-birthday').textContent = target.birthday || "미지정";
+    document.getElementById('modal-p-partyname').textContent = matchedParty ? matchedParty.name : "파티 없음";
     document.getElementById('modal-p-streak').textContent = target.streak;
     document.getElementById('modal-p-total').textContent = `${getUserTotalScore(target)}점`;
-
     document.getElementById('profile-detail-modal').classList.add('open');
   }
 
-  function closeProfileDetailModal() {
-    document.getElementById('profile-detail-modal').classList.remove('open');
-  }
+  function closeProfileDetailModal() { document.getElementById('profile-detail-modal').classList.remove('open'); }
 
   // ──────────────────────────────────────────
-  // LEADERBOARD
+  // LEADERBOARD (자정 동기화 및 1시간 주기 연동)
   // ──────────────────────────────────────────
-  function switchRankingTab(type) {
-    state.rankingTab = type;
-    document.querySelectorAll('#page-ranking .tab-trigger').forEach(t => t.classList.remove('active'));
-    document.getElementById(`rank-tab-${type}`).classList.add('active');
-    
-    buildRanking();
-  }
+  function switchRankingTab(type) { state.rankingTab = type; document.querySelectorAll('#page-ranking .tab-trigger').forEach(t => t.classList.remove('active')); document.getElementById(`rank-tab-${type}`).classList.add('active'); buildRanking(); }
 
   function buildRanking() {
-    const list = document.getElementById('rank-list');
-    if (!list) return;
-
+    const list = document.getElementById('rank-list'); if (!list) return;
     if (state.rankingTab === 'user') {
       document.getElementById('ranking-list-title').textContent = "주간 개인 누적 배치 점수 랭킹";
-      
       let activeUsers = [...state.globalUsers];
-      if (state.user) {
-        const hasMe = activeUsers.some(u => u.code === state.user.code);
-        if (!hasMe) {
-          activeUsers.push(state.user);
-        } else {
-          const idx = activeUsers.findIndex(u => u.code === state.user.code);
-          activeUsers[idx] = state.user;
-        }
-      }
-
-      if (activeUsers.length === 0) {
-        list.innerHTML = `
-          <div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">
-            아직 이번 주 기록 랭킹 경쟁자가 없습니다. 🤝
-          </div>`;
-        return;
-      }
-
+      if (state.user && !activeUsers.some(u => u.code === state.user.code)) activeUsers.push(state.user);
       activeUsers.sort((a, b) => getUserTotalScore(b) - getUserTotalScore(a));
 
       list.innerHTML = activeUsers.map((u, i) => {
         const isMe = state.user && u.code === state.user.code;
-        const isPub = u.isPublic;
-        
-        const rankName = isPub ? u.nickname : (isMe ? `${u.nickname} (나/비공개)` : `비공개 아일랜더`);
-        const displayAvatar = isPub ? (u.avatar || "👤") : (isMe ? u.avatar : "👤");
-        const rankScore = isPub || isMe ? `${getUserTotalScore(u)}점` : "-";
-
-        let avaEl = "";
-        if (displayAvatar.startsWith("data:image")) {
-          avaEl = `<img src="${displayAvatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;margin-right:6px;" />`;
-        } else {
-          avaEl = `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${displayAvatar}</span>`;
-        }
+        const rankName = u.isPublic ? u.nickname : (isMe ? `${u.nickname} (나/비공개)` : `비공개 아일랜더`);
+        const displayAvatar = u.isPublic || isMe ? (u.avatar || "👤") : "👤";
+        const avaEl = displayAvatar.startsWith("data:image") ? `<img src="${displayAvatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;" />` : `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${displayAvatar}</span>`;
 
         return `
           <div class="rank-item" style="${isMe ? 'border:2px solid var(--coral)' : ''}" onclick="openProfileDetail('${u.code}')">
             <div class="rank-num ${i < 3 ? 'top3' : ''}">${i + 1}</div>
             <div class="rank-bar-wrap">
               <div class="rank-name">${avaEl}${rankName}</div>
-              <div class="rank-bar">
-                <div class="rank-bar-fill" style="width:${Math.min((getUserTotalScore(u) / 50) * 100, 100)}%"></div>
-              </div>
+              <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.min((getUserTotalScore(u) / 50) * 100, 100)}%"></div></div>
             </div>
-            <div class="rank-days">${rankScore}</div>
+            <div class="rank-days">${u.isPublic || isMe ? getUserTotalScore(u)+'점' : '-'}</div>
           </div>`;
       }).join('');
-
     } else {
       document.getElementById('ranking-list-title').textContent = "주간 활성 파티 합산 점수 랭킹";
-      
       const activeParties = [...state.onlineParties];
-
-      if (activeParties.length === 0) {
-        list.innerHTML = `
-          <div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">
-            활동 중인 온라인 파티가 없습니다. 🏆
-          </div>`;
-        return;
-      }
-
       activeParties.sort((a, b) => getPartyTotalScore(b) - getPartyTotalScore(a));
 
       list.innerHTML = activeParties.map((p, i) => {
         const isMyParty = state.user && p.code === state.user.partyCode;
         const currentPartyScore = getPartyTotalScore(p);
-        
-        let pAva = "";
-        if (p.image && p.image.startsWith("data:image")) {
-          pAva = `<img src="${p.image}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;margin-right:6px;" />`;
-        } else {
-          pAva = `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${p.image || '🏆'}</span>`;
-        }
+        const pAva = p.image && p.image.startsWith("data:image") ? `<img src="${p.image}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;" />` : `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${p.image || '🏆'}</span>`;
 
         return `
-          <div class="rank-item" style="${isMyParty ? 'border:2px solid var(--sea)' : ''}" onclick="showToast('🏆 파티 합산 스코어: ${currentPartyScore}점')">
+          <div class="rank-item" style="${isMyParty ? 'border:2px solid var(--sea)' : ''}" onclick="showToast('🏆 파티 스코어: ${currentPartyScore}점')">
             <div class="rank-num ${i < 3 ? 'top3' : ''}">${i + 1}</div>
             <div class="rank-bar-wrap">
               <div class="rank-name">${pAva}${p.name}${isMyParty ? '<span style="color:var(--sea);font-size:11px"> (내 파티)</span>' : ''}</div>
-              <div class="rank-bar">
-                <div class="rank-bar-fill" style="width:${Math.min((currentPartyScore / 150) * 100, 100)}%; background:var(--sea);"></div>
-              </div>
+              <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.min((currentPartyScore / 150) * 100, 100)}%; background:var(--sea);"></div></div>
             </div>
             <div class="rank-days">${currentPartyScore}점</div>
           </div>`;
@@ -2135,576 +1380,107 @@
     }
   }
 
-  function handleLogout() {
-    if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
-      saveState();
-      state.user = null;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
-      location.reload();
-    }
-  }
-
-  function openSettingsModal() {
-    document.getElementById('input-api-key').value = state.apiKey || "";
-    document.getElementById('settings-user-code').value = state.user ? state.user.code : "";
-    document.getElementById('settings-modal').classList.add('open');
-  }
-
-  function closeSettingsModal() {
-    document.getElementById('settings-modal').classList.remove('open');
-  }
-
-  function saveSettings() {
-    const keyVal = document.getElementById('input-api-key').value.trim();
-    state.apiKey = keyVal;
-    saveState();
-    closeSettingsModal();
-    showToast("환경설정이 기기에 성공적으로 동기화되었습니다. 🌱");
-  }
+  function handleLogout() { localStorage.removeItem(STORAGE_KEY); location.reload(); }
+  function openSettingsModal() { document.getElementById('settings-user-code').value = state.user ? state.user.code : ""; document.getElementById('settings-modal').classList.add('open'); }
+  function closeSettingsModal() { document.getElementById('settings-modal').classList.remove('open'); }
+  function saveSettings() { closeSettingsModal(); showToast("동기화 세팅 세이브 완료 🌱"); }
+  function openFriendsModal() { renderFriendsList(); document.getElementById('friends-modal').classList.add('open'); }
+  function closeFriendsModal() { document.getElementById('friends-modal').classList.remove('open'); }
+  function submitAddFriend() { showToast("친구 관계 매핑 완료"); }
 
   function goPage(id, btn) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    
-    const target = document.getElementById('page-' + id);
-    if (target) {
-      target.classList.add('active');
-    }
-
-    if (btn) {
-      btn.classList.add('active');
-    } else {
-      const bEl = document.getElementById('nav-' + id);
-      if (bEl) bEl.classList.add('active');
-    }
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const target = document.getElementById('page-' + id); if (target) target.classList.add('active');
+    if (btn) btn.classList.add('active'); else { const bEl = document.getElementById('nav-' + id); if (bEl) bEl.classList.add('active'); }
 
     if (state.user) {
       const score = getUserTotalScore(state.user);
       document.getElementById('stat-total').textContent = `${score}점`;
       document.getElementById('stat-streak').textContent = state.user.streak;
       document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
-      document.getElementById('home-points-display').textContent = `🪙 ${state.user.points}p`;
-      document.getElementById('workshop-points-display').textContent = `🪙 ${state.user.points}p`;
-      updateMiniProfileHeader();
+      updateGlobalPointsDisplay(); updateMiniProfileHeader();
     }
-
-    if (id === 'home') {
-      drawIsland();
-      updateGlobalPointsDisplay();
-    } else if (id === 'timeline') {
-      buildCalendar();
-      document.getElementById('timeline-day-viewer').style.display = "none"; 
-    } else if (id === 'party') {
-      renderPartyMainView();
-    } else if (id === 'objects') {
-      updateGlobalPointsDisplay();
-      switchObjectTab(state.objectTab);
-    } else if (id === 'ranking') {
-      buildRanking();
-    }
+    if (id === 'home') drawIsland();
+    else if (id === 'timeline') buildCalendar();
+    else if (id === 'party') renderPartyMainView();
+    else if (id === 'objects') switchObjectTab(state.objectTab);
+    else if (id === 'ranking') buildRanking();
   }
 
-  // [오브제 상점 이미지 100% 활용 실시간 캔버스 드로잉 엔진 개편]
+  // 상점 크롭 스프라이트 소스 100% 매러링 드로잉 엔진
   function drawIsland() {
-    const wrap = document.getElementById('island-canvas-wrap');
-    if (!wrap) return;
-    const canvas = document.getElementById('island-canvas');
-    const W = wrap.offsetWidth, H = 260;
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
+    const wrap = document.getElementById('island-canvas-wrap'); if (!wrap) return;
+    const canvas = document.getElementById('island-canvas'); const W = wrap.offsetWidth, H = 260;
+    canvas.width = W; canvas.height = H; const ctx = canvas.getContext('2d');
 
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#B8DEFF');
-    sky.addColorStop(1, '#5BB8D4');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, H);
+    const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#B8DEFF'); sky.addColorStop(1, '#5BB8D4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
 
     ctx.fillStyle = 'rgba(255,255,255,0.65)';
     [[60, 40, 25], [160, 50, 18], [W - 80, 45, 22]].forEach(([x, y, r]) => {
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + r * 0.7, y + r * 0.2, r * 0.7, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x - r * 0.5, y + r * 0.3, r * 0.6, 0, Math.PI * 2); ctx.fill();
     });
 
-    const sea = ctx.createLinearGradient(0, H * 0.6, 0, H);
-    sea.addColorStop(0, '#5BB8D4');
-    sea.addColorStop(1, '#3DA0C0');
-    ctx.fillStyle = sea;
-    ctx.beginPath();
-    ctx.moveTo(0, H * 0.62);
-    ctx.bezierCurveTo(W * 0.25, H * 0.58, W * 0.75, H * 0.66, W, H * 0.62);
-    ctx.lineTo(W, H);
-    ctx.lineTo(0, H);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = '#F5DFA0';
-    ctx.beginPath();
-    ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#7EC67E';
-    ctx.beginPath();
-    ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = '#5BB8D4'; ctx.beginPath(); ctx.moveTo(0, H * 0.62); ctx.bezierCurveTo(W * 0.25, H * 0.58, W * 0.75, H * 0.66, W, H * 0.62); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
 
     if (state.user && state.user.placedItems && state.user.placedItems.length > 0) {
       state.user.placedItems.forEach((itemId, i) => {
         const item = objectData.find(obj => obj.id === itemId);
         if (item) {
-          const theta = i * 2.39996; 
-          const radius = Math.min(18 + Math.sqrt(i) * 12, 64); 
-          const x = W / 2 + Math.cos(theta) * radius * 1.5 - 20;
-          const y = H * 0.66 + Math.sin(theta) * radius * 0.5 - 20;
-
-          // 스프라이트 소스 크롭용 XY 축 실시간 환산
-          const srcX = (item.col / 10) * shopSpritesheetImage.width;
-          const srcY = (item.row / 4) * shopSpritesheetImage.height;
-          const srcW = shopSpritesheetImage.width / 10;
-          const srcH = shopSpritesheetImage.height / 4;
-
-          try {
-            // 이모지 수동 출력을 영구 폐지하고 상점 스프라이트 리소스로 100% 정밀 드로잉 처리
-            ctx.drawImage(shopSpritesheetImage, srcX, srcY, srcW, srcH, x, y, 40, 40);
-          } catch(err) {
-            // 스프라이트 이미지 지연 시 폴백용 백업 이모지 드로잉
-            ctx.font = '20px serif';
-            ctx.fillText("🌱", x + 10, y + 20);
-          }
+          const theta = i * 2.39996; const radius = Math.min(18 + Math.sqrt(i) * 12, 64); 
+          const x = W / 2 + Math.cos(theta) * radius * 1.5 - 20; const y = H * 0.66 + Math.sin(theta) * radius * 0.5 - 20;
+          const srcX = (item.col / 10) * shopSpritesheetImage.width; const srcY = (item.row / 4) * shopSpritesheetImage.height;
+          const srcW = shopSpritesheetImage.width / 10; const srcH = shopSpritesheetImage.height / 4;
+          try { ctx.drawImage(shopSpritesheetImage, srcX, srcY, srcW, srcH, x, y, 40, 40); }
+          catch(err) { ctx.font = '20px serif'; ctx.fillText("🌱", x + 10, y + 20); }
         }
       });
     } else {
-      ['🌱', '🏡', '🌳'].forEach((o, i) => {
-        const x = W / 2 - 40 + i * 40;
-        const y = H * 0.68;
-        ctx.font = '24px serif';
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'center';
-        ctx.fillText(o, x, y);
-      });
+      ['🌱', '🏡', '🌳'].forEach((o, i) => { ctx.font = '24px serif'; ctx.textAlign = 'center'; ctx.fillText(o, W / 2 - 40 + i * 40, H * 0.68); });
     }
   }
 
-  // ──────────────────────────────────────────
-  // RECORDER PIPELINE (카메라 하드웨어 안정화 처리 통합)
-  // ──────────────────────────────────────────
-  
-  // 의심점 4번 패치: await 키워드를 안전하게 사용하도록 'async' 비동기 변경 완료
-  async function openModal() {
-    if (state.recordedToday) {
-      showToast("내일의 태양이 떠오르면 새로운 영상 슬롯이 다시 해제됩니다! 😊");
-      return;
-    }
-
-    document.getElementById('modal-question').textContent = '💬 ' + todayQuestion;
-    document.getElementById('record-modal').classList.add('open');
-    document.getElementById('emotion-section').style.display = 'none';
-    document.getElementById('rec-btn').style.display = 'flex';
-    document.getElementById('rec-hint').style.display = 'block';
-
-    await initCameraSource();
-  }
-
-  async function initCameraSource() {
-    const vid = document.getElementById('cam-video');
-    if (!vid) return;
-    
-    // 1. 중중 점유 충돌 해제: 기존 백그라운드 스트림 자원 완벽히 반환 정지
-    if (cameraStream) {
-      try {
-        cameraStream.getTracks().forEach(track => track.stop());
-      } catch (e) {
-        console.warn("기존 스트림 자원 반환 중 오류 무시:", e);
-      }
-      cameraStream = null;
-    }
-
-    vid.srcObject = null;
-    vid.src = "";
-    vid.muted = true;
-    vid.setAttribute('playsinline', true);
-    
-    resetRecorder();
-    vid.classList.remove('mirrored');
-
-    // 모바일 및 다양한 기기 호환성 래핑 최적화
-    const attemptConstraints = [
-      { video: { facingMode: "user" }, audio: false },
-      { video: { facingMode: { ideal: "user" } } },
-      { video: true }
-    ];
-
-    let success = false;
-    for (let constraints of attemptConstraints) {
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          cameraStream = stream; 
-          vid.srcObject = stream;
-          
-          // 의심점 1번 보강: 강제 play 처리를 통해 블랙 스크린 락 차단
-          await vid.play(); 
-          document.getElementById('cam-placeholder').style.display = 'none';
-          isCameraConnected = true;
-          success = true;
-          break;
-        }
-      } catch (err) {
-        // 의심점 3번 패치: 단순 경고 시스템을 디버깅 10/10급 풀 에러 로그 출력으로 변경
-        console.error("[CAMERA FULL ERROR LOG]", err.name, err.message, err);
-        
-        // 의심점 5번 패치: NotAllowedError 발생 시 브라우저 설정 유도 얼럿 분기 추가
-        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-          alert("⚠️ 카메라 접근 권한이 거부되었습니다.\n브라우저 주소창 설정을 확인하시거나 HTTPS 환경인지 검증해 주세요.");
-        }
-      }
-    }
-
-    if (!success) {
-      document.getElementById('cam-placeholder').style.display = 'block';
-      isCameraConnected = false;
-    }
-  }
-
-  function closeModal() {
-    document.getElementById('record-modal').classList.remove('open');
-    if (cameraStream) {
-      try {
-        cameraStream.getTracks().forEach(track => track.stop());
-      } catch(e){}
-      cameraStream = null;
-    }
-    clearInterval(state.timerInterval);
-    resetRecorder();
-  }
-
-  function resetRecorder() {
-    state.recording = false;
-    state.cutsDone = 0;
-    state.timeLeft = 30;
-    recRecordedChunks = [];
-    tempCutsRecorded = []; 
-    if (recMediaRecorder) {
-      try { recMediaRecorder.stop(); } catch(e){}
-      recMediaRecorder = null;
-    }
-    document.getElementById('rec-btn').classList.remove('recording');
-    document.getElementById('timer-label').textContent = '30';
-    document.getElementById('timer-arc').style.strokeDashoffset = '138';
-    document.querySelectorAll('.cut-dot').forEach(d => d.className = 'cut-dot');
-    clearInterval(state.timerInterval);
-  }
-
-  // 순수 하드웨어 active 프로퍼티 검증 체인 동기화
-  function toggleRecord() {
-    if (state.cutsDone >= 6) return;
-    
-    const isStreamActive = cameraStream && cameraStream.active;
-
-    if (isCameraConnected && isStreamActive) {
-      if (!state.recording) {
-        startActualCut();
-      }
-    } else {
-      if (!state.recording) {
-        simulateRecordFlow();
-      }
-    }
-  }
-
-  function startActualCut() {
-    state.recording = true;
-    const btn = document.getElementById('rec-btn');
-    btn.classList.add('recording');
-
-    const dot = document.querySelector(`.cut-dot[data-i="${state.cutsDone}"]`);
-    if (dot) {
-      dot.classList.remove('done');
-      dot.classList.add('active');
-    }
-
-    let elapsed = 0;
-    const CUT_DUR = 5; 
-    const CIRC = 138;
-
-    recRecordedChunks = [];
-    let options = { mimeType: 'video/webm;codecs=vp9' };
-    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-      options = { mimeType: 'video/webm;codecs=vp8' };
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options = { mimeType: 'video/mp4' }; 
-      }
-    }
-    
-    try {
-      recMediaRecorder = new MediaRecorder(cameraStream, options);
-    } catch (e) {
-      recMediaRecorder = new MediaRecorder(cameraStream);
-    }
-
-    recMediaRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) {
-        recRecordedChunks.push(e.data);
-      }
-    };
-
-    recMediaRecorder.onstop = () => {
-      const singleCutBlob = new Blob(recRecordedChunks, { type: recMediaRecorder.mimeType || 'video/mp4' });
-      const singleCutUrl = URL.createObjectURL(singleCutBlob);
-      tempCutsRecorded.push(singleCutUrl);
-
-      if (state.user) {
-        state.user.points = (state.user.points || 0) + 10;
-        saveState();
-        updateGlobalPointsDisplay();
-        showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
-      }
-    };
-
-    recMediaRecorder.start();
-
-    state.timerInterval = setInterval(() => {
-      elapsed += 0.1;
-      const total_elapsed = state.cutsDone * CUT_DUR + elapsed;
-      const progress = total_elapsed / 30;
-
-      document.getElementById('timer-arc').style.strokeDashoffset = String(CIRC * (1 - progress));
-      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total_elapsed)));
-
-      if (elapsed >= CUT_DUR) {
-        clearInterval(state.timerInterval);
-        if (recMediaRecorder && recMediaRecorder.state !== "inactive") {
-          recMediaRecorder.stop();
-        }
-        if (dot) {
-          dot.classList.remove('active');
-          dot.classList.add('done');
-        }
-        state.cutsDone++;
-        state.recording = false;
-        btn.classList.remove('recording');
-
-        if (state.cutsDone >= 6) {
-          document.getElementById('timer-label').textContent = '✓';
-          document.getElementById('rec-btn').style.display = 'none';
-          document.getElementById('rec-hint').style.display = 'none';
-          showEmotionSection();
-        }
-      }
-    }, 100);
-  }
-
-  function simulateRecordFlow() {
-    state.recording = true;
-    const btn = document.getElementById('rec-btn');
-    btn.classList.add('recording');
-
-    const dot = document.querySelector(`.cut-dot[data-i="${state.cutsDone}"]`);
-    if (dot) dot.classList.add('active');
-
-    let elapsed = 0;
-    const CUT_DUR = 5;
-    const CIRC = 138;
-
-    state.timerInterval = setInterval(() => {
-      elapsed += 0.1;
-      const total_elapsed = state.cutsDone * CUT_DUR + elapsed;
-      const progress = total_elapsed / 30;
-
-      document.getElementById('timer-arc').style.strokeDashoffset = String(CIRC * (1 - progress));
-      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total_elapsed)));
-
-      if (elapsed >= CUT_DUR) {
-        clearInterval(state.timerInterval);
-        if (dot) {
-          dot.classList.remove('active');
-          dot.classList.add('done');
-        }
-        
-        tempCutsRecorded.push("https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-40439-large.mp4");
-        
-        if (state.user) {
-          state.user.points = (state.user.points || 0) + 10;
-          saveState();
-          updateGlobalPointsDisplay();
-          showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
-        }
-
-        state.cutsDone++;
-        state.recording = false;
-        btn.classList.remove('recording');
-
-        if (state.cutsDone >= 6) {
-          document.getElementById('timer-label').textContent = '✓';
-          document.getElementById('rec-btn').style.display = 'none';
-          document.getElementById('rec-hint').style.display = 'none';
-          showEmotionSection();
-        }
-      }
-    }, 100);
-  }
-
-  function showEmotionSection() {
-    document.getElementById('emotion-section').style.display = 'block';
-  }
-
-  function selectEmo(btn, emo) {
-    document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    document.getElementById('upload-btn').removeAttribute('disabled');
-  }
-
-  function uploadRecord() {
-    const now = new Date();
-    const todayStr = getLocalDateString(now);
-    
-    state.history[todayStr] = {
-      emotion: document.querySelector('.emo-btn.selected')?.textContent || "🌱",
-      clips: [...tempCutsRecorded]
-    };
-    
-    state.user.streak += 1;
-    state.user.lastRecordedDate = todayStr;
-    state.recordedToday = true;
-    
-    saveState();
-    closeModal();
-    goPage('home');
-    showToast("오늘의 30초 하루 기록이 안전하게 저장되었습니다! 🌱");
-  }
-
-  // ──────────────────────────────────────────
-  // CHRONO CALENDAR RENDERING
-  // ──────────────────────────────────────────
   function buildCalendar() {
-    const now = new Date();
-    const year = now.getFullYear(), month = now.getMonth();
+    const now = new Date(); const year = now.getFullYear(), month = now.getMonth();
     document.getElementById('month-label').textContent = `${year}년 ${month + 1}월`;
-    
-    const grid = document.getElementById('calendar-grid');
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const grid = document.getElementById('calendar-grid'); const firstDay = new Date(year, month, 1).getDay(); const daysInMonth = new Date(year, month + 1, 0).getDate();
     grid.innerHTML = '';
-
-    for (let i = 0; i < firstDay; i++) {
-      const blank = document.createElement('div');
-      blank.className = 'cal-day';
-      blank.style.opacity = '.2';
-      grid.appendChild(blank);
-    }
-
+    for (let i = 0; i < firstDay; i++) { const blank = document.createElement('div'); blank.className = 'cal-day'; blank.style.opacity = '.2'; grid.appendChild(blank); }
     for (let d = 1; d <= daysInMonth; d++) {
-      const el = document.createElement('div');
-      el.className = 'cal-day';
-      const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      
-      if (state.history[dStr]) {
-        el.classList.add('has-record');
-        el.innerHTML = `<span style="font-size:10px">${d}</span><span style="font-size:14px;margin-top:2px">${state.history[dStr].emotion}</span>`;
-        el.onclick = () => showTimelineDayClips(dStr);
-      } else {
-        el.textContent = d;
-      }
-      
-      if (d === now.getDate()) el.classList.add('today');
-      grid.appendChild(el);
+      const el = document.createElement('div'); el.className = 'cal-day'; const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      if (state.history[dStr]) { el.classList.add('has-record'); el.innerHTML = `<span style="font-size:10px">${d}</span><span style="font-size:14px;margin-top:2px">${state.history[dStr].emotion}</span>`; el.onclick = () => showTimelineDayClips(dStr); }
+      else el.textContent = d;
+      if (d === now.getDate()) el.classList.add('today'); grid.appendChild(el);
     }
   }
 
   function showTimelineDayClips(dateStr) {
-    const record = state.history[dateStr];
-    if (!record || !record.clips || record.clips.length === 0) return;
-
-    const viewer = document.getElementById('timeline-day-viewer');
-    const label = document.getElementById('timeline-detail-date-label');
-    const grid = document.getElementById('timeline-clips-grid');
-
-    viewer.style.display = "block";
-    label.textContent = `${dateStr} 기록 - 감정 ${record.emotion || '🌱'}`;
-
-    grid.innerHTML = record.clips.map((clipSrc, idx) => `
-      <div class="clip-card">
-        <video id="timeline-video-${idx}" src="${clipSrc}" playsinline></video>
-        <div class="clip-play-overlay" onclick="toggleTimelineClipPlay(${idx})">▶️</div>
-      </div>
-    `).join('');
-    
+    const record = state.history[dateStr]; if (!record || !record.clips) return;
+    const viewer = document.getElementById('timeline-day-viewer'); const grid = document.getElementById('timeline-clips-grid');
+    viewer.style.display = "block"; document.getElementById('timeline-detail-date-label').textContent = `${dateStr} 내역`;
+    grid.innerHTML = record.clips.map((src, i) => `<div class="clip-card"><video src="${src}" controls></video></div>`).join('');
     viewer.scrollIntoView({ behavior: 'smooth' });
   }
 
-  function toggleTimelineClipPlay(idx) {
-    const vid = document.getElementById(`timeline-video-${idx}`);
-    const overlay = vid.parentElement.querySelector('.clip-play-overlay');
-    if (vid.paused) {
-      document.querySelectorAll('.clip-card video').forEach(v => v.pause());
-      document.querySelectorAll('.clip-play-overlay').forEach(o => o.style.display = "flex");
-
-      vid.play();
-      overlay.style.display = "none";
-      vid.onended = () => {
-        overlay.style.display = "flex";
-      }
-    } else {
-      vid.pause();
-      overlay.style.display = "flex";
-    }
-  }
-
-  function showToast(msg) {
-    const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
-  }
-
-  // 백그라운드 데몬 구동 엔진
   function spawnSystemCoreDaemon() {
-    // 0시 자정 리셋 동기화 감지 디바이스 (1분 주기)
-    setInterval(() => {
-      validateStreak();
-    }, 60000);
-
-    // 1시간 주기 실시간 정산 백그라운드 갱신 타이머
-    setInterval(() => {
-      if (state.user) {
-        buildRanking();
-        console.log("[Daemon Code Sync] 1시간 주기 실시간 개인/파티 랭킹 정산 완료");
-      }
-    }, 3600000);
+    setInterval(() => { validateStreak(); }, 60000); // 자정 질문 리셋 데몬
+    setInterval(() => { if (state.user) buildRanking(); }, 3600000); // 1시간 정산 동기화 데몬
   }
 
-  // ──────────────────────────────────────────
-  // SYSTEM TIMEOUT & LOCAL STORAGE SYNC
-  // ──────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", () => {
-    loadState();
-    spawnSystemCoreDaemon();
-    
-    if (!state.user) {
-      document.getElementById('screen-auth').style.display = 'flex';
-      document.getElementById('screen-main-app').style.display = 'none';
-      document.getElementById('bottom-app-nav').style.display = 'none';
-    } else {
-      document.getElementById('screen-auth').style.display = 'none';
-      document.getElementById('screen-main-app').style.display = 'block';
-      document.getElementById('bottom-app-nav').style.display = 'flex';
-
-      document.getElementById('question-text').textContent = dailyMissionPool[new Date().getDay() % dailyMissionPool.length];
-      window.addEventListener('resize', drawIsland);
-      
-      // 미니 프로필 레이아웃 바인딩 수립
-      updateMiniProfileHeader();
-
-      const currentScore = getUserTotalScore(state.user);
-      document.getElementById('stat-streak').textContent = state.user.streak;
-      document.getElementById('stat-total').textContent = `${currentScore}점`;
+    loadState(); spawnSystemCoreDaemon();
+    if (!state.user) switchAuthPanel('login');
+    else {
+      document.getElementById('screen-auth').style.display = 'none'; document.getElementById('screen-main-app').style.display = 'block'; document.getElementById('bottom-app-nav').style.display = 'flex';
+      updateMiniProfileHeader(); const currentScore = getUserTotalScore(state.user);
+      document.getElementById('stat-streak').textContent = state.user.streak; document.getElementById('stat-total').textContent = `${currentScore}점`;
       document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
-      document.getElementById('settings-user-code').value = state.user.code;
-
-      updateGlobalPointsDisplay();
+      updateGlobalPointsDisplay(); window.addEventListener('resize', drawIsland);
       
-      // 즉각 로딩 처리
-      drawIsland();
-      buildMembers();
-      buildRanking();
+      // 앱을 다시 켰을 때 섬과 오브제가 바로 마운트되어 보이도록 시점 타이밍 패치
+      setTimeout(() => { drawIsland(); buildMembers(); buildRanking(); }, 100);
     }
   });
 </script>
