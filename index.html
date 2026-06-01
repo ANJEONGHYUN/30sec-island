@@ -1091,6 +1091,7 @@
   };
 
   let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 30, timerInterval: null };
+  let todayQuestion = "오늘 하루 당신을 미소 짓게 한 것은 무엇인가요?";
 
   let selectedProfileAvatar = "🌳";
   let selectedPartyAvatar = "🏆";
@@ -2701,6 +2702,22 @@ function startActualCut() {
       document.getElementById('settings-user-code').value = state.user.code;
 
       updateGlobalPointsDisplay();
+
+// 이 함수가 있어야 버튼을 눌렀을 때 화면이 바뀝니다.
+function switchAuthPanel(panelId) {
+    // 1. 일단 모든 화면(로그인, 회원가입, 아이디 찾기 등)을 다 숨깁니다.
+    document.querySelectorAll('.auth-card').forEach(card => {
+        card.style.display = 'none';
+        card.classList.remove('active');
+    });
+
+    // 2. 사용자가 클릭한 그 화면만 찾아서 보여줍니다.
+    const targetPanel = document.getElementById('panel-' + panelId);
+    if (targetPanel) {
+        targetPanel.style.display = 'block';
+        targetPanel.classList.add('active');
+    }
+}
       
       // 즉각 로딩 처리
       drawIsland();
