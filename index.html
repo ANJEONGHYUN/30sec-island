@@ -2289,27 +2289,14 @@
   // RECORDER PIPELINE (카메라 하드웨어 안정화 처리 통합)
   // ──────────────────────────────────────────
   
-  // 의심점 4번 패치: await 키워드를 안전하게 사용하도록 'async' 비동기 변경 완료
-  async function openModal() {
-    if (state.recordedToday) {
-      showToast("내일의 태양이 떠오르면 새로운 영상 슬롯이 다시 해제됩니다! 😊");
-      return;
-    }
-  }
-  }
-
-  // ──────────────────────────────────────────
-  // RECORDER PIPELINE (카메라 하드웨어 안정화 처리 통합)
-  // ──────────────────────────────────────────
-  
-  // 의심점 4번 패치: await 키워드를 안전하게 사용하도록 'async' 비동기 변경 완료
+    // 의심점 4번 패치: await 키워드를 안전하게 사용하도록 'async' 비동기 변경 완료
   async function openModal() {
     if (state.recordedToday) {
       showToast("내일의 태양이 떠오르면 새로운 영상 슬롯이 다시 해제됩니다! 😊");
       return;
     }
 
-    document.getElementById('modal-question').textContent = '💬 ' + 오늘 하루는 어땠나요?;
+    document.getElementById('modal-question').textContent = '💬 ' + todayQuestion?;
     document.getElementById('record-modal').classList.add('open');
     document.getElementById('emotion-section').style.display = 'none';
     document.getElementById('rec-btn').style.display = 'flex';
@@ -2322,7 +2309,7 @@
     const vid = document.getElementById('cam-video');
     if (!vid) return;
     
-    document.getElementById('modal-question').textContent = '💬 ' + 오늘 하루는 어땠나요?;
+    document.getElementById('modal-question').textContent = '💬 ' + todayQuestion?;
     document.getElementById('record-modal').classList.add('open');
     document.getElementById('emotion-section').style.display = 'none';
     document.getElementById('rec-btn').style.display = 'flex';
