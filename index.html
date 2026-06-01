@@ -160,12 +160,6 @@
       color: rgba(255,255,255,0.6); font-size: 13px; text-align: center; line-height: 1.6;
       padding: 20px; pointer-events: none; z-index: 1;
     }
-    .camera-switch-btn {
-      position: absolute; top: 12px; left: 12px; z-index: 10;
-      background: rgba(0,0,0,0.5); border: none; width: 36px; height: 36px;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; color: white; font-size: 16px;
-    }
 
     .timer-ring { position: absolute; top: 12px; right: 12px; z-index: 5; }
     .timer-ring svg { width: 56px; height: 56px; transform: rotate(-90deg); }
@@ -226,6 +220,7 @@
       align-items: center; justify-content: center; font-size: 11px;
       color: var(--muted); position: relative; overflow: hidden;
       border: 1px solid rgba(255,255,255,0.6);
+      cursor: pointer;
     }
     .cal-day.has-record {
       background: linear-gradient(135deg, var(--sea), #3DA0C0);
@@ -486,6 +481,26 @@
       align-items: center; gap: 6px; font-weight: 700; font-size: 13px;
       border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
+
+    /* ───────── TIMELINE CLIP VIEWER ───────── */
+    .timeline-detail-box {
+      margin: 16px 20px; padding: 16px; background: var(--glass);
+      border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: var(--shadow); display: none;
+    }
+    .clip-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px;
+    }
+    .clip-card {
+      background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 9/16;
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .clip-card video { width: 100%; height: 100%; object-fit: cover; }
+    .clip-play-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 24px; cursor: pointer; z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -689,6 +704,12 @@
     </div>
     <div class="calendar-grid" id="calendar-grid"></div>
 
+    <!-- 일별 개별 비디오 클립 뷰어 -->
+    <div class="timeline-detail-box" id="timeline-day-viewer">
+      <p style="font-family:'Gowun Batang',serif; font-size:14px; font-weight:700; color:var(--ink);" id="timeline-detail-date-label">2026-06-01 기록 내역</p>
+      <div class="clip-grid" id="timeline-clips-grid"></div>
+    </div>
+
     <p class="section-title">이번 달 하이라이트</p>
     <div class="ai-box" style="margin:0 20px 16px">
       <div class="ai-label">✦ 월간 요약 (Gemini)</div>
@@ -880,9 +901,8 @@
 
     <div class="camera-preview" id="cam-preview">
       <video id="cam-video" autoplay muted playsinline></video>
-      <button class="camera-switch-btn" onclick="switchCameraSource()" aria-label="카메라 전환">🔄</button>
       <div class="no-cam" id="cam-placeholder">
-        미디어 장치 초기화 실패. 데모 촬영 모드로 활성화됩니다.
+        미디어 장치가 차단되었거나 지원되지 않습니다. 데모 모드로 진행됩니다.
       </div>
       <div class="timer-ring">
         <svg viewBox="0 0 48 48">
@@ -1036,6 +1056,7 @@
   let isIdCheckedAndValid = false;
   let checkedAndValidIdString = "";
   let activeFacingMode = "user";
+  let tempCutsRecorded = [];
 
   function loadState() {
     try {
@@ -1992,6 +2013,7 @@
     } else if (id === 'timeline') {
       buildCalendar();
       loadMonthlyAI();
+      document.getElementById('timeline-day-viewer').style.display = "none"; 
     } else if (id === 'party') {
       renderPartyMainView();
     } else if (id === 'objects') {
@@ -2098,7 +2120,7 @@
   }
 
   // ──────────────────────────────────────────
-  // RECORDER SYSTEM
+  // RECORDER PIPELINE (WITH CLEAN RELEASE CONTEXT)
   // ──────────────────────────────────────────
   let cameraStream = null;
   let recMediaRecorder = null;
@@ -2123,6 +2145,17 @@
 
   async function initCameraSource() {
     const vid = document.getElementById('cam-video');
+    
+    // 1. 주요 요구사항: 기존 스트림 트랙이 존재할 경우 확실하게 정지(.stop()) 후 초기화하여 장치 리소스를 반환합니다.
+    if (cameraStream) {
+      try {
+        cameraStream.getTracks().forEach(track => track.stop());
+      } catch (e) {
+        // 백그라운드 트랙 에러 무시
+      }
+      cameraStream = null;
+    }
+
     vid.srcObject = null;
     vid.src = "";
     vid.muted = true;
@@ -2130,41 +2163,37 @@
     
     resetRecorder();
 
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        cameraStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: activeFacingMode },
-          audio: true
-        });
-        vid.srcObject = cameraStream;
-        document.getElementById('cam-placeholder').style.display = 'none';
-        isCameraConnected = true;
-      } else {
-        throw new Error("No mediaDevices");
-      }
-    } catch (err) {
-      try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: activeFacingMode },
-          audio: false
-        });
-        vid.srcObject = cameraStream;
-        document.getElementById('cam-placeholder').style.display = 'none';
-        isCameraConnected = true;
-      } catch (innerErr) {
-        document.getElementById('cam-placeholder').style.display = 'block';
-        isCameraConnected = false;
-      }
-    }
-  }
+    // 임의의 카메라 반전 효과나 다중 facingMode 복잡성 코드를 전면 배제하여 디바이스 본래 렌더 방향을 유지합니다.
+    vid.classList.remove('mirrored');
 
-  async function switchCameraSource() {
-    if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
+    // 최적의 안정성을 위해 layered fallback 방식으로 카메라 스트림 획득을 진행합니다.
+    const attemptConstraints = [
+      { video: { facingMode: { ideal: activeFacingMode } }, audio: true },
+      { video: { facingMode: { ideal: activeFacingMode } }, audio: false },
+      { video: true, audio: false }
+    ];
+
+    let success = false;
+    for (let constraints of attemptConstraints) {
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+          vid.srcObject = cameraStream;
+          vid.play().catch(e => {}); 
+          document.getElementById('cam-placeholder').style.display = 'none';
+          isCameraConnected = true;
+          success = true;
+          break;
+        }
+      } catch (err) {
+        // 다음 단계 연계 fallback
+      }
     }
-    activeFacingMode = (activeFacingMode === "user") ? "environment" : "user";
-    await initCameraSource();
-    showToast(`📸 ${activeFacingMode === "user" ? "전면" : "후면"} 카메라로 전환되었습니다.`);
+
+    if (!success) {
+      document.getElementById('cam-placeholder').style.display = 'block';
+      isCameraConnected = false;
+    }
   }
 
   function closeModal() {
@@ -2182,7 +2211,7 @@
     state.cutsDone = 0;
     state.timeLeft = 30;
     recRecordedChunks = [];
-    recVideoBlob = null;
+    tempCutsRecorded = []; 
     if (recMediaRecorder) {
       try { recMediaRecorder.stop(); } catch(e){}
       recMediaRecorder = null;
@@ -2194,16 +2223,20 @@
     clearInterval(state.timerInterval);
   }
 
+  // 2. 주요 요구사항: 단순히 플래그 변수에만 의존하지 않고, 실제 cameraStream이 존재하고 현재 활성화(active)되어 작동 중인 지 검사합니다.
   function toggleRecord() {
     if (state.cutsDone >= 6) return;
     
-    if (!isCameraConnected) {
-      simulateRecordFlow();
-      return;
-    }
+    const isStreamActive = cameraStream && cameraStream.active;
 
-    if (!state.recording) {
-      startActualCut();
+    if (isCameraConnected && isStreamActive) {
+      if (!state.recording) {
+        startActualCut();
+      }
+    } else {
+      if (!state.recording) {
+        simulateRecordFlow();
+      }
     }
   }
 
@@ -2222,46 +2255,42 @@
     const CUT_DUR = 5; 
     const CIRC = 138;
 
-    if (state.cutsDone === 0) {
-      recRecordedChunks = [];
-      let options = { mimeType: 'video/webm;codecs=vp9' };
+    recRecordedChunks = [];
+    let options = { mimeType: 'video/webm;codecs=vp9' };
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options = { mimeType: 'video/webm;codecs=vp8' };
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options = { mimeType: 'video/webm;codecs=vp8' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-          options = { mimeType: 'video/mp4' }; 
-        }
-      }
-      
-      try {
-        recMediaRecorder = new MediaRecorder(cameraStream, options);
-      } catch (e) {
-        recMediaRecorder = new MediaRecorder(cameraStream);
-      }
-
-      recMediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          recRecordedChunks.push(e.data);
-        }
-      };
-
-      recMediaRecorder.onstop = () => {
-        recVideoBlob = new Blob(recRecordedChunks, { type: recMediaRecorder.mimeType || 'video/mp4' });
-        
-        const vid = document.getElementById('cam-video');
-        vid.srcObject = null;
-        vid.src = URL.createObjectURL(recVideoBlob);
-        vid.muted = false; 
-        vid.controls = true;
-        vid.loop = true;
-        vid.play().catch(err => {});
-      };
-
-      recMediaRecorder.start(100); 
-    } else {
-      if (recMediaRecorder && recMediaRecorder.state === "paused") {
-        recMediaRecorder.resume();
+        options = { mimeType: 'video/mp4' }; 
       }
     }
+    
+    try {
+      recMediaRecorder = new MediaRecorder(cameraStream, options);
+    } catch (e) {
+      recMediaRecorder = new MediaRecorder(cameraStream);
+    }
+
+    recMediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        recRecordedChunks.push(e.data);
+      }
+    };
+
+    recMediaRecorder.onstop = () => {
+      const singleCutBlob = new Blob(recRecordedChunks, { type: recMediaRecorder.mimeType || 'video/mp4' });
+      const singleCutUrl = URL.createObjectURL(singleCutBlob);
+      tempCutsRecorded.push(singleCutUrl);
+
+      // 영상 컷 촬영 성공 시마다 즉시 10코인 가산 (요구사항 반영)
+      if (state.user) {
+        state.user.points = (state.user.points || 0) + 10;
+        saveState();
+        updateGlobalPointsDisplay();
+        showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
+      }
+    };
+
+    recMediaRecorder.start();
 
     state.timerInterval = setInterval(() => {
       elapsed += 0.1;
@@ -2273,6 +2302,9 @@
 
       if (elapsed >= CUT_DUR) {
         clearInterval(state.timerInterval);
+        if (recMediaRecorder && recMediaRecorder.state !== "inactive") {
+          recMediaRecorder.stop();
+        }
         if (dot) {
           dot.classList.remove('active');
           dot.classList.add('done');
@@ -2281,18 +2313,10 @@
         state.recording = false;
         btn.classList.remove('recording');
 
-        if (state.cutsDone < 6) {
-          if (recMediaRecorder && recMediaRecorder.state === "recording") {
-            recMediaRecorder.pause();
-          }
-        } else {
+        if (state.cutsDone >= 6) {
           document.getElementById('timer-label').textContent = '✓';
           document.getElementById('rec-btn').style.display = 'none';
           document.getElementById('rec-hint').style.display = 'none';
-          
-          if (recMediaRecorder && recMediaRecorder.state !== "inactive") {
-            recMediaRecorder.stop();
-          }
           showEmotionSection();
         }
       }
@@ -2325,6 +2349,16 @@
           dot.classList.remove('active');
           dot.classList.add('done');
         }
+        
+        tempCutsRecorded.push("https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-40439-large.mp4");
+        
+        if (state.user) {
+          state.user.points = (state.user.points || 0) + 10;
+          saveState();
+          updateGlobalPointsDisplay();
+          showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
+        }
+
         state.cutsDone++;
         state.recording = false;
         btn.classList.remove('recording');
@@ -2339,6 +2373,9 @@
     }, 100);
   }
 
+  // ──────────────────────────────────────────
+  // CHRONO CALENDAR RENDERING & INTERACTIVE VIEWER
+  // ──────────────────────────────────────────
   function buildCalendar() {
     const now = new Date();
     const year = now.getFullYear(), month = now.getMonth();
@@ -2364,6 +2401,7 @@
       if (state.history[dStr]) {
         el.classList.add('has-record');
         el.innerHTML = `<span style="font-size:10px">${d}</span><span style="font-size:14px;margin-top:2px">${state.history[dStr].emotion}</span>`;
+        el.onclick = () => showTimelineDayClips(dStr);
       } else {
         el.textContent = d;
       }
@@ -2373,35 +2411,82 @@
     }
   }
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
+  function showTimelineDayClips(dateStr) {
+    const record = state.history[dateStr];
+    if (!record || !record.clips || record.clips.length === 0) return;
+
+    const viewer = document.getElementById('timeline-day-viewer');
+    const label = document.getElementById('timeline-detail-date-label');
+    const grid = document.getElementById('timeline-clips-grid');
+
+    viewer.style.display = "block";
+    label.textContent = `${dateStr} 기록 - 감정 ${record.emotion || '🌱'}`;
+
+    grid.innerHTML = record.clips.map((clipSrc, idx) => `
+      <div class="clip-card">
+        <video id="timeline-video-${idx}" src="${clipSrc}" playsinline></video>
+        <div class="clip-play-overlay" onclick="toggleTimelineClipPlay(${idx})">▶️</div>
+      </div>
+    `).join('');
+    
+    viewer.scrollIntoView({ behavior: 'smooth' });
   }
 
-  setInterval(() => {
-    if (!state.user) return;
-    
-    state.globalUsers.forEach(u => {
-      if (u.code !== state.user.code) {
-        if (Math.random() > 0.5) {
-          u.total += Math.floor(Math.random() * 2);
-          u.streak += Math.floor(Math.random() * 2);
-        }
+  function toggleTimelineClipPlay(idx) {
+    const vid = document.getElementById(`timeline-video-${idx}`);
+    const overlay = vid.parentElement.querySelector('.clip-play-overlay');
+    if (vid.paused) {
+      document.querySelectorAll('.clip-card video').forEach(v => v.pause());
+      document.querySelectorAll('.clip-play-overlay').forEach(o => o.style.display = "flex");
+
+      vid.play();
+      overlay.style.display = "none";
+      vid.onended = () => {
+        overlay.style.display = "flex";
       }
-    });
-
-    saveState();
-    buildRanking();
-    
-    const indicator = document.getElementById('sync-indicator');
-    if (indicator) {
-      const now = new Date();
-      indicator.textContent = `마지막 동기화: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')} (10분 동기화 가동 중)`;
+    } else {
+      vid.pause();
+      overlay.style.display = "flex";
     }
-  }, 10000);
+  }
 
+  async function geminiPrompt(prompt) {
+    const key = state.apiKey || "";
+    if (!key || key.trim() === "" || key === "YOUR_GEMINI_API_KEY_HERE") {
+      await new Promise(r => setTimeout(r, 1200));
+      if (prompt.includes("연속")) {
+        return `[데모] 현재 연속 기록을 통해 아일랜드에 수많은 생명이 무르익고 있습니다. 모바일 상단의 ⚙️ 아이콘을 터치하여 실제 Gemini API 키를 활성화하고 실시간 비디오 코칭을 경험해 보세요.`;
+      } else if (prompt.includes("오늘의 기록에 대한 따뜻한 감정 분석")) {
+        return `[데모] 질문에 담아주신 당신의 대답에 따뜻함을 느낍니다. 매일 작은 한 조각을 쌓아 올리다 보면 어느샌가 더욱 깊어진 나를 직관할 수 있을 것입니다. 고생하셨습니다. ✨`;
+      } else if (prompt.includes("월간 요약") || prompt.includes("이번 달")) {
+        return `[데모] 이번 한 달 동안 총 ${state.total}개의 영상 점을 이어내셨습니다. 매 순간을 마주하려고 결심한 당신의 여정을 마음 깊이 응원합니다.`;
+      }
+      return "Gemini API 키 등록이 완료되면 지능화된 개인 분석 피드백이 실시간 작성됩니다.";
+    }
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 200, temperature: 0.7 }
+        })
+      });
+      const data = await res.json();
+      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+      }
+      return "분석 데이터 도출 과정 중 오류가 발생했습니다. 키 유효성을 점검해 주세요.";
+    } catch (e) {
+      return "네트워크가 원활하지 않습니다. 접속망 상태를 다시 한 번 확인해 주세요.";
+    }
+  }
+
+  // ──────────────────────────────────────────
+  // SYSTEM TIMEOUT & LOCAL STORAGE SYNC
+  // ──────────────────────────────────────────
   document.addEventListener("DOMContentLoaded", () => {
     loadState();
     
