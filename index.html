@@ -670,8 +670,8 @@
         <div class="label">연속 기록</div>
       </div>
       <div class="stat-card">
-        <div class="num" id="stat-total">3</div>
-        <div class="label">총 기록</div>
+        <div class="num" id="stat-total">0점</div>
+        <div class="label">총 점수</div>
       </div>
       <div class="stat-card">
         <div class="num" id="stat-rank">#1</div>
@@ -739,7 +739,7 @@
         <button class="badge-rank-link" onclick="goPage('ranking')">파티 랭킹 🏆</button>
         <h2 id="active-party-name">파티명</h2>
         <p id="active-party-code-label" style="font-size:12px; opacity:0.85; margin-top:4px;">파티 코드: PARTY-XXXX-B</p>
-        <div id="active-party-score" style="font-size:32px; font-weight:700; margin-top:12px;">달성률 0%</div>
+        <div id="active-party-score" style="font-size:32px; font-weight:700; margin-top:12px;">총 파티 점수: 0점</div>
       </div>
 
       <p class="section-title">파티원 목록 (프로필 상세 보기 클릭)</p>
@@ -837,8 +837,8 @@
         <div style="font-size:11px; color:var(--muted);">연속 기록 일수</div>
       </div>
       <div style="background:var(--cream); padding:12px; border-radius:12px;">
-        <div style="font-size:22px; font-weight:700; color:var(--coral);" id="modal-p-total">0</div>
-        <div style="font-size:11px; color:var(--muted);">누적 총 기록 수</div>
+        <div style="font-size:22px; font-weight:700; color:var(--coral);" id="modal-p-total">0점</div>
+        <div style="font-size:11px; color:var(--muted);">누적 총 점수</div>
       </div>
     </div>
     
@@ -1036,6 +1036,14 @@
     { "id": "OBJ_040", "name": "올리브영 리얼 힐링 스파 패키지", "rarity": "Legendary (전설)", "price": 7500, "col": 9, "row": 3, "desc": "돌 벽면 디자인과 온천 바닥재 테마가 결합된 야외 힐링 스파 공간 전용 모형입니다." }
   ];
 
+  // 등급별 가산 점수 매핑 가이드
+  const rarityPoints = {
+    "Common (일반)": 1,
+    "Rare (희귀)": 3,
+    "Epic (영웅)": 5,
+    "Legendary (전설)": 10
+  };
+
   const defaultState = {
     user: null, 
     objects: [], 
@@ -1049,7 +1057,7 @@
     onlineParties: []
   };
 
-  let state = { ...defaultState };
+  let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 30, timerInterval: null };
 
   let selectedProfileAvatar = "🌳";
   let selectedPartyAvatar = "🏆";
@@ -1058,19 +1066,34 @@
   let activeFacingMode = "user";
   let tempCutsRecorded = [];
 
+  // 배치한 오브제 기반 실시간 총 점수 계산식
+  function getUserTotalScore(user) {
+    if (!user || !user.placedItems) return 0;
+    return user.placedItems.reduce((sum, itemId) => {
+      const obj = objectData.find(o => o.id === itemId);
+      if (obj && rarityPoints[obj.rarity]) return sum + rarityPoints[obj.rarity];
+      return sum;
+    }, 0);
+  }
+
+  // 파티원들의 배치 총 점수 실시간 합산식
+  function getPartyTotalScore(party) {
+    if (!party || !party.members) return 0;
+    return party.members.reduce((sum, mCode) => {
+      const member = state.globalUsers.find(u => u.code === mCode) || (state.user && state.user.code === mCode ? state.user : null);
+      return sum + (member ? getUserTotalScore(member) : 0);
+    }, 0);
+  }
+
   function loadState() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        state = { ...defaultState, ...parsed };
+        state = { ...state, ...parsed };
         validateStreak();
-      } else {
-        state = { ...defaultState };
       }
-    } catch (e) {
-      state = { ...defaultState };
-    }
+    } catch (e) {}
   }
 
   function saveState() {
@@ -1083,7 +1106,9 @@
           state.globalUsers.push(state.user);
         }
       }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        user: state.user, globalUsers: state.globalUsers, onlineParties: state.onlineParties, history: state.history, apiKey: state.apiKey
+      }));
     } catch (e) {}
   }
 
@@ -1267,7 +1292,6 @@
       isPublic: isPublic,
       avatar: selectedProfileAvatar,
       streak: 1,
-      total: 3,
       code: userCode,
       points: 1000, 
       inventory: [], 
@@ -1278,7 +1302,6 @@
 
     state.globalUsers.push(newUser);
     saveState();
-
     showWelcomeToast();
 
     setTimeout(() => {
@@ -1383,20 +1406,19 @@
 
   function completeInitialLoginFlow() {
     saveState();
-    
     document.getElementById('screen-auth').style.display = 'none';
     document.getElementById('screen-main-app').style.display = 'block';
     document.getElementById('bottom-app-nav').style.display = 'flex';
 
     updateGlobalPointsDisplay();
 
+    const currentScore = getUserTotalScore(state.user);
     document.getElementById('stat-streak').textContent = state.user.streak;
-    document.getElementById('stat-total').textContent = state.user.total;
+    document.getElementById('stat-total').textContent = `${currentScore}점`;
     document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
     document.getElementById('settings-user-code').value = state.user.code;
 
     drawIsland();
-    loadAIReflection();
     buildMembers();
     buildRanking();
     
@@ -1531,7 +1553,7 @@
   }
 
   // ──────────────────────────────────────────
-  // SHOP & INVENTORY (SPRITE SHEET COUPLING)
+  // SHOP & INVENTORY (배치 점수 가이드 결합)
   // ──────────────────────────────────────────
   function switchObjectTab(type) {
     state.objectTab = type;
@@ -1567,6 +1589,7 @@
       const isOwned = state.user.inventory.includes(item.id);
       const posX = (item.col / 9) * 100; 
       const posY = (item.row / 3) * 100; 
+      const allocatedScore = rarityPoints[item.rarity] || 0;
 
       const card = document.createElement('div');
       card.className = 'obj-card';
@@ -1585,6 +1608,7 @@
           <div class="obj-desc">${item.desc}</div>
         </div>
         <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:8px;">
+          <div style="font-size:11px; color:var(--coral); font-weight:700;">배치 점수: +${allocatedScore}점</div>
           <span style="font-size:13px; font-weight:700; color:var(--sea);">${item.price}p</span>
           ${buttonHtml}
         </div>`;
@@ -1667,7 +1691,7 @@
   }
 
   // ──────────────────────────────────────────
-  // ONLINE PARTY SYSTEM
+  // ONLINE PARTY SYSTEM (파티 배치 총점 결합)
   // ──────────────────────────────────────────
   function openPartyCreationModal() {
     setupAvatarPresetGrid('create-party-preset-grid', 'party');
@@ -1700,7 +1724,6 @@
       code: pCode,
       name: pName,
       image: selectedPartyAvatar,
-      score: 100, 
       members: [state.user.code]
     };
     
@@ -1756,11 +1779,7 @@
 
     document.getElementById('active-party-name').innerHTML = `${party.image} ${party.name}`;
     document.getElementById('active-party-code-label').textContent = `파티 코드: ${party.code}`;
-
-    const membersList = getPartyJoinedMembers(party);
-    const totalStreak = membersList.reduce((sum, m) => sum + m.streak, 0);
-    const avgStreakPercent = Math.min(Math.round((totalStreak / (membersList.length * 10)) * 100), 100);
-    document.getElementById('active-party-score').textContent = `달성률 ${avgStreakPercent}%`;
+    document.getElementById('active-party-score').textContent = `총 파티 점수: ${getPartyTotalScore(party)}점`;
 
     buildMembers();
   }
@@ -1805,7 +1824,7 @@
           <div class="member-avatar">${renderAvatarHtml}</div>
           <div class="member-info">
             <div class="name">${showName}</div>
-            <div class="streak">🔥 ${m.streak}일 연속 기록 중</div>
+            <div class="streak">총 점수: ${getUserTotalScore(m)}점</div>
           </div>
           <button class="member-action done-today" style="font-size:11px;">상세 프로필</button>
         </div>`;
@@ -1837,7 +1856,7 @@
     document.getElementById('modal-p-nickname').textContent = nameStr;
     document.getElementById('modal-p-code').textContent = `CODE: ${codeStr}`;
     document.getElementById('modal-p-streak').textContent = isPub ? target.streak : "숨김";
-    document.getElementById('modal-p-total').textContent = isPub ? target.total : "숨김";
+    document.getElementById('modal-p-total').textContent = isPub ? `${getUserTotalScore(target)}점` : "숨김";
 
     document.getElementById('profile-detail-modal').classList.add('open');
   }
@@ -1847,7 +1866,7 @@
   }
 
   // ──────────────────────────────────────────
-  // LEADERBOARD (NO ARTIFICIAL BOTS)
+  // LEADERBOARD (실시간 배치 총합 스코어 기반 연동)
   // ──────────────────────────────────────────
   function switchRankingTab(type) {
     state.rankingTab = type;
@@ -1862,7 +1881,7 @@
     if (!list) return;
 
     if (state.rankingTab === 'user') {
-      document.getElementById('ranking-list-title').textContent = "주간 개인 누적 기록 랭킹";
+      document.getElementById('ranking-list-title').textContent = "주간 개인 누적 배치 점수 랭킹";
       
       let activeUsers = [...state.globalUsers];
       if (state.user) {
@@ -1883,7 +1902,8 @@
         return;
       }
 
-      activeUsers.sort((a, b) => b.total - a.total);
+      // 배치 점수 총합순 정렬
+      activeUsers.sort((a, b) => getUserTotalScore(b) - getUserTotalScore(a));
 
       list.innerHTML = activeUsers.map((u, i) => {
         const isMe = state.user && u.code === state.user.code;
@@ -1891,7 +1911,7 @@
         
         const rankName = isPub ? u.nickname : (isMe ? `${u.nickname} (나/비공개)` : `비공개 아일랜더 #${u.code.split('-')[1]}`);
         const displayAvatar = isPub ? u.avatar : (isMe ? u.avatar : "👤");
-        const rankTotal = isPub ? `${u.total}일` : (isMe ? `${u.total}일` : "-");
+        const rankScore = isPub || isMe ? `${getUserTotalScore(u)}점` : "-";
 
         let avaEl = "";
         if (displayAvatar.startsWith("data:image")) {
@@ -1906,15 +1926,15 @@
             <div class="rank-bar-wrap">
               <div class="rank-name">${avaEl}${rankName}</div>
               <div class="rank-bar">
-                <div class="rank-bar-fill" style="width:${Math.min((u.total / 30) * 100, 100)}%"></div>
+                <div class="rank-bar-fill" style="width:${Math.min((getUserTotalScore(u) / 50) * 100, 100)}%"></div>
               </div>
             </div>
-            <div class="rank-days">${rankTotal}</div>
+            <div class="rank-days">${rankScore}</div>
           </div>`;
       }).join('');
 
     } else {
-      document.getElementById('ranking-list-title').textContent = "주간 활성 파티 랭킹 (달성률)";
+      document.getElementById('ranking-list-title').textContent = "주간 활성 파티 합산 점수 랭킹";
       
       const activeParties = [...state.onlineParties];
 
@@ -1926,26 +1946,18 @@
         return;
       }
 
-      activeParties.forEach(p => {
-        const pMembers = getPartyJoinedMembers(p);
-        if (pMembers.length > 0) {
-          const totalStreak = pMembers.reduce((sum, m) => sum + m.streak, 0);
-          p.calculatedScore = Math.min(Math.round((totalStreak / (pMembers.length * 10)) * 100), 100);
-        } else {
-          p.calculatedScore = 0;
-        }
-      });
-
-      activeParties.sort((a, b) => b.calculatedScore - a.calculatedScore);
+      // 파티원 총점 합산 정렬
+      activeParties.sort((a, b) => getPartyTotalScore(b) - getPartyTotalScore(a));
 
       list.innerHTML = activeParties.map((p, i) => {
         const isMyParty = state.user && p.code === state.user.partyCode;
+        const currentPartyScore = getPartyTotalScore(p);
         
         let pAva = "";
-        if (p.image.startsWith("data:image")) {
+        if (p.image && p.image.startsWith("data:image")) {
           pAva = `<img src="${p.image}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;margin-right:6px;" />`;
         } else {
-          pAva = `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${p.image}</span>`;
+          pAva = `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${p.image || '🏆'}</span>`;
         }
 
         return `
@@ -1954,10 +1966,10 @@
             <div class="rank-bar-wrap">
               <div class="rank-name">${pAva}${p.name}${isMyParty ? '<span style="color:var(--sea);font-size:11px"> (내 파티)</span>' : ''}</div>
               <div class="rank-bar">
-                <div class="rank-bar-fill" style="width:${p.calculatedScore}%; background:var(--sea);"></div>
+                <div class="rank-bar-fill" style="width:${Math.min((currentPartyScore / 150) * 100, 100)}%; background:var(--sea);"></div>
               </div>
             </div>
-            <div class="rank-days">${p.calculatedScore}%</div>
+            <div class="rank-days">${currentPartyScore}점</div>
           </div>`;
       }).join('');
     }
@@ -1988,7 +2000,6 @@
     saveState();
     closeSettingsModal();
     showToast("환경설정이 기기에 성공적으로 동기화되었습니다. 🌱");
-    loadAIReflection();
   }
 
   function goPage(id, btn) {
@@ -2007,12 +2018,20 @@
       if (bEl) bEl.classList.add('active');
     }
 
+    if (state.user) {
+      const score = getUserTotalScore(state.user);
+      document.getElementById('stat-total').textContent = `${score}점`;
+      document.getElementById('stat-streak').textContent = state.user.streak;
+      document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
+      document.getElementById('home-points-display').textContent = `🪙 ${state.user.points}p`;
+      document.getElementById('workshop-points-display').textContent = `🪙 ${state.user.points}p`;
+    }
+
     if (id === 'home') {
       drawIsland();
       updateGlobalPointsDisplay();
     } else if (id === 'timeline') {
       buildCalendar();
-      loadMonthlyAI();
       document.getElementById('timeline-day-viewer').style.display = "none"; 
     } else if (id === 'party') {
       renderPartyMainView();
@@ -2120,14 +2139,8 @@
   }
 
   // ──────────────────────────────────────────
-  // RECORDER PIPELINE (WITH CLEAN RELEASE CONTEXT)
+  // RECORDER PIPELINE (안정 자원 해제 루틴 반영)
   // ──────────────────────────────────────────
-  let cameraStream = null;
-  let recMediaRecorder = null;
-  let recRecordedChunks = [];
-  let recVideoBlob = null;
-  let isCameraConnected = false;
-
   async function openModal() {
     if (state.recordedToday) {
       showToast("내일의 태양이 떠오르면 새로운 영상 슬롯이 다시 해제됩니다! 😊");
@@ -2146,12 +2159,12 @@
   async function initCameraSource() {
     const vid = document.getElementById('cam-video');
     
-    // 1. 주요 요구사항: 기존 스트림 트랙이 존재할 경우 확실하게 정지(.stop()) 후 초기화하여 장치 리소스를 반환합니다.
+    // 1. 기존 비디오 트랙 자원 완벽히 반환 및 정지
     if (cameraStream) {
       try {
         cameraStream.getTracks().forEach(track => track.stop());
       } catch (e) {
-        // 백그라운드 트랙 에러 무시
+        console.warn(e);
       }
       cameraStream = null;
     }
@@ -2162,11 +2175,8 @@
     vid.controls = false;
     
     resetRecorder();
-
-    // 임의의 카메라 반전 효과나 다중 facingMode 복잡성 코드를 전면 배제하여 디바이스 본래 렌더 방향을 유지합니다.
     vid.classList.remove('mirrored');
 
-    // 최적의 안정성을 위해 layered fallback 방식으로 카메라 스트림 획득을 진행합니다.
     const attemptConstraints = [
       { video: { facingMode: { ideal: activeFacingMode } }, audio: true },
       { video: { facingMode: { ideal: activeFacingMode } }, audio: false },
@@ -2179,14 +2189,14 @@
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
           vid.srcObject = cameraStream;
-          vid.play().catch(e => {}); 
+          await vid.play(); 
           document.getElementById('cam-placeholder').style.display = 'none';
           isCameraConnected = true;
           success = true;
           break;
         }
       } catch (err) {
-        // 다음 단계 연계 fallback
+        console.warn("컨스트레인트 진입 실패, 다음 단계 폴백 진행", err);
       }
     }
 
@@ -2223,7 +2233,7 @@
     clearInterval(state.timerInterval);
   }
 
-  // 2. 주요 요구사항: 단순히 플래그 변수에만 의존하지 않고, 실제 cameraStream이 존재하고 현재 활성화(active)되어 작동 중인 지 검사합니다.
+  // 2. 하드웨어의 스트림 상태 직접 검증 체인 동기화
   function toggleRecord() {
     if (state.cutsDone >= 6) return;
     
@@ -2281,7 +2291,6 @@
       const singleCutUrl = URL.createObjectURL(singleCutBlob);
       tempCutsRecorded.push(singleCutUrl);
 
-      // 영상 컷 촬영 성공 시마다 즉시 10코인 가산 (요구사항 반영)
       if (state.user) {
         state.user.points = (state.user.points || 0) + 10;
         saveState();
@@ -2373,8 +2382,37 @@
     }, 100);
   }
 
+  function showEmotionSection() {
+    document.getElementById('emotion-section').style.display = 'block';
+  }
+
+  function selectEmo(btn, emo) {
+    document.querySelectorAll('.emo-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('upload-btn').removeAttribute('disabled');
+  }
+
+  function uploadRecord() {
+    const now = new Date();
+    const todayStr = getLocalDateString(now);
+    
+    state.history[todayStr] = {
+      emotion: document.querySelector('.emo-btn.selected')?.textContent || "🌱",
+      clips: [...tempCutsRecorded]
+    };
+    
+    state.user.streak += 1;
+    state.lastRecordedDate = todayStr;
+    state.recordedToday = true;
+    
+    saveState();
+    closeModal();
+    goPage('home');
+    showToast("오늘의 30초 하루 기록이 안전하게 저장되었습니다! 🌱");
+  }
+
   // ──────────────────────────────────────────
-  // CHRONO CALENDAR RENDERING & INTERACTIVE VIEWER
+  // CHRONO CALENDAR RENDERING
   // ──────────────────────────────────────────
   function buildCalendar() {
     const now = new Date();
@@ -2450,40 +2488,6 @@
     }
   }
 
-  async function geminiPrompt(prompt) {
-    const key = state.apiKey || "";
-    if (!key || key.trim() === "" || key === "YOUR_GEMINI_API_KEY_HERE") {
-      await new Promise(r => setTimeout(r, 1200));
-      if (prompt.includes("연속")) {
-        return `[데모] 현재 연속 기록을 통해 아일랜드에 수많은 생명이 무르익고 있습니다. 모바일 상단의 ⚙️ 아이콘을 터치하여 실제 Gemini API 키를 활성화하고 실시간 비디오 코칭을 경험해 보세요.`;
-      } else if (prompt.includes("오늘의 기록에 대한 따뜻한 감정 분석")) {
-        return `[데모] 질문에 담아주신 당신의 대답에 따뜻함을 느낍니다. 매일 작은 한 조각을 쌓아 올리다 보면 어느샌가 더욱 깊어진 나를 직관할 수 있을 것입니다. 고생하셨습니다. ✨`;
-      } else if (prompt.includes("월간 요약") || prompt.includes("이번 달")) {
-        return `[데모] 이번 한 달 동안 총 ${state.total}개의 영상 점을 이어내셨습니다. 매 순간을 마주하려고 결심한 당신의 여정을 마음 깊이 응원합니다.`;
-      }
-      return "Gemini API 키 등록이 완료되면 지능화된 개인 분석 피드백이 실시간 작성됩니다.";
-    }
-
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 200, temperature: 0.7 }
-        })
-      });
-      const data = await res.json();
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
-      }
-      return "분석 데이터 도출 과정 중 오류가 발생했습니다. 키 유효성을 점검해 주세요.";
-    } catch (e) {
-      return "네트워크가 원활하지 않습니다. 접속망 상태를 다시 한 번 확인해 주세요.";
-    }
-  }
-
   // ──────────────────────────────────────────
   // SYSTEM TIMEOUT & LOCAL STORAGE SYNC
   // ──────────────────────────────────────────
@@ -2502,14 +2506,14 @@
       document.getElementById('question-text').textContent = todayQuestion;
       window.addEventListener('resize', drawIsland);
       
+      const currentScore = getUserTotalScore(state.user);
       document.getElementById('stat-streak').textContent = state.user.streak;
-      document.getElementById('stat-total').textContent = state.user.total;
+      document.getElementById('stat-total').textContent = `${currentScore}점`;
       document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
       document.getElementById('settings-user-code').value = state.user.code;
 
       updateGlobalPointsDisplay();
       drawIsland();
-      loadAIReflection();
       buildMembers();
       buildRanking();
     }
