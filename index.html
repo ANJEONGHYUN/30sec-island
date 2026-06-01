@@ -2412,91 +2412,88 @@
     }
   }
 
-  function startActualCut() {
-    state.recording = true;
-    const btn = document.getElementById('rec-btn');
-    btn.classList.add('recording');
+function startActualCut() {
+  state.recording = true;
+  const btn = document.getElementById('rec-btn');
+  btn.classList.add('recording');
 
-    const dot = document.querySelector(`.cut-dot[data-i="${state.cutsDone}"]`);
-    if (dot) {
-      dot.classList.remove('done');
-      dot.classList.add('active');
-    }
-
-    let elapsed = 0;
-    const CUT_DUR = 5; 
-    const CIRC = 138;
-
-// 기존의 if-else문 전체를 삭제하고 아래 코드로 교체하세요
-recRecordedChunks = [];
-
-// 브라우저가 지원하는 기본 MIME 타입을 사용하도록 옵션을 비워둡니다.
-let options = {}; 
-
-try {
-  recMediaRecorder = new MediaRecorder(cameraStream, options);
-} catch (e) {
-  console.error("MediaRecorder 생성 실패:", e);
-  showToast("녹화 기능을 지원하지 않는 브라우저입니다.");
-  return; // 생성 실패 시 함수 종료
-}    
-    try {
-      recMediaRecorder = new MediaRecorder(cameraStream, options);
-    } catch (e) {
-      recMediaRecorder = new MediaRecorder(cameraStream);
-    }
-
-    recMediaRecorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) {
-        recRecordedChunks.push(e.data);
-      }
-    };
-
-    recMediaRecorder.onstop = () => {
-      const singleCutBlob = new Blob(recRecordedChunks, { type: recMediaRecorder.mimeType || 'video/mp4' });
-      const singleCutUrl = URL.createObjectURL(singleCutBlob);
-      tempCutsRecorded.push(singleCutUrl);
-
-      if (state.user) {
-        state.user.points = (state.user.points || 0) + 10;
-        saveState();
-        updateGlobalPointsDisplay();
-        showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
-      }
-    };
-
-    recMediaRecorder.start();
-
-    state.timerInterval = setInterval(() => {
-      elapsed += 0.1;
-      const total_elapsed = state.cutsDone * CUT_DUR + elapsed;
-      const progress = total_elapsed / 30;
-
-      document.getElementById('timer-arc').style.strokeDashoffset = String(CIRC * (1 - progress));
-      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total_elapsed)));
-
-      if (elapsed >= CUT_DUR) {
-        clearInterval(state.timerInterval);
-        if (recMediaRecorder && recMediaRecorder.state !== "inactive") {
-          recMediaRecorder.stop();
-        }
-        if (dot) {
-          dot.classList.remove('active');
-          dot.classList.add('done');
-        }
-        state.cutsDone++;
-        state.recording = false;
-        btn.classList.remove('recording');
-
-        if (state.cutsDone >= 6) {
-          document.getElementById('timer-label').textContent = '✓';
-          document.getElementById('rec-btn').style.display = 'none';
-          document.getElementById('rec-hint').style.display = 'none';
-          showEmotionSection();
-        }
-      }
-    }, 100);
+  const dot = document.querySelector(`.cut-dot[data-i="${state.cutsDone}"]`);
+  if (dot) {
+    dot.classList.remove('done');
+    dot.classList.add('active');
   }
+
+  let elapsed = 0;
+  const CUT_DUR = 5; 
+  const CIRC = 138;
+
+  recRecordedChunks = [];
+
+  // MediaRecorder 초기화: 브라우저가 최적의 코덱을 자동으로 선택하게 함
+  try {
+    recMediaRecorder = new MediaRecorder(cameraStream);
+  } catch (e) {
+    console.error("MediaRecorder 생성 실패:", e);
+    showToast("녹화 기능을 지원하지 않는 브라우저입니다.");
+    state.recording = false;
+    btn.classList.remove('recording');
+    return;
+  }
+
+  recMediaRecorder.ondataavailable = (e) => {
+    if (e.data && e.data.size > 0) {
+      recRecordedChunks.push(e.data);
+    }
+  };
+
+  recMediaRecorder.onstop = () => {
+    // MIME 타입이 지정되지 않았다면 기본값(video/webm 등) 사용
+    const mimeType = recMediaRecorder.mimeType || 'video/webm';
+    const singleCutBlob = new Blob(recRecordedChunks, { type: mimeType });
+    const singleCutUrl = URL.createObjectURL(singleCutBlob);
+    tempCutsRecorded.push(singleCutUrl);
+
+    if (state.user) {
+      state.user.points = (state.user.points || 0) + 10;
+      saveState();
+      updateGlobalPointsDisplay();
+      showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
+    }
+  };
+
+  recMediaRecorder.start();
+
+  // 녹화 타이머 로직
+  state.timerInterval = setInterval(() => {
+    elapsed += 0.1;
+    const total_elapsed = state.cutsDone * CUT_DUR + elapsed;
+    const progress = total_elapsed / 30;
+
+    document.getElementById('timer-arc').style.strokeDashoffset = String(CIRC * (1 - progress));
+    document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total_elapsed)));
+
+    if (elapsed >= CUT_DUR) {
+      clearInterval(state.timerInterval);
+      if (recMediaRecorder && recMediaRecorder.state !== "inactive") {
+        recMediaRecorder.stop();
+      }
+      if (dot) {
+        dot.classList.remove('active');
+        dot.classList.add('done');
+      }
+      state.cutsDone++;
+      state.recording = false;
+      btn.classList.remove('recording');
+
+      if (state.cutsDone >= 6) {
+        document.getElementById('timer-label').textContent = '✓';
+        document.getElementById('rec-btn').style.display = 'none';
+        document.getElementById('rec-hint').style.display = 'none';
+        showEmotionSection();
+      }
+    }
+  }, 100);
+}
 
   function simulateRecordFlow() {
     state.recording = true;
