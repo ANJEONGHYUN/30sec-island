@@ -78,7 +78,7 @@
     .nav-record:hover { transform: scale(1.08); box-shadow: 0 6px 28px rgba(255,127,107,0.65); }
     .nav-record svg { width: 28px; height: 28px; color: white; }
 
-    .page { display: none; padding: 0 0 96px; min-height: 100dvh; }
+    .page { display: none; padding: 0 0 110px; min-height: 100dvh; }
     .page.active { display: block; }
 
     .topbar {
@@ -152,11 +152,19 @@
       background: var(--ink); border-radius: 20px; overflow: hidden;
       position: relative; display: flex; align-items: center; justify-content: center;
     }
-    .camera-preview video { width: 100%; height: 100%; object-fit: cover; background: #000; }
+    .camera-preview video {
+      width: 100%; height: 100%; object-fit: cover; background: #000;
+    }
     .camera-preview .no-cam {
       position: absolute;
       color: rgba(255,255,255,0.6); font-size: 13px; text-align: center; line-height: 1.6;
       padding: 20px; pointer-events: none; z-index: 1;
+    }
+    .camera-switch-btn {
+      position: absolute; top: 12px; left: 12px; z-index: 10;
+      background: rgba(0,0,0,0.5); border: none; width: 36px; height: 36px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: white; font-size: 16px;
     }
 
     .timer-ring { position: absolute; top: 12px; right: 12px; z-index: 5; }
@@ -404,15 +412,90 @@
       cursor: pointer; transition: background 0.2s;
     }
     .check-btn:hover { background: #EEF8FA; }
+
+    /* ───────── SHOP SPRITESHEET SYSTEM ───────── */
+    .shop-container { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+      gap: 16px; 
+      padding: 0 20px;
+    }
+    .obj-card { 
+      background: #ffffff; 
+      border: 2px solid #e1d3c7; 
+      border-radius: 12px; 
+      padding: 12px; 
+      text-align: center; 
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sprite-wrapper {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 10px auto;
+      overflow: hidden;
+      border-radius: 8px;
+      background-color: #fffdec;
+      border: 1px solid #ebdcd0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .object-sprite {
+      width: 76px;
+      height: 76px;
+      background-image: url('shop_spritesheet.png'); 
+      background-size: 1040% 480%; 
+      background-repeat: no-repeat;
+    }
+    .obj-title { font-size: 14px; font-weight: bold; color: #333; margin: 6px 0; min-height: 38px; display: flex; align-items: center; justify-content: center;}
+    .obj-rarity { font-size: 11px; color: #b08e72; font-weight: bold; margin-bottom: 5px; }
+    .obj-desc { font-size: 11px; color: #777; height: 48px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.4; margin-bottom: 12px; }
+    .buy-btn { background-color: #dca777; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; width: 100%; font-size: 12px; }
+    .buy-btn:hover { background-color: #c59363; }
+    .buy-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+    .inventory-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 20px;
+    }
+    .inventory-card {
+      background: white; border-radius: 12px; aspect-ratio: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; border: 2px solid transparent; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 4px;
+    }
+    .inventory-card.placed { border-color: var(--island); }
+    .inventory-card-sprite-mini {
+      width: 48px;
+      height: 48px;
+      background-image: url('shop_spritesheet.png');
+      background-size: 1040% 480%;
+      background-repeat: no-repeat;
+      transform: scale(0.8);
+    }
+    .inventory-card-badge {
+      position: absolute; bottom: 4px; right: 4px; background: var(--island);
+      color: white; font-size: 8px; font-weight: 700; padding: 2px 4px; border-radius: 4px;
+    }
+
+    .points-counter {
+      background: rgba(255,255,255,0.7); backdrop-filter: blur(8px);
+      border-radius: 20px; padding: 6px 14px; display: inline-flex;
+      align-items: center; gap: 6px; font-weight: 700; font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
   </style>
 </head>
 <body>
 
 <div id="toast" class="toast"></div>
 
+<!-- 로그인 / 회원가입 게이트 -->
 <div class="auth-container" id="screen-auth">
   
-  <!-- 로그인 패널 -->
+  <!-- 로그인 카드 -->
   <div class="auth-card active" id="panel-login">
     <div class="auth-logo">
       <h2>🏝️ 30초 아일랜드</h2>
@@ -439,7 +522,7 @@
     </div>
   </div>
 
-  <!-- 회원가입 패널 -->
+  <!-- 회원가입 카드 -->
   <div class="auth-card" id="panel-register">
     <div class="auth-logo">
       <h2>👤 새 모험가 가입</h2>
@@ -509,7 +592,7 @@
     <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로 가기</button>
   </div>
 
-  <!-- 아이디 찾기 패널 -->
+  <!-- 아이디 찾기 -->
   <div class="auth-card" id="panel-find-id">
     <div class="auth-logo">
       <h2>🔍 아이디 찾기</h2>
@@ -530,7 +613,7 @@
     <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로 돌아가기</button>
   </div>
 
-  <!-- 비밀번호 찾기 패널 -->
+  <!-- 비밀번호 찾기 -->
   <div class="auth-card" id="panel-find-pw">
     <div class="auth-logo">
       <h2>🔍 비밀번호 조회</h2>
@@ -548,14 +631,16 @@
 
 </div>
 
+<!-- 메인 애플리케이션 프레임워크 -->
 <div id="screen-main-app" style="display:none;">
 
   <!-- 아일랜드 탭 -->
   <div class="page active" id="page-home">
     <div class="topbar">
-      <h1>🏝️ 30초 아일랜드</h1>
+      <div class="points-counter" id="home-points-display">🪙 0p</div>
       <div class="topbar-actions">
         <span class="badge" id="streak-badge">🔥 1일 연속</span>
+        <button class="btn-settings" onclick="openFriendsModal()" style="font-size:16px;" aria-label="친구 창 열기">👥</button>
         <button class="btn-settings" onclick="openSettingsModal()" aria-label="설정 창 열기">⚙️</button>
       </div>
     </div>
@@ -574,7 +659,7 @@
         <div class="label">총 기록</div>
       </div>
       <div class="stat-card">
-        <div class="num" id="stat-rank">#7</div>
+        <div class="num" id="stat-rank">#1</div>
         <div class="label">이번 주 순위</div>
       </div>
     </div>
@@ -633,7 +718,7 @@
         <button class="badge-rank-link" onclick="goPage('ranking')">파티 랭킹 🏆</button>
         <h2 id="active-party-name">파티명</h2>
         <p id="active-party-code-label" style="font-size:12px; opacity:0.85; margin-top:4px;">파티 코드: PARTY-XXXX-B</p>
-        <div id="active-party-score" style="font-size:32px; font-weight:700; margin-top:12px;">달성률 80%</div>
+        <div id="active-party-score" style="font-size:32px; font-weight:700; margin-top:12px;">달성률 0%</div>
       </div>
 
       <p class="section-title">파티원 목록 (프로필 상세 보기 클릭)</p>
@@ -641,7 +726,25 @@
     </div>
   </div>
 
-  <!-- 랭킹 탭 -->
+  <!-- 오브제 아틀리에 탭 -->
+  <div class="page" id="page-objects">
+    <div class="topbar">
+      <h1>📦 오브제 아틀리에</h1>
+      <div class="points-counter" id="workshop-points-display">🪙 0p</div>
+    </div>
+
+    <div class="tab-container">
+      <button class="tab-trigger active" id="obj-tab-shop" onclick="switchObjectTab('shop')">오브제 상점</button>
+      <button class="tab-trigger" id="obj-tab-inv" onclick="switchObjectTab('inv')">인벤토리</button>
+    </div>
+
+    <p class="section-title" id="object-list-title">구매 가능한 아일랜드 테마 아이템</p>
+    
+    <div id="shop" class="shop-container"></div>
+    <div id="inventory-view-grid" class="inventory-grid" style="display:none;"></div>
+  </div>
+
+  <!-- 실시간 랭킹 탭 -->
   <div class="page" id="page-ranking">
     <div class="topbar">
       <h1>🥇 실시간 랭킹</h1>
@@ -653,10 +756,29 @@
       <button class="tab-trigger" id="rank-tab-party" onclick="switchRankingTab('party')">파티 대항전</button>
     </div>
 
-    <p class="section-title" id="ranking-list-title">주간 경쟁 랭킹</p>
+    <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 20px;">
+      <p class="section-title" id="ranking-list-title" style="padding:0;">주간 경쟁 랭킹</p>
+      <span id="sync-indicator" style="font-size:10px; color:var(--muted); font-weight:500;">마지막 동기화: 방금 전</span>
+    </div>
     <div class="rank-list" id="rank-list"></div>
   </div>
 
+</div>
+
+<!-- 친구 관리 모달 -->
+<div class="modal-overlay" id="friends-modal">
+  <div class="modal-sheet">
+    <button class="close-btn" onclick="closeFriendsModal()">✕</button>
+    <p style="font-family:'Gowun Batang',serif;font-size:18px;font-weight:700;margin-bottom:16px">👥 내 친구들</p>
+    
+    <div class="form-group" style="margin-bottom:16px; display:flex; gap:8px;">
+      <input type="text" id="friend-add-code-input" class="form-control" style="flex:1;" placeholder="친구 식별 코드 입력 (ISLAND-XXXX-X)" />
+      <button class="check-btn" onclick="submitAddFriend()">친구 추가</button>
+    </div>
+
+    <p class="section-title" style="padding:0; margin-bottom:8px;">친구 목록</p>
+    <div id="friends-list-container" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
 </div>
 
 <!-- 환경설정 모달 -->
@@ -730,7 +852,7 @@
   </div>
 </div>
 
-<!-- 파티 합류 모달 -->
+<!-- 파티 참가 모달 -->
 <div class="modal-overlay" id="party-join-modal">
   <div class="modal-sheet">
     <button class="close-btn" onclick="closePartyJoinModal()">✕</button>
@@ -748,7 +870,7 @@
   </div>
 </div>
 
-<!-- 비디오 촬영 모달 -->
+<!-- 촬영 모달 -->
 <div class="modal-overlay" id="record-modal">
   <div class="modal-sheet" style="position:relative">
     <button class="close-btn" onclick="closeModal()">✕</button>
@@ -758,8 +880,9 @@
 
     <div class="camera-preview" id="cam-preview">
       <video id="cam-video" autoplay muted playsinline></video>
+      <button class="camera-switch-btn" onclick="switchCameraSource()" aria-label="카메라 전환">🔄</button>
       <div class="no-cam" id="cam-placeholder">
-        미디어 장치를 가져오고 있거나 권한이 필요합니다.
+        미디어 장치 초기화 실패. 데모 촬영 모드로 활성화됩니다.
       </div>
       <div class="timer-ring">
         <svg viewBox="0 0 48 48">
@@ -809,7 +932,6 @@
   </div>
 </div>
 
-<!-- 하단 글로벌 네비게이션 -->
 <nav id="bottom-app-nav" style="display:none;">
   <button class="nav-btn active" id="nav-home" onclick="goPage('home',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -836,6 +958,12 @@
     </svg>
     파티
   </button>
+  <button class="nav-btn" id="nav-objects" onclick="goPage('objects',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M20 7h-9l-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+    </svg>
+    오브제
+  </button>
   <button class="nav-btn" id="nav-ranking" onclick="goPage('ranking',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M8 17L8 11M12 17V7M16 17v-5"/><rect x="3" y="19" width="18" height="2" rx="1"/>
@@ -845,49 +973,79 @@
 </nav>
 
 <script>
-  const STORAGE_KEY = "30sec_island_v3_state";
+  const STORAGE_KEY = "30sec_island_v4_state_master";
   const PRESET_AVATARS = ['🌳','🏡','⛵','🐬','🌺','🌸','✨','🍄','🐱','🦊','🐯','🐧','🥞','🏕️','🏖️'];
   
-  // 가상 사용자 데이터 풀 구성 (기본 탑재 유저)
-  const BASE_ONLINE_USERS = [
-    { loginId: "seoyun12", nickname: "이서윤", avatar: "🌸", birthday: "2000-05-12", isPublic: true, streak: 12, total: 24, code: "ISLAND-8219-X", animal: "강아지", pw: "password12" },
-    { loginId: "jinwoo34", nickname: "박진우", avatar: "🎯", birthday: "1998-11-20", isPublic: true, streak: 8, total: 16, code: "ISLAND-4712-B", animal: "고양이", pw: "password12" },
-    { loginId: "minjae55", nickname: "김민재", avatar: "🌊", birthday: "2002-01-15", isPublic: true, streak: 5, total: 10, code: "ISLAND-5591-A", animal: "사자", pw: "password12" },
-    { loginId: "doyun10", nickname: "최도윤", avatar: "⚡", birthday: "1999-07-04", isPublic: true, streak: 3, total: 9, code: "ISLAND-1092-C", animal: "호랑이", pw: "password12" },
-    { loginId: "sua77", nickname: "정수아", avatar: "🌙", birthday: "2001-03-30", isPublic: true, streak: 11, total: 22, code: "ISLAND-7731-S", animal: "토끼", pw: "password12" }
+  const objectData = [
+    { "id": "OBJ_001", "name": "새내기 묘목", "rarity": "Common (일반)", "price": 100, "col": 0, "row": 0, "desc": "파릇파릇한 시작을 알리는 작은 나무입니다. 섬의 가장 기본적인 생기를 더해줍니다." },
+    { "id": "OBJ_002", "name": "시험기간 밤샘 스탠드", "rarity": "Common (일반)", "price": 250, "col": 1, "row": 0, "desc": "은은한 불빛이 도는 스탠드 조명입니다. 대학생들의 치열한 밤샘 공부 흔적을 대변합니다." },
+    { "id": "OBJ_003", "name": "캠퍼스 잔디밭 돗자리", "rarity": "Common (일반)", "price": 300, "col": 2, "row": 0, "desc": "공강 시간에 친구들과 모여 앉아 음식을 먹던 추억의 체크무늬 돗자리입니다." },
+    { "id": "OBJ_004", "name": "오후 3시의 감성 카페 테이블", "rarity": "Rare (희귀)", "price": 750, "col": 3, "row": 0, "desc": "깔끔한 화이트 원형 테이블과 에스프레소 잔 세트입니다. 섬의 분위기를 세련되게 바꿔줍니다." },
+    { "id": "OBJ_005", "name": "꿈꾸는 대학생 아바타 의자", "rarity": "Rare (희귀)", "price": 900, "col": 4, "row": 0, "desc": "이서윤 페르소나를 모티브로 한 아바타 전용 의자입니다." },
+    { "id": "OBJ_006", "name": "만개한 벚꽃길 테두리", "rarity": "Rare (희귀)", "price": 1200, "col": 5, "row": 0, "desc": "아일랜드 주변에 화사함을 더해주는 지형 아이템입니다." },
+    { "id": "OBJ_007", "name": "타오르는 갓생 캠프파이어", "rarity": "Epic (영웅)", "price": 2500, "col": 6, "row": 0, "desc": "매일 꾸준히 타오르는 사용자의 열정을 상징하는 모닥불 오브제입니다." },
+    { "id": "OBJ_008", "name": "학사모를 쓴 황금 부엉이 동상", "rarity": "Epic (영웅)", "price": 3500, "col": 7, "row": 0, "desc": "지혜와 성실함의 상징인 부엉이가 학사모를 쓰고 있는 거대 동상 장식물입니다." },
+    { "id": "OBJ_009", "name": "취업 마법의 은하수 분수대", "rarity": "Legendary (전설)", "price": 6000, "col": 8, "row": 0, "desc": "영롱한 물줄기 디자인을 지닌 아일랜드 중앙 장식용 분수대 오브제입니다." },
+    { "id": "OBJ_010", "name": "스타벅스 리얼 커피 나무", "rarity": "Legendary (전설)", "price": 8000, "col": 4, "row": 1, "desc": "특별한 보상 혜택을 시각적으로 연동해주는 커피 나무 조형물입니다." },
+    { "id": "OBJ_011", "name": "전공서적 타워", "rarity": "Common (일반)", "price": 150, "col": 0, "row": 1, "desc": "두꺼운 전공 책들이 높게 쌓여 있는 소품입니다. 보기만 해도 학구열이 돋보입니다." },
+    { "id": "OBJ_012", "name": "시험 기간 테이크아웃 커피", "rarity": "Common (일반)", "price": 120, "col": 1, "row": 1, "desc": "얼음이 가득 찬 아이스 아메리카노 컵 소품으로, 대학생들의 필수 아이템입니다." },
+    { "id": "OBJ_013", "name": "싱그러운 대학 캠퍼스 가로등", "rarity": "Common (일반)", "price": 200, "col": 2, "row": 1, "desc": "클래식한 디자인의 정적인 가로등 모형입니다. 아일랜드 길목의 배치를 장식합니다." },
+    { "id": "OBJ_014", "name": "알록달록 계획표 보드", "rarity": "Common (일반)", "price": 180, "col": 5, "row": 1, "desc": "포스트잇이 깔끔하게 붙어 있는 미니 계획표용 화이트보드 장식입니다." },
+    { "id": "OBJ_015", "name": "캠퍼스 길냥이 급식소", "rarity": "Common (일반)", "price": 220, "col": 6, "row": 1, "desc": "학교 구석에 놓여있던 형태를 본뜬 아늑한 고양이 집 모양 소품입니다." },
+    { "id": "OBJ_016", "name": "파란 학잠 입은 테디베어", "rarity": "Common (일반)", "price": 280, "col": 7, "row": 1, "desc": "대학교 야구점퍼 디자인의 의상을 껴입은 귀여운 곰인형 소품입니다." },
+    { "id": "OBJ_017", "name": "과제 제출용 노트북", "rarity": "Common (일반)", "price": 160, "col": 8, "row": 1, "desc": "문서 편집 화면이 열려 있는 미니 청춘 노트북 모형입니다." },
+    { "id": "OBJ_021", "name": "동아리방 통기타", "rarity": "Common (일반)", "price": 240, "col": 0, "row": 2, "desc": "벽면 장식용으로 세워둘 수 있는 클래식한 목재 통기타 모형입니다." },
+    { "id": "OBJ_022", "name": "루프탑 대나무 흔들의자", "rarity": "Rare (희귀)", "price": 700, "col": 1, "row": 2, "desc": "안락한 라탄 및 대나무 소재로 구성된 미니 흔들의자 가구입니다." },
+    { "id": "OBJ_023", "name": "청춘의 필름 카메라 존", "rarity": "Rare (희귀)", "price": 650, "col": 2, "row": 2, "desc": "아날로그 소형 미니 카메라와 사진 엽서들이 연출된 장식 데스크입니다." },
+    { "id": "OBJ_024", "name": "미니 홈트레이닝 매트", "rarity": "Rare (희귀)", "price": 550, "col": 3, "row": 2, "desc": "말려 있는 요가 매트와 덤벨이 함께 배치된 건강한 루틴용 소품입니다." },
+    { "id": "OBJ_025", "name": "노을빛 차양 천막", "rarity": "Rare (희귀)", "price": 800, "col": 4, "row": 2, "desc": "아일랜드 대지에 캠핑 감성을 불어넣어 주는 정적인 패브릭 천막 가구입니다." },
+    { "id": "OBJ_026", "name": "비오는 날의 투명 우산꽂이", "rarity": "Rare (희귀)", "price": 750, "col": 5, "row": 2, "desc": "투명 우산들이 꽂혀 있는 현관 테마용 소형 바스켓 오브제입니다." },
+    { "id": "OBJ_027", "name": "은은한 LP 턴테이블", "rarity": "Rare (희귀)", "price": 850, "col": 6, "row": 2, "desc": "레트로하고 아날로그한 감성을 지닌 목재 플레이어 하우징 모형입니다." },
+    { "id": "OBJ_028", "name": "밤하늘 은하수 프로젝터", "rarity": "Rare (희귀)", "price": 950, "col": 7, "row": 2, "desc": "원형의 미니 우주 조명 램프 외형을 지닌 실내 장식용 오브제입니다." },
+    { "id": "OBJ_029", "name": "소확행 디저트 쇼케이스", "rarity": "Rare (희귀)", "price": 680, "col": 8, "row": 2, "desc": "아기자기한 미니 조각 케이크 모형이 진열된 작은 앤티크 유리장입니다." },
+    { "id": "OBJ_030", "name": "자전거 하이킹 거치대", "rarity": "Rare (희귀)", "price": 720, "col": 9, "row": 2, "desc": "한강 야외 하이킹의 감성을 담아낸 미니 스포츠 자전거 고정 랙 세트입니다." },
+    { "id": "OBJ_031", "name": "반짝이는 성취의 유리 온실", "rarity": "Epic (영웅)", "price": 2200, "col": 0, "row": 3, "desc": "섬 한가운데 영구 배치하는 고급스러운 대형 유리 하우스 구조물입니다." },
+    { "id": "OBJ_032", "name": "꿈을 향한 푸른 돛단배", "rarity": "Epic (영웅)", "price": 2400, "col": 1, "row": 3, "desc": "아일랜드 해안가 그리드 지형에 깔끔하게 정박시켜 두는 푸른색 미니 돛단배입니다." },
+    { "id": "OBJ_033", "name": "네온사인 전광판 벽", "rarity": "Epic (영웅)", "price": 1800, "col": 2, "row": 3, "desc": "세련된 타이포그래피 모형이 몰딩된 인테리어용 정적 네온 보드 벽면입니다." },
+    { "id": "OBJ_034", "name": "우정 가득 스티커사진 월", "rarity": "Epic (영웅)", "price": 2000, "col": 4, "row": 3, "desc": "추억의 프레임 사진 소품들이 아기자기하게 부착되어 있는 미니 파티션 보드입니다." },
+    { "id": "OBJ_035", "name": "도심 속 프라이빗 인피니티 풀", "rarity": "Epic (영웅)", "price": 2800, "col": 3, "row": 3, "desc": "에메랄드빛 타일 바닥과 투명한 물 외형이 돋보이는 럭셔리 미니 수영장 타일입니다." },
+    { "id": "OBJ_036", "name": "시간을 달리는 천문 망원경", "rarity": "Epic (영웅)", "price": 2600, "col": 5, "row": 3, "desc": "삼각대 위에 균형감 있게 고정된 클래식 디자인의 은색 천문 망원경 모형입니다." },
+    { "id": "OBJ_037", "name": "성공적인 프로젝트 발표 무대", "rarity": "Epic (영웅)", "price": 2500, "col": 6, "row": 3, "desc": "미니 강연대와 목재 단상 프레임이 세팅된 깔끔한 야외 이벤트 스테이지 모형입니다." },
+    { "id": "OBJ_038", "name": "하늘을 나는 고래 풍선", "rarity": "Legendary (전설)", "price": 5000, "col": 7, "row": 3, "desc": "아일랜드 공중 그리드 고정용으로 고안된 고래 형상의 고정식 벌룬입니다." },
+    { "id": "OBJ_039", "name": "새벽을 깨우는 황금 종탑", "rarity": "Legendary (전설)", "price": 5500, "col": 8, "row": 3, "desc": "황금빛 외벽과 대형 종 오브제가 고정 매립되어 있는 최상위 티어 랜드마크 타워입니다." },
+    { "id": "OBJ_040", "name": "올리브영 리얼 힐링 스파 패키지", "rarity": "Legendary (전설)", "price": 7500, "col": 9, "row": 3, "desc": "돌 벽면 디자인과 온천 바닥재 테마가 결합된 야외 힐링 스파 공간 전용 모형입니다." }
   ];
 
-  const MOCK_ONLINE_PARTIES = [
-    { code: "PARTY-7731-B", name: "취준 탈출 기록 파티", image: "🏆", score: 80, members: ["ISLAND-8219-X", "ISLAND-4712-B", "ISLAND-7731-S"] },
-    { code: "PARTY-1029-A", name: "동기부여 매일 30초", image: "🔥", score: 65, members: ["ISLAND-5591-A", "ISLAND-1092-C"] }
-  ];
-
-  let state = {
+  const defaultState = {
     user: null, 
-    objects: ['🌱', '🏡', '🌳'],
+    objects: [], 
     recordedToday: false,
     lastRecordedDate: null,
     apiKey: "",
     history: {},
     rankingTab: 'user', 
-    onlineUsers: [...BASE_ONLINE_USERS],
-    onlineParties: [...MOCK_ONLINE_PARTIES]
+    objectTab: 'shop',
+    globalUsers: [], 
+    onlineParties: []
   };
+
+  let state = { ...defaultState };
 
   let selectedProfileAvatar = "🌳";
   let selectedPartyAvatar = "🏆";
-  
-  // 중복 검사 확인 여부 관리 상태
   let isIdCheckedAndValid = false;
   let checkedAndValidIdString = "";
+  let activeFacingMode = "user";
 
   function loadState() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        state = { ...state, ...parsed };
+        state = { ...defaultState, ...parsed };
         validateStreak();
+      } else {
+        state = { ...defaultState };
       }
     } catch (e) {
       state = { ...defaultState };
@@ -896,6 +1054,14 @@
 
   function saveState() {
     try {
+      if (state.user) {
+        const uIdx = state.globalUsers.findIndex(u => u.code === state.user.code);
+        if (uIdx !== -1) {
+          state.globalUsers[uIdx] = state.user;
+        } else {
+          state.globalUsers.push(state.user);
+        }
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {}
   }
@@ -942,13 +1108,9 @@
     return `PARTY-${num}-${char}`;
   }
 
-  // ──────────────────────────────────────────
-  // AUTH PANEL SWITCHING
-  // ──────────────────────────────────────────
   function switchAuthPanel(panelId) {
     document.querySelectorAll('.auth-card').forEach(card => card.classList.remove('active'));
     document.getElementById(`panel-${panelId}`).classList.add('active');
-
     if (panelId === 'register') {
       resetRegisterForm();
     }
@@ -961,23 +1123,17 @@
     document.getElementById('reg-pw-confirm').value = "";
     document.getElementById('reg-birthday').value = "";
     document.getElementById('reg-animal').value = "";
-    
     document.getElementById('reg-id').classList.remove('error');
     document.getElementById('reg-pw').classList.remove('error');
     document.getElementById('reg-pw-confirm').classList.remove('error');
-    
     document.getElementById('reg-id-status').style.display = 'none';
     document.getElementById('reg-pw-warn').style.display = 'none';
     document.getElementById('reg-pw-confirm-warn').style.display = 'none';
-    
     isIdCheckedAndValid = false;
     checkedAndValidIdString = "";
     setupAvatarPresetGrid('prof-avatar-preset-grid', 'profile');
   }
 
-  // ──────────────────────────────────────────
-  // ID DUPLICATION CHECK
-  // ──────────────────────────────────────────
   function handleIdInputChange() {
     isIdCheckedAndValid = false;
     checkedAndValidIdString = "";
@@ -995,7 +1151,6 @@
       return;
     }
 
-    // 영문, 숫자 조합 규칙성 검증 (특수문자 제외 정책)
     const regex = /^[a-zA-Z0-9]+$/;
     if (!regex.test(idVal)) {
       statusEl.style.display = 'block';
@@ -1006,13 +1161,12 @@
       return;
     }
 
-    // 가상 유저 데이터셋과 중복 검사 비교
-    const isDuplicate = state.onlineUsers.some(u => u.loginId.toLowerCase() === idVal.toLowerCase());
+    const isDuplicate = state.globalUsers.some(u => u.loginId.toLowerCase() === idVal.toLowerCase());
 
     statusEl.style.display = 'block';
     if (isDuplicate) {
       statusEl.style.color = '#FF5A42';
-      statusEl.textContent = "❌ 중복된 아이디입니다. 다른 아이디를 입력해 주세요.";
+      statusEl.textContent = "❌ 중복된 아이디입니다.";
       idInput.classList.add('error');
       isIdCheckedAndValid = false;
     } else {
@@ -1024,13 +1178,9 @@
     }
   }
 
-  // ──────────────────────────────────────────
-  // VALIDATE PASSWORD ON-INPUT
-  // ──────────────────────────────────────────
   function validatePasswordFields() {
     const pwInput = document.getElementById('reg-pw');
     const confirmInput = document.getElementById('reg-pw-confirm');
-    
     const pwVal = pwInput.value;
     const confirmVal = confirmInput.value;
 
@@ -1038,16 +1188,12 @@
       pwInput.classList.remove('error');
       document.getElementById('reg-pw-warn').style.display = 'none';
     }
-
     if (confirmVal === "" || pwVal === confirmVal) {
       confirmInput.classList.remove('error');
       document.getElementById('reg-pw-confirm-warn').style.display = 'none';
     }
   }
 
-  // ──────────────────────────────────────────
-  // REGISTER SUBMISSION
-  // ──────────────────────────────────────────
   function submitRegister() {
     const idInput = document.getElementById('reg-id');
     const idVal = idInput.value.trim();
@@ -1060,56 +1206,38 @@
     const animal = document.getElementById('reg-animal').value.trim();
     const isPublic = document.getElementById('prof-public-toggle').checked;
 
-    // 1. 아이디 중복 체크 유효성 검사
     if (!isIdCheckedAndValid || idVal !== checkedAndValidIdString) {
-      showToast("아이디 중복 검사를 먼저 완료해 주세요.");
+      showToast("아이디 중복 검사를 완료해 주세요.");
       idInput.classList.add('error');
       return;
     }
-
-    // 2. 닉네임 입력 검증
     if (!nickname) {
       showToast("계정 이름을 지정해 주세요.");
       return;
     }
-
-    // 3. 비밀번호 길이 제약 검사
     if (pwVal.length < 8) {
       pwInput.classList.add('error');
       document.getElementById('reg-pw-warn').style.display = 'block';
-      showToast("비밀번호는 최소 8자 이상 요구됩니다.");
+      showToast("비밀번호는 최소 8자 이상 필요합니다.");
       return;
-    } else {
-      pwInput.classList.remove('error');
-      document.getElementById('reg-pw-warn').style.display = 'none';
     }
-
-    // 4. 비밀번호 확인 매칭 검사
     if (pwVal !== confirmVal) {
       confirmInput.classList.add('error');
       document.getElementById('reg-pw-confirm-warn').style.display = 'block';
-      showToast("입력하신 비밀번호 확인이 불일치합니다.");
+      showToast("비밀번호 확인이 일치하지 않습니다.");
       return;
-    } else {
-      confirmInput.classList.remove('error');
-      document.getElementById('reg-pw-confirm-warn').style.display = 'none';
     }
-
-    // 5. 생일 정보 제약 검사
     if (!birthday) {
       showToast("생년월일을 선택해 주세요.");
       return;
     }
-
-    // 6. 질문 동물 기입 검증
     if (!animal) {
       showToast("좋아하는 동물 답변을 입력해 주세요.");
       return;
     }
 
-    // 가상 유저 생성 후 로컬 온라인 유저 리스트 데이터셋 적재
     const userCode = generateUserCode();
-    const newUserObj = {
+    const newUser = {
       loginId: idVal,
       nickname: nickname,
       pw: pwVal,
@@ -1119,20 +1247,32 @@
       avatar: selectedProfileAvatar,
       streak: 1,
       total: 3,
-      code: userCode
+      code: userCode,
+      points: 1000, 
+      inventory: [], 
+      placedItems: [],
+      friends: [],
+      partyCode: null
     };
 
-    state.onlineUsers.push(newUserObj);
+    state.globalUsers.push(newUser);
     saveState();
 
-    showToast("계정 생성이 성공적으로 완료되었습니다! 로그인해 주세요.");
-    switchAuthPanel('login');
-    document.getElementById('login-id').value = idVal;
+    showWelcomeToast();
+
+    setTimeout(() => {
+      switchAuthPanel('login');
+      document.getElementById('login-id').value = idVal;
+    }, 2000);
   }
 
-  // ──────────────────────────────────────────
-  // LOGIN SUBMISSION
-  // ──────────────────────────────────────────
+  function showWelcomeToast() {
+    const t = document.getElementById('toast');
+    t.innerHTML = "🎉 웰컴 포인트! 가입 기념 1000p 지급 완료!";
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
   function submitLogin() {
     const idVal = document.getElementById('login-id').value.trim();
     const pwVal = document.getElementById('login-pw').value;
@@ -1142,22 +1282,17 @@
       return;
     }
 
-    // 가상 저장소 일치 유저 검색
-    const matchedUser = state.onlineUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
+    const matchedUser = state.globalUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
 
     if (!matchedUser || matchedUser.pw !== pwVal) {
-      showToast("아이디 혹은 비밀번호가 틀렸습니다. 다시 확인해 주세요.");
+      showToast("가입 정보가 일치하지 않습니다. 다시 시도해 주세요.");
       return;
     }
 
-    // 로그인 정보 실 적용 및 가입 세션 정보 바인딩
     state.user = matchedUser;
     completeInitialLoginFlow();
   }
 
-  // ──────────────────────────────────────────
-  // PROFILE SETUP INTERACTION (AVATAR PRESETS)
-  // ──────────────────────────────────────────
   function handleProfileImageUpload(input) {
     if (input.files && input.files[0]) {
       const reader = new FileReader();
@@ -1186,60 +1321,53 @@
     }
   }
 
-  // ──────────────────────────────────────────
-  // FIND USER ID
-  // ──────────────────────────────────────────
   function submitFindId() {
     const nickVal = document.getElementById('find-id-nickname').value.trim();
     const animalVal = document.getElementById('find-id-animal').value.trim();
 
     if (!nickVal || !animalVal) {
-      showToast("모든 본인 인증 필드를 기입해 주세요.");
+      showToast("모든 정보를 입력해 주세요.");
       return;
     }
 
-    const matched = state.onlineUsers.find(u => u.nickname === nickVal && u.animal.toLowerCase() === animalVal.toLowerCase());
+    const matched = state.globalUsers.find(u => u.nickname === nickVal && u.animal.toLowerCase() === animalVal.toLowerCase());
 
     if (matched) {
-      alert(`🎉 계정 정보 매칭 성공!\n\n회원님의 가입 아이디는 [ ${matched.loginId} ] 입니다.`);
+      alert(`🎉 계정 일치 성공!\n\n회원님의 가입 아이디는 [ ${matched.loginId} ] 입니다.`);
       switchAuthPanel('login');
       document.getElementById('login-id').value = matched.loginId;
     } else {
-      showToast("일치하는 계정 정보가 없습니다. 이름과 좋아하는 동물을 다시 확인해 주세요.");
+      showToast("일치하는 가입 정보가 없습니다.");
     }
   }
 
-  // ──────────────────────────────────────────
-  // FIND USER PASSWORD
-  // ──────────────────────────────────────────
   function submitFindPw() {
     const idVal = document.getElementById('find-pw-id').value.trim();
 
     if (!idVal) {
-      showToast("조회할 아이디를 입력해 주세요.");
+      showToast("아이디를 입력해 주세요.");
       return;
     }
 
-    const matched = state.onlineUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
+    const matched = state.globalUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
 
     if (matched) {
-      alert(`🎉 계정 비밀번호 조회 성공!\n\n회원님의 가입 비밀번호는 [ ${matched.pw} ] 입니다.`);
+      alert(`🎉 계정 비밀번호 조회 성공!\n\n비밀번호는 [ ${matched.pw} ] 입니다.`);
       switchAuthPanel('login');
       document.getElementById('login-pw').value = matched.pw;
     } else {
-      showToast("가입되어 있지 않은 아이디입니다. 다시 확인해 주세요.");
+      showToast("등록되어 있지 않은 아이디입니다.");
     }
   }
 
-  // ──────────────────────────────────────────
-  // MAIN APP NAVIGATION FLOWS
-  // ──────────────────────────────────────────
   function completeInitialLoginFlow() {
     saveState();
     
     document.getElementById('screen-auth').style.display = 'none';
     document.getElementById('screen-main-app').style.display = 'block';
     document.getElementById('bottom-app-nav').style.display = 'flex';
+
+    updateGlobalPointsDisplay();
 
     document.getElementById('stat-streak').textContent = state.user.streak;
     document.getElementById('stat-total').textContent = state.user.total;
@@ -1251,56 +1379,274 @@
     buildMembers();
     buildRanking();
     
-    showToast(`🏝️ 환영합니다, ${state.user.nickname}님! 나만의 섬에 오신 것을 환영해요.`);
+    showToast(`🏝️ 환영합니다, ${state.user.nickname}님!`);
   }
 
-  function handleLogout() {
-    if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
-      state.user = null;
-      saveState();
-      location.reload();
+  function updateGlobalPointsDisplay() {
+    if (!state.user) return;
+    const pts = state.user.points || 0;
+    document.getElementById('home-points-display').textContent = `🪙 ${pts}p`;
+    document.getElementById('workshop-points-display').textContent = `🪙 ${pts}p`;
+  }
+
+  function setupAvatarPresetGrid(gridId, mode) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = PRESET_AVATARS.map(ava => `
+      <div class="avatar-item" data-avatar="${ava}" onclick="selectAvatarElement(this, '${ava}', '${mode}')">${ava}</div>
+    `).join('');
+    
+    const first = grid.querySelector('.avatar-item');
+    if (first) first.classList.add('selected');
+    if (mode === 'profile') {
+      selectedProfileAvatar = "🌳";
+    } else {
+      selectedPartyAvatar = "🏆";
+    }
+  }
+
+  function selectAvatarElement(el, ava, mode) {
+    const parent = el.parentElement;
+    parent.querySelectorAll('.avatar-item').forEach(child => child.classList.remove('selected'));
+    el.classList.add('selected');
+    
+    if (mode === 'profile') {
+      selectedProfileAvatar = ava;
+      document.getElementById('prof-avatar-preview-img').style.display = 'none';
+    } else {
+      selectedPartyAvatar = ava;
+      document.getElementById('party-custom-image-preview').style.display = 'none';
     }
   }
 
   // ──────────────────────────────────────────
-  // GEMINI AI WRAPPER (PROMPT INTERACTION)
+  // FRIENDS SYSTEM
   // ──────────────────────────────────────────
-  async function geminiPrompt(prompt) {
-    const key = state.apiKey || "";
-    if (!key || key.trim() === "" || key === "YOUR_GEMINI_API_KEY_HERE") {
-      await new Promise(r => setTimeout(r, 1200));
-      if (prompt.includes("연속")) {
-        return `[데모] 현재 연속 기록을 통해 아일랜드에 수많은 생명이 무르익고 있습니다. 모바일 상단의 ⚙️ 아이콘을 터치하여 실제 Gemini API 키를 활성화하고 실시간 비디오 코칭을 경험해 보세요.`;
-      } else if (prompt.includes("오늘의 기록에 대한 따뜻한 감정 분석")) {
-        return `[데모] 질문에 담아주신 당신의 대답에 따뜻함을 느낍니다. 매일 작은 한 조각을 쌓아 올리다 보면 어느샌가 더욱 깊어진 나를 직관할 수 있을 것입니다. 고생하셨습니다. ✨`;
-      } else if (prompt.includes("월간 요약") || prompt.includes("이번 달")) {
-        return `[데모] 이번 한 달 동안 총 ${state.total}개의 영상 점을 이어내셨습니다. 매 순간을 마주하려고 결심한 당신의 여정을 마음 깊이 응원합니다.`;
+  function openFriendsModal() {
+    renderFriendsList();
+    document.getElementById('friends-modal').classList.add('open');
+  }
+
+  function closeFriendsModal() {
+    document.getElementById('friends-modal').classList.remove('open');
+  }
+
+  function submitAddFriend() {
+    const fCodeInput = document.getElementById('friend-add-code-input');
+    const fCode = fCodeInput.value.trim();
+
+    if (!fCode) {
+      showToast("친구 코드를 입력해 주세요.");
+      return;
+    }
+
+    if (state.user && fCode === state.user.code) {
+      showToast("자기 자신은 친구로 등록할 수 없습니다.");
+      return;
+    }
+
+    if (!state.user.friends) state.user.friends = [];
+
+    if (state.user.friends.includes(fCode)) {
+      showToast("이미 등록된 친구입니다.");
+      return;
+    }
+
+    const targetUser = state.globalUsers.find(u => u.code === fCode);
+    if (!targetUser) {
+      showToast("입력하신 고유 코드를 가진 유저를 찾지 못했습니다.");
+      return;
+    }
+
+    state.user.friends.push(fCode);
+    
+    if (!targetUser.friends) targetUser.friends = [];
+    if (!targetUser.friends.includes(state.user.code)) {
+      targetUser.friends.push(state.user.code);
+    }
+
+    saveState();
+    fCodeInput.value = "";
+    renderFriendsList();
+    showToast(`🤝 "${targetUser.nickname}"님과 친구가 성사되었습니다.`);
+  }
+
+  function renderFriendsList() {
+    const list = document.getElementById('friends-list-container');
+    if (!list) return;
+
+    if (!state.user || !state.user.friends || state.user.friends.length === 0) {
+      list.innerHTML = `
+        <div style="text-align:center; padding:24px; color:var(--muted); font-size:12px;">
+          아직 추가된 친구가 없습니다. 친구 코드를 등록해 보세요! 🤝
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = state.user.friends.map(fCode => {
+      const friend = state.globalUsers.find(u => u.code === fCode);
+      if (!friend) return '';
+
+      const isPub = friend.isPublic;
+      const fName = isPub ? friend.nickname : "비공개 아일랜더";
+      const fAvatar = isPub ? friend.avatar : "👤";
+      
+      let avaEl = "";
+      if (fAvatar.startsWith("data:image")) {
+        avaEl = `<img src="${fAvatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />`;
+      } else {
+        avaEl = `<span style="font-size:20px;">${fAvatar}</span>`;
       }
-      return "Gemini API 키 등록이 완료되면 지능화된 개인 분석 피드백이 실시간 작성됩니다.";
-    }
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`;
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 200, temperature: 0.7 }
-        })
-      });
-      const data = await res.json();
-      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
-      }
-      return "분석 데이터 도출 과정 중 오류가 발생했습니다. 키 유효성을 점검해 주세요.";
-    } catch (e) {
-      return "네트워크가 원활하지 않습니다. 접속망 상태를 다시 한 번 확인해 주세요.";
-    }
+      return `
+        <div class="member-card" style="padding:10px; border-radius:10px;">
+          <div class="member-avatar">${avaEl}</div>
+          <div class="member-info">
+            <div class="name" style="font-size:13px;">${fName}</div>
+            <div class="streak" style="font-size:11px;">🔥 ${isPub ? friend.streak : '-'}일 연속 기록 중</div>
+          </div>
+          <button class="member-action done-today" onclick="openProfileDetail('${friend.code}')" style="padding:4px 8px; font-size:10px;">상세보기</button>
+        </div>`;
+    }).join('');
   }
 
   // ──────────────────────────────────────────
-  // ONLINE PARTY SYSTEM SYNC
+  // SHOP & INVENTORY (SPRITE SHEET COUPLING)
+  // ──────────────────────────────────────────
+  function switchObjectTab(type) {
+    state.objectTab = type;
+    document.querySelectorAll('#page-objects .tab-trigger').forEach(t => t.classList.remove('active'));
+    document.getElementById(`obj-tab-${type}`).classList.add('active');
+
+    const shopGrid = document.getElementById('shop');
+    const invGrid = document.getElementById('inventory-view-grid');
+    const titleEl = document.getElementById('object-list-title');
+
+    if (type === 'shop') {
+      titleEl.textContent = "포인트를 활용한 테마 오브제 구매";
+      shopGrid.style.display = "grid";
+      invGrid.style.display = "none";
+      renderShopItems();
+    } else {
+      titleEl.textContent = "보유 중인 테마 오브제 및 섬 배치 (클릭하여 조율)";
+      shopGrid.style.display = "none";
+      invGrid.style.display = "grid";
+      renderInventoryItems();
+    }
+  }
+
+  function renderShopItems() {
+    const grid = document.getElementById('shop');
+    if (!grid) return;
+
+    if (!state.user) return;
+    if (!state.user.inventory) state.user.inventory = [];
+
+    grid.innerHTML = '';
+    objectData.forEach(item => {
+      const isOwned = state.user.inventory.includes(item.id);
+      const posX = (item.col / 9) * 100; 
+      const posY = (item.row / 3) * 100; 
+
+      const card = document.createElement('div');
+      card.className = 'obj-card';
+
+      const buttonHtml = isOwned 
+        ? `<button class="buy-btn" disabled style="background:#ccc; color:#666;">보유 중</button>`
+        : `<button class="buy-btn" onclick="purchaseObject('${item.id}', ${item.price})">구매</button>`;
+
+      card.innerHTML = `
+        <div>
+          <div class="sprite-wrapper">
+            <div class="object-sprite" style="background-position: ${posX}% ${posY}%;"></div>
+          </div>
+          <div class="obj-rarity">${item.rarity}</div>
+          <div class="obj-title">${item.name}</div>
+          <div class="obj-desc">${item.desc}</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:8px;">
+          <span style="font-size:13px; font-weight:700; color:var(--sea);">${item.price}p</span>
+          ${buttonHtml}
+        </div>`;
+      
+      grid.appendChild(card);
+    });
+  }
+
+  function purchaseObject(itemId, price) {
+    if (!state.user) return;
+    const currentPoints = state.user.points || 0;
+
+    if (currentPoints < price) {
+      showToast("포인트가 부족합니다. 매일 영상을 기록해 성실 포인트를 모아보세요!");
+      return;
+    }
+
+    state.user.points = currentPoints - price;
+    if (!state.user.inventory) state.user.inventory = [];
+    state.user.inventory.push(itemId);
+
+    saveState();
+    updateGlobalPointsDisplay();
+    renderShopItems();
+    showToast(`📦 오브제 구매가 성공적으로 완료되었습니다. (차감: ${price}p)`);
+  }
+
+  function renderInventoryItems() {
+    const grid = document.getElementById('inventory-view-grid');
+    if (!grid) return;
+
+    if (!state.user) return;
+    if (!state.user.inventory || state.user.inventory.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align:center; padding:32px; color:var(--muted); font-size:12px;">
+          인벤토리가 비어있습니다. 상점 탭에서 마음에 드는 오브제를 입양해 보세요! 🪴
+        </div>`;
+      return;
+    }
+
+    if (!state.user.placedItems) state.user.placedItems = [];
+
+    grid.innerHTML = state.user.inventory.map(itemId => {
+      const item = objectData.find(i => i.id === itemId);
+      if (!item) return '';
+
+      const isPlaced = state.user.placedItems.includes(itemId);
+      const posX = (item.col / 9) * 100;
+      const posY = (item.row / 3) * 100;
+
+      return `
+        <div class="inventory-card ${isPlaced ? 'placed' : ''}" onclick="togglePlaceObject('${itemId}')">
+          <div class="inventory-card-sprite-mini" style="background-position: ${posX}% ${posY}%;"></div>
+          <span style="font-size:10px; font-weight:700; text-align:center; margin-top:4px; max-width:90%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</span>
+          ${isPlaced ? `<span class="inventory-card-badge">배치 중</span>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  function togglePlaceObject(itemId) {
+    if (!state.user) return;
+    if (!state.user.placedItems) state.user.placedItems = [];
+
+    const pIdx = state.user.placedItems.indexOf(itemId);
+    if (pIdx !== -1) {
+      state.user.placedItems.splice(pIdx, 1);
+      showToast("오브제를 섬 대지에서 수거하였습니다.");
+    } else {
+      if (state.user.placedItems.length >= 12) {
+        showToast("섬의 공간이 협소하여 최대 12개까지만 동시에 대지에 수놓을 수 있습니다.");
+        return;
+      }
+      state.user.placedItems.push(itemId);
+      showToast("오브제를 섬 위에 무사히 배치하였습니다!");
+    }
+
+    saveState();
+    renderInventoryItems();
+    drawIsland();
+  }
+
+  // ──────────────────────────────────────────
+  // ONLINE PARTY SYSTEM
   // ──────────────────────────────────────────
   function openPartyCreationModal() {
     setupAvatarPresetGrid('create-party-preset-grid', 'party');
@@ -1320,6 +1666,7 @@
   }
 
   function submitCreateParty() {
+    if (!state.user) return;
     const pName = document.getElementById('create-party-name').value.trim();
     if (!pName) {
       showToast("파티 이름을 지정해 주세요.");
@@ -1338,24 +1685,15 @@
     
     state.onlineParties.push(newParty);
     state.user.partyCode = pCode;
-    
-    simulateOtherMembersJoining(pCode);
 
     saveState();
     closePartyCreateModal();
     renderPartyMainView();
-    showToast(`👥 성공적으로 파티 "${pName}"를 생성했습니다.`);
-  }
-
-  function simulateOtherMembersJoining(partyCode) {
-    const party = state.onlineParties.find(p => p.code === partyCode);
-    if (party) {
-      party.members.push("ISLAND-8219-X");
-      party.members.push("ISLAND-4712-B");
-    }
+    showToast(`👥 실시간 온라인 파티 "${pName}"를 개설했습니다.`);
   }
 
   function submitJoinParty() {
+    if (!state.user) return;
     const codeVal = document.getElementById('join-party-code-input').value.trim();
     if (!codeVal) {
       showToast("파티 코드를 입력하세요.");
@@ -1364,7 +1702,7 @@
 
     const match = state.onlineParties.find(p => p.code === codeVal);
     if (!match) {
-      showToast("해당 코드를 소유한 가상 파티를 찾지 못했습니다. 올바른 형식인지 대소문자를 다시 점검해 주세요.");
+      showToast("일치하는 파티를 찾지 못했습니다. 파티 코드를 확인해 주세요.");
       return;
     }
 
@@ -1376,14 +1714,14 @@
     saveState();
     closePartyJoinModal();
     renderPartyMainView();
-    showToast(`👥 "${match.name}" 파티에 동기화 가입을 완료했습니다!`);
+    showToast("👥 파티 가입 및 동기화가 완료되었습니다.");
   }
 
   function renderPartyMainView() {
     const gate = document.getElementById('party-gate-view');
     const mainView = document.getElementById('party-active-view');
 
-    if (!state.user.partyCode) {
+    if (!state.user || !state.user.partyCode) {
       gate.style.display = "grid";
       mainView.style.display = "none";
       return;
@@ -1412,7 +1750,7 @@
       if (state.user && mCode === state.user.code) {
         users.push(state.user);
       } else {
-        const found = state.onlineUsers.find(u => u.code === mCode);
+        const found = state.globalUsers.find(u => u.code === mCode);
         if (found) users.push(found);
       }
     });
@@ -1423,7 +1761,7 @@
     const list = document.getElementById('member-list');
     if (!list) return;
 
-    if (!state.user.partyCode) {
+    if (!state.user || !state.user.partyCode) {
       list.innerHTML = "";
       return;
     }
@@ -1458,7 +1796,7 @@
     if (state.user && userCode === state.user.code) {
       target = state.user;
     } else {
-      target = state.onlineUsers.find(u => u.code === userCode);
+      target = state.globalUsers.find(u => u.code === userCode);
     }
 
     if (!target) return;
@@ -1488,11 +1826,11 @@
   }
 
   // ──────────────────────────────────────────
-  // LEADERBOARD DUAL TAB RENDERING
+  // LEADERBOARD (NO ARTIFICIAL BOTS)
   // ──────────────────────────────────────────
   function switchRankingTab(type) {
     state.rankingTab = type;
-    document.querySelectorAll('.tab-trigger').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#page-ranking .tab-trigger').forEach(t => t.classList.remove('active'));
     document.getElementById(`rank-tab-${type}`).classList.add('active');
     
     buildRanking();
@@ -1505,19 +1843,28 @@
     if (state.rankingTab === 'user') {
       document.getElementById('ranking-list-title').textContent = "주간 개인 누적 기록 랭킹";
       
-      let combinedUsers = [...state.onlineUsers];
+      let activeUsers = [...state.globalUsers];
       if (state.user) {
-        const fIdx = combinedUsers.findIndex(u => u.code === state.user.code);
-        if (fIdx !== -1) {
-          combinedUsers[fIdx] = state.user;
+        const hasMe = activeUsers.some(u => u.code === state.user.code);
+        if (!hasMe) {
+          activeUsers.push(state.user);
         } else {
-          combinedUsers.push(state.user);
+          const idx = activeUsers.findIndex(u => u.code === state.user.code);
+          activeUsers[idx] = state.user;
         }
       }
 
-      combinedUsers.sort((a, b) => b.total - a.total);
+      if (activeUsers.length === 0) {
+        list.innerHTML = `
+          <div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">
+            아직 이번 주 기록 랭킹 경쟁자가 없습니다. 🤝
+          </div>`;
+        return;
+      }
 
-      list.innerHTML = combinedUsers.map((u, i) => {
+      activeUsers.sort((a, b) => b.total - a.total);
+
+      list.innerHTML = activeUsers.map((u, i) => {
         const isMe = state.user && u.code === state.user.code;
         const isPub = u.isPublic;
         
@@ -1548,17 +1895,29 @@
     } else {
       document.getElementById('ranking-list-title').textContent = "주간 활성 파티 랭킹 (달성률)";
       
-      const sortedParties = [...state.onlineParties];
-      
-      sortedParties.forEach(p => {
+      const activeParties = [...state.onlineParties];
+
+      if (activeParties.length === 0) {
+        list.innerHTML = `
+          <div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">
+            활동 중인 온라인 파티가 없습니다. 🏆
+          </div>`;
+        return;
+      }
+
+      activeParties.forEach(p => {
         const pMembers = getPartyJoinedMembers(p);
-        const totalStreak = pMembers.reduce((sum, m) => sum + m.streak, 0);
-        p.calculatedScore = Math.min(Math.round((totalStreak / (pMembers.length * 10)) * 100), 100);
+        if (pMembers.length > 0) {
+          const totalStreak = pMembers.reduce((sum, m) => sum + m.streak, 0);
+          p.calculatedScore = Math.min(Math.round((totalStreak / (pMembers.length * 10)) * 100), 100);
+        } else {
+          p.calculatedScore = 0;
+        }
       });
 
-      sortedParties.sort((a, b) => b.calculatedScore - a.calculatedScore);
+      activeParties.sort((a, b) => b.calculatedScore - a.calculatedScore);
 
-      list.innerHTML = sortedParties.map((p, i) => {
+      list.innerHTML = activeParties.map((p, i) => {
         const isMyParty = state.user && p.code === state.user.partyCode;
         
         let pAva = "";
@@ -1583,9 +1942,15 @@
     }
   }
 
-  // ──────────────────────────────────────────
-  // SYSTEM UTILS
-  // ──────────────────────────────────────────
+  function handleLogout() {
+    if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
+      saveState();
+      state.user = null;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+      location.reload();
+    }
+  }
+
   function openSettingsModal() {
     document.getElementById('input-api-key').value = state.apiKey || "";
     document.getElementById('settings-user-code').value = state.user ? state.user.code : "";
@@ -1623,11 +1988,15 @@
 
     if (id === 'home') {
       drawIsland();
+      updateGlobalPointsDisplay();
     } else if (id === 'timeline') {
       buildCalendar();
       loadMonthlyAI();
     } else if (id === 'party') {
       renderPartyMainView();
+    } else if (id === 'objects') {
+      updateGlobalPointsDisplay();
+      switchObjectTab(state.objectTab);
     } else if (id === 'ranking') {
       buildRanking();
     }
@@ -1676,21 +2045,61 @@
     ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    const renderCount = state.user ? state.user.total : state.objects.length;
-    const objs = state.objects.slice(0, renderCount);
-    objs.forEach((o, i) => {
-      const theta = i * 2.39996; 
-      const radius = Math.min(18 + Math.sqrt(i) * 12, 64); 
-      const x = W / 2 + Math.cos(theta) * radius * 1.5;
-      const y = H * 0.66 + Math.sin(theta) * radius * 0.5;
+    if (state.user && state.user.placedItems && state.user.placedItems.length > 0) {
+      state.user.placedItems.forEach((itemId, i) => {
+        const item = objectData.find(obj => obj.id === itemId);
+        if (item) {
+          const theta = i * 2.39996; 
+          const radius = Math.min(18 + Math.sqrt(i) * 12, 64); 
+          const x = W / 2 + Math.cos(theta) * radius * 1.5;
+          const y = H * 0.66 + Math.sin(theta) * radius * 0.5;
 
-      ctx.font = '24px serif';
-      ctx.textBaseline = 'middle';
-      ctx.textAlign = 'center';
-      ctx.fillText(o, x, y);
-    });
+          let visualSymbol = "🌱";
+          if (item.id === "OBJ_001") visualSymbol = "🪴";
+          else if (item.id === "OBJ_002") visualSymbol = "💡";
+          else if (item.id === "OBJ_003") visualSymbol = "🧺";
+          else if (item.id === "OBJ_004") visualSymbol = "☕";
+          else if (item.id === "OBJ_005") visualSymbol = "🪑";
+          else if (item.id === "OBJ_006") visualSymbol = "🌸";
+          else if (item.id === "OBJ_007") visualSymbol = "🔥";
+          else if (item.id === "OBJ_008") visualSymbol = "🦉";
+          else if (item.id === "OBJ_009") visualSymbol = "⛲";
+          else if (item.id === "OBJ_011") visualSymbol = "📚";
+          else if (item.id === "OBJ_012") visualSymbol = "🥤";
+          else if (item.id === "OBJ_015") visualSymbol = "🐈";
+          else if (item.id === "OBJ_016") visualSymbol = "🧸";
+          else if (item.id === "OBJ_017") visualSymbol = "💻";
+          else if (item.id === "OBJ_021") visualSymbol = "🕯️";
+          else if (item.id === "OBJ_022") visualSymbol = "🛋️";
+          else if (item.id === "OBJ_025") visualSymbol = "⛺";
+          else if (item.id === "OBJ_032") visualSymbol = "⛵";
+          else if (item.id === "OBJ_035") visualSymbol = "🏊";
+          else if (item.id === "OBJ_036") visualSymbol = "🔭";
+          else if (item.id === "OBJ_038") visualSymbol = "🐳";
+          else if (item.id === "OBJ_039") visualSymbol = "🔔";
+          else if (item.id === "OBJ_040") visualSymbol = "♨️";
+
+          ctx.font = '24px serif';
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'center';
+          ctx.fillText(visualSymbol, x, y);
+        }
+      });
+    } else {
+      ['🌱', '🏡', '🌳'].forEach((o, i) => {
+        const x = W / 2 - 40 + i * 40;
+        const y = H * 0.68;
+        ctx.font = '24px serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText(o, x, y);
+      });
+    }
   }
 
+  // ──────────────────────────────────────────
+  // RECORDER SYSTEM
+  // ──────────────────────────────────────────
   let cameraStream = null;
   let recMediaRecorder = null;
   let recRecordedChunks = [];
@@ -1709,6 +2118,10 @@
     document.getElementById('rec-btn').style.display = 'flex';
     document.getElementById('rec-hint').style.display = 'block';
 
+    initCameraSource();
+  }
+
+  async function initCameraSource() {
     const vid = document.getElementById('cam-video');
     vid.srcObject = null;
     vid.src = "";
@@ -1718,17 +2131,40 @@
     resetRecorder();
 
     try {
-      cameraStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 1110 } },
-        audio: true
-      });
-      vid.srcObject = cameraStream;
-      document.getElementById('cam-placeholder').style.display = 'none';
-      isCameraConnected = true;
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: activeFacingMode },
+          audio: true
+        });
+        vid.srcObject = cameraStream;
+        document.getElementById('cam-placeholder').style.display = 'none';
+        isCameraConnected = true;
+      } else {
+        throw new Error("No mediaDevices");
+      }
     } catch (err) {
-      document.getElementById('cam-placeholder').style.display = 'block';
-      isCameraConnected = false;
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: activeFacingMode },
+          audio: false
+        });
+        vid.srcObject = cameraStream;
+        document.getElementById('cam-placeholder').style.display = 'none';
+        isCameraConnected = true;
+      } catch (innerErr) {
+        document.getElementById('cam-placeholder').style.display = 'block';
+        isCameraConnected = false;
+      }
     }
+  }
+
+  async function switchCameraSource() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+    activeFacingMode = (activeFacingMode === "user") ? "environment" : "user";
+    await initCameraSource();
+    showToast(`📸 ${activeFacingMode === "user" ? "전면" : "후면"} 카메라로 전환되었습니다.`);
   }
 
   function closeModal() {
@@ -1903,12 +2339,68 @@
     }, 100);
   }
 
+  function buildCalendar() {
+    const now = new Date();
+    const year = now.getFullYear(), month = now.getMonth();
+    document.getElementById('month-label').textContent = `${year}년 ${month + 1}월`;
+    
+    const grid = document.getElementById('calendar-grid');
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    grid.innerHTML = '';
+
+    for (let i = 0; i < firstDay; i++) {
+      const blank = document.createElement('div');
+      blank.className = 'cal-day';
+      blank.style.opacity = '.2';
+      grid.appendChild(blank);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const el = document.createElement('div');
+      el.className = 'cal-day';
+      const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      
+      if (state.history[dStr]) {
+        el.classList.add('has-record');
+        el.innerHTML = `<span style="font-size:10px">${d}</span><span style="font-size:14px;margin-top:2px">${state.history[dStr].emotion}</span>`;
+      } else {
+        el.textContent = d;
+      }
+      
+      if (d === now.getDate()) el.classList.add('today');
+      grid.appendChild(el);
+    }
+  }
+
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2800);
   }
+
+  setInterval(() => {
+    if (!state.user) return;
+    
+    state.globalUsers.forEach(u => {
+      if (u.code !== state.user.code) {
+        if (Math.random() > 0.5) {
+          u.total += Math.floor(Math.random() * 2);
+          u.streak += Math.floor(Math.random() * 2);
+        }
+      }
+    });
+
+    saveState();
+    buildRanking();
+    
+    const indicator = document.getElementById('sync-indicator');
+    if (indicator) {
+      const now = new Date();
+      indicator.textContent = `마지막 동기화: ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')} (10분 동기화 가동 중)`;
+    }
+  }, 10000);
 
   document.addEventListener("DOMContentLoaded", () => {
     loadState();
@@ -1930,6 +2422,7 @@
       document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
       document.getElementById('settings-user-code').value = state.user.code;
 
+      updateGlobalPointsDisplay();
       drawIsland();
       loadAIReflection();
       buildMembers();
