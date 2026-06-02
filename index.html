@@ -104,7 +104,6 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px;
     }
 
-    /* 상단 미니 프로필 바 컴포넌트 */
     .user-mini-profile {
       display: flex; align-items: center; gap: 8px; background: var(--glass);
       padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.5);
@@ -329,14 +328,12 @@
     .member-info .name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .member-info .streak { font-size: 12px; color: var(--muted); }
 
-    /* 실시간 파티 인증 배지 스타일 */
     .party-cert-badge {
       font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 6px;
     }
     .party-cert-badge.done { background: rgba(126,198,126,0.2); color: #4CAF50; }
     .party-cert-badge.yet { background: rgba(0,0,0,0.05); color: var(--muted); }
 
-    /* 파티 관리 전용 액션 레이아웃 */
     .party-management-actions { display: flex; gap: 10px; margin-top: 16px; }
     .btn-party-action { flex: 1; padding: 12px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; border: none; cursor: pointer; color: white; transition: background 0.2s; }
     .btn-party-action.leave { background: #FF5A42; }
@@ -443,7 +440,6 @@
     }
     .check-btn:hover { background: #EEF8FA; }
 
-    /* ───────── SHOP SPRITESHEET SYSTEM ───────── */
     .shop-container { 
       display: grid; 
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
@@ -517,7 +513,6 @@
       border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
 
-    /* ───────── TIMELINE CLIP VIEWER ───────── */
     .timeline-detail-box {
       margin: 16px 20px; padding: 16px; background: var(--glass);
       border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.6);
@@ -536,8 +531,72 @@
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 24px; cursor: pointer; z-index: 2;
     }
-    #island-canvas-wrap { margin: 0 20px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); background: linear-gradient(180deg, #B8DEFF 0%, #7EC7E8 40%, #5BB8D4 100%); position: relative; height: 260px; }
-    #island-canvas { width: 100%; height: 100%; display: block; }
+
+    /* ───────── 출석체크 & 일일 임무 UI (신규 추가) ───────── */
+    .btn-action-icon {
+      background: var(--glass); border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 50%; width: 32px; height: 32px; display: flex;
+      align-items: center; justify-content: center; cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px; margin-top: 8px;
+    }
+    .mission-progress-bar {
+      display: flex; justify-content: space-between; position: relative; margin: 20px 0; padding: 0 10px;
+    }
+    .mission-progress-bar::before {
+      content: ''; position: absolute; top: 16px; left: 24px; right: 24px;
+      height: 4px; background: #e0e0e0; z-index: 1; border-radius: 2px;
+    }
+    .mission-progress-fill {
+      position: absolute; top: 16px; left: 24px; height: 4px; background: var(--coral);
+      z-index: 1; border-radius: 2px; transition: width 0.5s ease; width: 0%;
+    }
+    .mission-tier {
+      position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .tier-circle {
+      width: 36px; height: 36px; border-radius: 50%; background: #e0e0e0; color: #888;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+      transition: all 0.3s; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: pointer;
+    }
+    .tier-circle.ready { background: var(--coral); color: white; box-shadow: 0 0 12px rgba(255,90,66,0.6); animation: pulse 1.5s infinite; }
+    .tier-circle.claimed { background: var(--sea); color: white; border-color: #E0F2F1; }
+
+    .mission-list { max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px; margin-top:10px; }
+    .mission-card {
+      background: white; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between;
+      align-items: center; border: 1px solid #eee; transition: all 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .mission-card.ready { border-color: var(--coral); box-shadow: 0 2px 12px rgba(255,90,66,0.25); }
+    .mission-card.done { filter: grayscale(100%); opacity: 0.6; pointer-events: none; }
+    .mission-card-info h4 { font-size: 14px; margin-bottom: 4px; color: var(--ink); }
+    .mission-card-info p { font-size: 11px; color: var(--muted); }
+    .mission-card-btn { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; background: #f0f0f0; color: #888; }
+    .mission-card.ready .mission-card-btn { background: var(--coral); color: white; animation: pulse 1.5s infinite; }
+
+    .attendance-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px; padding: 0 10px;}
+    .att-day {
+      aspect-ratio: 1; border-radius: 12px; background: white; border: 1px solid #eee;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; position: relative;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .att-day.today-ready { border: 2px solid var(--coral); box-shadow: 0 0 12px rgba(255,90,66,0.4); animation: pulse 1.5s infinite; color: var(--coral); font-weight: 700; }
+    .att-day.attended { background: var(--island); color: white; border-color: var(--island); }
+    .att-day.hidden-day { border: 2px solid #FFD700; background: #FFFDF0; color: #B8860B; font-weight: 700; }
+    .att-day.hidden-day.attended { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; border: none; }
+
+    /* 카메라 추가 스타일 */
+    .cam-controls { position: absolute; bottom: 16px; right: 16px; z-index: 10; }
+    .btn-cam-swap {
+      background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.3);
+      width: 44px; height: 44px; border-radius: 50%; font-size: 20px; cursor: pointer;
+      backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+    }
+    .record-gauge-container { display: flex; gap: 6px; justify-content: center; margin-top: 12px; margin-bottom: 4px; }
+    .record-gauge-slot { width: 20px; height: 6px; border-radius: 3px; background: #ddd; transition: all 0.3s; }
+    .record-gauge-slot.active { background: #FF5A42; animation: blink 1s infinite; box-shadow: 0 0 6px rgba(255,90,66,0.6); }
+    .record-gauge-slot.used { background: #FF5A42; opacity: 0.25; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
   </style>
 </head>
 <body>
@@ -545,26 +604,21 @@
 <div id="toast" class="toast"></div>
 
 <div class="auth-container" id="screen-auth">
-  
   <div class="auth-card active" id="panel-login">
     <div class="auth-logo">
       <h2>🏝️ 30초 아일랜드</h2>
       <p>가장 솔직한 나를 만나는 시간, 하루 30초 기록</p>
     </div>
-    
     <div class="form-group" style="margin-bottom: 12px;">
       <label>계정 아이디</label>
       <input type="text" id="login-id" class="form-control" placeholder="아이디를 입력하세요" />
     </div>
-    
     <div class="form-group" style="margin-bottom: 16px;">
       <label>비밀번호</label>
       <input type="password" id="login-pw" class="form-control" placeholder="비밀번호를 입력하세요" />
     </div>
-
     <button class="btn-primary" style="margin-bottom:12px;" onclick="submitLogin()">로그인</button>
     <button class="btn-secondary" style="margin-bottom:16px; font-weight:700;" onclick="switchAuthPanel('register')">새 계정 생성하기</button>
-
     <div style="display:flex; justify-content:space-around; font-size:11px;">
       <a href="javascript:void(0)" onclick="switchAuthPanel('find-id')" style="color:var(--muted); text-decoration:none;">아이디 찾기</a>
       <span style="color:#ddd;">|</span>
@@ -577,7 +631,6 @@
       <h2>👤 새 모험가 가입</h2>
       <p>나만의 고유 아일랜드 영토를 생성하세요.</p>
     </div>
-
     <div class="form-group" style="margin-bottom: 12px;">
       <label>계정 아이디</label>
       <div style="display:flex; gap:8px;">
@@ -586,37 +639,31 @@
       </div>
       <div id="reg-id-status" style="font-size:11px; margin-top:4px; font-weight:500; display:none;"></div>
     </div>
-
     <div class="form-group" style="margin-bottom: 12px;">
       <label>계정 이름 (아일랜더 닉네임)</label>
       <input type="text" id="reg-nickname" class="form-control" placeholder="아일랜드에서 불릴 이름" />
     </div>
-
     <div class="form-group" style="margin-bottom: 12px;">
       <label>비밀번호 (8글자 이상)</label>
       <input type="password" id="reg-pw" class="form-control" placeholder="••••••••" oninput="validatePasswordFields()" />
-      <div id="reg-pw-warn" style="font-size:11px; color:#FF5A42; margin-top:4px; display:none;">비밀번호는 최소 8자 이상 입력해야 합니다.</div>
+      <div id="reg-pw-warn" style="font-size:11px; color:#FF5A42; margin-top:4px; display:none;">비밀번호는 최소 8자 이상 필요합니다.</div>
     </div>
-
     <div class="form-group" style="margin-bottom: 12px;">
       <label>비밀번호 확인</label>
       <input type="password" id="reg-pw-confirm" class="form-control" placeholder="••••••••" oninput="validatePasswordFields()" />
       <div id="reg-pw-confirm-warn" style="font-size:11px; color:#FF5A42; margin-top:4px; display:none;">비밀번호가 서로 일치하지 않습니다.</div>
     </div>
-
     <div class="form-group" style="margin-bottom: 12px;">
       <label>생년월일</label>
       <input type="date" id="reg-birthday" class="form-control" />
     </div>
-
     <div class="form-group" style="margin-bottom: 12px;">
       <label>가장 좋아하는 동물</label>
       <input type="text" id="reg-animal" class="form-control" placeholder="예: 고양이" />
       <p style="font-size:10px; color:var(--muted); margin-top:4px; line-height:1.4;">
-        ※ 입력하신 좋아하는 동물은 향후 아이디 분실 시 본인 확인 질문으로 사용되므로 신중하게 작성해 주세요.
+        ※ 향후 아이디 분실 시 본인 확인 질문으로 사용됩니다.
       </p>
     </div>
-
     <div class="form-group" style="margin-bottom: 12px;">
       <label>프로필 사진 선택 (추천 아바타)</label>
       <div class="avatar-grid" id="prof-avatar-preset-grid"></div>
@@ -628,58 +675,34 @@
         <img id="prof-avatar-preview-img" class="avatar-file-preview" alt="커스텀 프리뷰" />
       </div>
     </div>
-
     <div class="form-group" style="margin-bottom: 16px; display:flex; align-items:center; justify-content:space-between; background:white; padding:10px; border-radius:8px; border:1px solid #ddd;">
       <div>
         <label style="display:block; font-size:12px; font-weight:700; color:var(--ink);">계정 공개 여부</label>
-        <p style="font-size:10px; color:var(--muted); margin-top:2px;">비공개 설정 시, 랭킹 및 파티 화면에서 익명 처리됩니다.</p>
+        <p style="font-size:10px; color:var(--muted); margin-top:2px;">비공개 시, 랭킹 및 파티 화면에서 익명 처리됩니다.</p>
       </div>
       <input type="checkbox" id="prof-public-toggle" checked style="width:20px; height:20px; accent-color:var(--sea);" />
     </div>
-
-	    <button class="btn-primary" style="margin-bottom:12px;" onclick="submitRegister()">계정 생성 완료 🌱</button>
+    <button class="btn-primary" style="margin-bottom:12px;" onclick="submitRegister()">계정 생성 완료 🌱</button>
     <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로 가기</button>
   </div>
 
   <div class="auth-card" id="panel-find-id">
-    <div class="auth-logo">
-      <h2>🔍 아이디 찾기</h2>
-      <p>이름과 비밀질문 답변(동물)을 매칭하여 아이디를 찾습니다.</p>
-    </div>
-
-    <div class="form-group" style="margin-bottom: 12px;">
-      <label>계정 이름 (아일랜더 닉네임)</label>
-      <input type="text" id="find-id-nickname" class="form-control" placeholder="계정 생성 시 설정한 이름" />
-    </div>
-
-    <div class="form-group" style="margin-bottom: 16px;">
-      <label>내가 좋아하는 동물</label>
-      <input type="text" id="find-id-animal" class="form-control" placeholder="예: 고양이" />
-    </div>
-
+    <div class="auth-logo"><h2>🔍 아이디 찾기</h2></div>
+    <div class="form-group" style="margin-bottom: 12px;"><label>계정 이름</label><input type="text" id="find-id-nickname" class="form-control" /></div>
+    <div class="form-group" style="margin-bottom: 16px;"><label>내가 좋아하는 동물</label><input type="text" id="find-id-animal" class="form-control" /></div>
     <button class="btn-primary" style="margin-bottom:12px;" onclick="submitFindId()">아이디 조회</button>
-    <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로 돌아가기</button>
+    <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로</button>
   </div>
 
   <div class="auth-card" id="panel-find-pw">
-    <div class="auth-logo">
-      <h2>🔍 비밀번호 조회</h2>
-      <p>계정 아이디를 기반으로 비밀번호를 확인합니다.</p>
-    </div>
-
-    <div class="form-group" style="margin-bottom: 16px;">
-      <label>계정 아이디</label>
-      <input type="text" id="find-pw-id" class="form-control" placeholder="조회할 아이디 입력" />
-    </div>
-
+    <div class="auth-logo"><h2>🔍 비밀번호 조회</h2></div>
+    <div class="form-group" style="margin-bottom: 16px;"><label>계정 아이디</label><input type="text" id="find-pw-id" class="form-control" /></div>
     <button class="btn-primary" style="margin-bottom:12px;" onclick="submitFindPw()">비밀번호 조회</button>
-    <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로 돌아가기</button>
+    <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로</button>
   </div>
-
 </div>
 
 <div id="screen-main-app" style="display:none;">
-
   <div class="page active" id="page-home">
     <div class="topbar">
       <div class="user-mini-profile" onclick="openMyProfileModal()">
@@ -687,10 +710,17 @@
         <div class="user-mini-name" id="home-mini-nickname">아일랜더</div>
       </div>
       <div class="points-counter" id="home-points-display">🪙 0p</div>
-      <div class="topbar-actions">
-        <span class="badge" id="streak-badge">🔥 1일 연속</span>
-        <button class="btn-settings" onclick="openFriendsModal()" style="font-size:16px;" aria-label="친구 창 열기">👥</button>
-        <button class="btn-settings" onclick="openSettingsModal()" aria-label="설정 창 열기">⚙️</button>
+      
+      <div class="topbar-actions" style="display:flex; flex-direction:column; align-items:flex-end;">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="badge" id="streak-badge">🔥 1일 연속</span>
+          <button class="btn-settings" onclick="openFriendsModal()" style="font-size:16px;" aria-label="친구 창 열기">👥</button>
+          <button class="btn-settings" onclick="openSettingsModal()" aria-label="설정 창 열기">⚙️</button>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn-action-icon" onclick="openAttendanceModal()" aria-label="출석체크">📅</button>
+          <button class="btn-action-icon" onclick="openMissionModal()" aria-label="일일 임무">📜</button>
+        </div>
       </div>
     </div>
 
@@ -699,18 +729,9 @@
     </div>
 
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="num" id="stat-streak">1</div>
-        <div class="label">연속 기록</div>
-      </div>
-      <div class="stat-card">
-        <div class="num" id="stat-total">0점</div>
-        <div class="label">총 점수</div>
-      </div>
-      <div class="stat-card">
-        <div class="num" id="stat-rank">#1</div>
-        <div class="label">이번 주 순위</div>
-      </div>
+      <div class="stat-card"><div class="num" id="stat-streak">1</div><div class="label">연속 기록</div></div>
+      <div class="stat-card"><div class="num" id="stat-total">0점</div><div class="label">총 점수</div></div>
+      <div class="stat-card"><div class="num" id="stat-rank">#1</div><div class="label">이번 주 순위</div></div>
     </div>
 
     <p class="section-title">오늘의 미션</p>
@@ -750,9 +771,7 @@
   </div>
 
   <div class="page" id="page-party">
-    <div class="topbar">
-      <h1>👥 파티</h1>
-    </div>
+    <div class="topbar"><h1>👥 파티</h1></div>
 
     <div id="party-gate-view" class="party-gate">
       <div class="gate-card" onclick="openPartyCreationModal()">
@@ -817,7 +836,33 @@
     </div>
     <div class="rank-list" id="rank-list"></div>
   </div>
+</div>
 
+<div class="modal-overlay" id="attendance-modal">
+  <div class="modal-sheet">
+    <button class="close-btn" onclick="document.getElementById('attendance-modal').classList.remove('open')">✕</button>
+    <p style="font-family:'Gowun Batang',serif;font-size:20px;font-weight:700; color:var(--ink);">📅 이달의 출석체크</p>
+    <p style="font-size:12px; color:var(--muted); margin-top:4px; margin-bottom:16px;">평일 5p, 주말 10p! <span style="color:#B8860B; font-weight:700;">격주 금요일은 코인 2배 히든데이 ✨</span></p>
+    <div class="weekday-labels" style="margin: 0 10px 8px;"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+    <div class="attendance-grid" id="attendance-grid"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mission-modal">
+  <div class="modal-sheet" style="background:#f8f9fa;">
+    <button class="close-btn" onclick="document.getElementById('mission-modal').classList.remove('open')">✕</button>
+    <p style="font-family:'Gowun Batang',serif;font-size:20px;font-weight:700; color:var(--ink);">📜 오늘의 일일 임무</p>
+    
+    <div class="mission-progress-bar">
+      <div class="mission-progress-fill" id="mission-progress-fill"></div>
+      <div class="mission-tier"><div class="tier-circle" id="tier-0">0</div></div>
+      <div class="mission-tier"><div class="tier-circle" id="tier-30" onclick="claimTierReward(30)">30</div><span style="font-size:11px; font-weight:700; color:var(--sea);">20p</span></div>
+      <div class="mission-tier"><div class="tier-circle" id="tier-70" onclick="claimTierReward(70)">70</div><span style="font-size:11px; font-weight:700; color:var(--sea);">20p</span></div>
+      <div class="mission-tier"><div class="tier-circle" id="tier-100" onclick="claimTierReward(100)">100</div><span style="font-size:11px; font-weight:700; color:var(--coral);">50p</span></div>
+    </div>
+
+    <div class="mission-list" id="mission-list"></div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="friends-modal">
@@ -839,17 +884,14 @@
   <div class="modal-sheet">
     <button class="close-btn" onclick="closeSettingsModal()">✕</button>
     <p style="font-family:'Gowun Batang',serif;font-size:18px;font-weight:700;margin-bottom:16px">⚙️ 서비스 환경설정</p>
-    
     <div class="form-group" style="margin-bottom:12px;">
       <label>내 계정 고유 식별 코드</label>
       <input type="text" id="settings-user-code" class="form-control" readonly style="background:#eee; text-align:center; font-weight:700;" />
     </div>
-
     <div class="form-group" style="margin-bottom:16px;">
       <label>Google Gemini API Key</label>
       <input type="password" id="input-api-key" class="form-control" placeholder="AI Studio에서 발급받은 키를 입력하세요" />
     </div>
-
     <button class="btn-primary" onclick="saveSettings()" style="margin-bottom:8px;">설정 저장하기</button>
     <button class="btn-secondary" onclick="handleLogout()" style="color:#FF5A42; border-color:rgba(255,90,66,0.2);">로그아웃</button>
   </div>
@@ -884,12 +926,10 @@
   <div class="modal-sheet">
     <button class="close-btn" onclick="closePartyCreateModal()">✕</button>
     <p style="font-family:'Gowun Batang',serif;font-size:18px;font-weight:700;margin-bottom:16px">🏆 새 파티 만들기</p>
-
     <div class="form-group" style="margin-bottom:12px;">
       <label>파티 이름</label>
       <input type="text" id="create-party-name" class="form-control" placeholder="파티명 입력" />
     </div>
-
     <div class="form-group" style="margin-bottom:16px;">
       <label>파티 커버 이미지 (추천 아바타)</label>
       <div class="avatar-grid" id="create-party-preset-grid"></div>
@@ -901,7 +941,6 @@
         <img id="party-custom-image-preview" class="avatar-file-preview" alt="파티 커스텀 프리뷰" />
       </div>
     </div>
-
     <button class="btn-primary" onclick="submitCreateParty()">파티 생성하고 멤버 영입하기 🚀</button>
   </div>
 </div>
@@ -910,31 +949,31 @@
   <div class="modal-sheet">
     <button class="close-btn" onclick="closePartyJoinModal()">✕</button>
     <p style="font-family:'Gowun Batang',serif;font-size:18px;font-weight:700;margin-bottom:16px">🔑 기존 파티 참여하기</p>
-
     <div class="form-group" style="margin-bottom:16px;">
       <label>파티 공유 코드</label>
       <input type="text" id="join-party-code-input" class="form-control" style="text-align:center; font-weight:700; font-size:16px; letter-spacing:0.05em;" placeholder="PARTY-XXXX-X" />
-      <p style="font-size:11px; color:var(--muted); margin-top:6px; line-height:1.4;">
-        예시 코드: <strong style="cursor:pointer; color:var(--sea);" onclick="document.getElementById('join-party-code-input').value='PARTY-7731-B'">PARTY-7731-B</strong>
-      </p>
     </div>
-
     <button class="btn-primary" onclick="submitJoinParty()">코드로 파티원 합류하기 👥</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="record-modal">
-  <div class="modal-sheet" style="position:relative">
-    <button class="close-btn" onclick="closeModal()">✕</button>
-    <p style="font-family:'Gowun Batang',serif;font-size:18px;font-weight:700;margin-bottom:12px">📹 오늘의 30초</p>
+  <div class="modal-sheet" style="position:relative; background:#2B2D42;">
+    <button class="close-btn" style="background:rgba(255,255,255,0.2); color:white;" onclick="closeModal()">✕</button>
+    <p style="font-family:'Gowun Batang',serif;font-size:18px;font-weight:700;margin-bottom:12px; color:white;">📹 오늘의 30초</p>
 
-    <div style="font-size:13px;color:var(--sea);font-weight:700;margin-bottom:10px" id="modal-question"></div>
+    <div style="font-size:13px;color:var(--sky);font-weight:700;margin-bottom:10px" id="modal-question"></div>
 
     <div class="camera-preview" id="cam-preview">
       <video id="cam-video" autoplay muted playsinline></video>
       <div class="no-cam" id="cam-placeholder">
         미디어 장치가 차단되었거나 지원되지 않습니다. 데모 모드로 진행됩니다.
       </div>
+      
+      <div class="cam-controls">
+        <button class="btn-cam-swap" onclick="toggleCameraFacing()">🔄</button>
+      </div>
+
       <div class="timer-ring">
         <svg viewBox="0 0 48 48">
           <circle class="timer-bg" cx="24" cy="24" r="22"/>
@@ -945,22 +984,23 @@
     </div>
 
     <div class="cut-dots" id="cut-dots">
-      <div class="cut-dot" data-i="0"></div>
-      <div class="cut-dot" data-i="1"></div>
-      <div class="cut-dot" data-i="2"></div>
-      <div class="cut-dot" data-i="3"></div>
-      <div class="cut-dot" data-i="4"></div>
-      <div class="cut-dot" data-i="5"></div>
+      <div class="cut-dot" data-i="0"></div><div class="cut-dot" data-i="1"></div><div class="cut-dot" data-i="2"></div>
+      <div class="cut-dot" data-i="3"></div><div class="cut-dot" data-i="4"></div><div class="cut-dot" data-i="5"></div>
     </div>
+
+    <div class="record-gauge-container" id="record-gauge">
+      <div class="record-gauge-slot"></div><div class="record-gauge-slot"></div><div class="record-gauge-slot"></div>
+      <div class="record-gauge-slot"></div><div class="record-gauge-slot"></div><div class="record-gauge-slot"></div>
+    </div>
+    <p id="rec-hint" style="text-align:center;font-size:11px;color:#aaa;margin-top:6px">
+      오늘 업로드 가능 횟수 (최대 6회)
+    </p>
 
     <button class="rec-btn" id="rec-btn" onclick="toggleRecord()">
       <div class="inner"></div>
     </button>
-    <p id="rec-hint" style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">
-      버튼을 터치해 5초씩 6컷을 녹화해보세요.
-    </p>
 
-    <div id="emotion-section" style="display:none">
+    <div id="emotion-section" style="display:none; background:white; padding:16px; border-radius:16px; margin-top:20px;">
       <p class="section-title" style="padding:12px 0 8px">오늘 일상을 감정 태그로 표현해주세요</p>
       <div class="emotion-picker" id="emotion-picker">
         <button class="emo-btn" onclick="selectEmo(this,'😊')">😊</button>
@@ -1028,24 +1068,25 @@
   // 1. Firebase 초기화 및 환경 설정
   // ==========================================
   const firebaseConfig = {
-  apiKey: "AIzaSyAG1FFFPm9ro7qOz1odE9wXDDSTAAbMiV0",
-  authDomain: "sec-island.firebaseapp.com",
-  databaseURL: "https://sec-island-default-rtdb.firebaseio.com",
-  projectId: "sec-island",
-  storageBucket: "sec-island.firebasestorage.app",
-  messagingSenderId: "599343149748",
-  appId: "1:599343149748:web:c360d1ebf26f10b08f9de1"
-};
+    apiKey: "AIzaSyAG1FFFPm9ro7qOz1odE9wXDDSTAAbMiV0",
+    authDomain: "sec-island.firebaseapp.com",
+    databaseURL: "https://sec-island-default-rtdb.firebaseio.com",
+    projectId: "sec-island",
+    storageBucket: "sec-island.firebasestorage.app",
+    messagingSenderId: "599343149748",
+    appId: "1:599343149748:web:c360d1ebf26f10b08f9de1"
+  };
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth(); // 이 줄을 추가합니다.
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const auth = firebase.auth();
   const db = firebase.firestore();
   const storage = firebase.storage();
 
   // ==========================================
   // 2. 핵심 데이터 상수 및 상태 관리
   // ==========================================
-  const STORAGE_KEY = "30sec_island_v4_state_master"; // Firebase 마이그레이션으로 인해 식별용으로만 남김
   const PRESET_AVATARS = ['🌳','🏡','⛵','🐬','🌺','🌸','✨','🍄','🐱','🦊','🐯','🐧','🥞','🏕️','🏖️'];
   
   const dailyMissionPool = [
@@ -1100,6 +1141,20 @@
 
   const rarityPoints = { "Common (일반)": 1, "Rare (희귀)": 3, "Epic (영웅)": 5, "Legendary (전설)": 10 };
 
+  const missionsConfig = [
+    { key: 'attend', title: '출석체크 하기', desc: '오늘의 출석 보상을 받으세요.', point: 10 },
+    { key: 'watch_video', title: '타임라인 날짜 클릭 후 영상 시청', desc: '타임라인에서 영상을 시청하세요.', point: 10 },
+    { key: 'view_profile', title: '파티원 프로필 눌러보기', desc: '다른 사용자의 프로필을 확인하세요.', point: 10 },
+    { key: 'upload_1', title: '영상 1회 업로드', desc: '오늘 첫 영상을 업로드 하세요.', point: 20 },
+    { key: 'play_5m', title: '5분 접속 유지', desc: '아일랜드에 5분 이상 머무르세요.', point: 20 },
+    { key: 'upload_3', title: '영상 3회 업로드', desc: '누적 3개의 영상을 업로드 하세요.', point: 30 },
+    { key: 'spend_100', title: '코인 100개 사용', desc: '상점에서 100코인 이상 소비하세요.', point: 30 },
+    { key: 'upload_5', title: '영상 5회 업로드', desc: '누적 5개의 영상을 업로드 하세요.', point: 40 },
+    { key: 'add_friend', title: '친구 추가 1회 성공', desc: '새로운 모험가와 친구를 맺으세요.', point: 40 },
+    { key: 'play_20m', title: '20분 접속 유지', desc: '아일랜드에 20분 이상 머무르세요.', point: 50 },
+    { key: 'buy_object', title: '오브제 1회 구매', desc: '상점에서 아무 오브제나 구매하세요.', point: 80 }
+  ];
+
   const defaultState = { user: null, recordedToday: false, history: {}, rankingTab: 'user', objectTab: 'shop' };
   let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 30, timerInterval: null };
   
@@ -1107,12 +1162,13 @@
   let isIdCheckedAndValid = false, checkedAndValidIdString = "";
   let tempCutsRecorded = [];
   
-  let cameraStream = null, recMediaRecorder = null, isCameraConnected = false;
+  // 카메라 전역 상태
+  let cameraStream = null, recMediaRecorder = null, isCameraConnected = false, currentFacingMode = "user";
+  let sessionTimer = null, sessionSeconds = 0;
 
   const shopSpritesheetImage = new Image();
   shopSpritesheetImage.src = 'shop_spritesheet.png';
 
-  // [스코어 환산 로직: 인벤토리 아이템 기준]
   function getUserTotalScore(user) {
     if (!user || !user.inventory) return 0;
     return user.inventory.reduce((sum, itemId) => {
@@ -1156,6 +1212,13 @@
     }
   }
 
+  function isHiddenDay(dateStr) {
+    const d = new Date(dateStr);
+    if(d.getDay() !== 5) return false;
+    const dateNum = d.getDate();
+    return (dateNum >= 8 && dateNum <= 14) || (dateNum >= 22 && dateNum <= 28);
+  }
+
   // ==========================================
   // 4. 인증 화면 제어 및 사진 업로드 시스템
   // ==========================================
@@ -1163,7 +1226,6 @@
     document.querySelectorAll('.auth-card').forEach(card => card.classList.remove('active'));
     const targetPanel = document.getElementById('panel-' + panelId);
     if (targetPanel) targetPanel.classList.add('active');
-    
     if (panelId === 'register') resetRegisterForm();
   }
 
@@ -1201,10 +1263,7 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const preview = document.getElementById('prof-avatar-preview-img');
-        if(preview) {
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-        }
+        if(preview) { preview.src = e.target.result; preview.style.display = 'block'; }
         selectedProfileAvatar = e.target.result;
         document.querySelectorAll('#prof-avatar-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
       }
@@ -1217,10 +1276,7 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const preview = document.getElementById('party-custom-image-preview');
-        if(preview) {
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-        }
+        if(preview) { preview.src = e.target.result; preview.style.display = 'block'; }
         selectedPartyAvatar = e.target.result;
         document.querySelectorAll('#create-party-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
       }
@@ -1228,10 +1284,9 @@
     }
   }
 
-// ==========================================
+  // ==========================================
   // 5. Firebase 기반 회원가입 / 로그인 / 찾기
   // ==========================================
-
   function resetRegisterForm() {
     document.getElementById('reg-id').value = "";
     document.getElementById('reg-nickname').value = "";
@@ -1305,16 +1360,12 @@
     if (!birthday) return showToast("생년월일을 선택해 주세요.");
     if (!animal) return showToast("좋아하는 동물 답변을 입력해 주세요.");
 
-    // Firebase Auth용 가상 이메일 조합
     const dummyEmail = idVal + "@secisland.app";
     const userCode = generateUserCode();
     const todayStr = getLocalDateString(new Date());
 
     try {
-      // 1. Firebase Auth에 실제 계정 생성
       await auth.createUserWithEmailAndPassword(dummyEmail, pwVal);
-
-      // 2. Firestore에 유저 정보 저장
       await db.collection('users').doc(userCode).set({
         code: userCode, loginId: idVal, nickname: nickname,
         birthday: birthday, animal: animal, isPublic: isPublic,
@@ -1325,8 +1376,6 @@
       });
 
       showToast("🎉 가입 성공! 1000p 지급 완료!");
-      
-      // 자동 로그인 방지 및 화면 전환
       await auth.signOut();
       setTimeout(() => { switchAuthPanel('login'); document.getElementById('login-id').value = idVal; }, 2000);
     } catch (e) { 
@@ -1356,9 +1405,7 @@
     if (!snapshot.empty) {
       alert(`⚠️ 보안 정책 업데이트\n\n현재 계정 시스템이 안전하게 암호화되어 비밀번호 직접 조회가 불가능합니다.`);
       switchAuthPanel('login');
-    } else { 
-      showToast("등록되지 않은 아이디입니다."); 
-    }
+    } else { showToast("등록되지 않은 아이디입니다."); }
   }
 
   async function submitLogin() {
@@ -1384,22 +1431,6 @@
     }
   }
 
-// [수정] 비밀번호 조회 로직 (보안 변경)
-  // ==========================================
-  async function submitFindPw() {
-    const idVal = document.getElementById('find-pw-id').value.trim().toLowerCase();
-    if (!idVal) return showToast("아이디를 입력해 주세요.");
-
-    const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
-    if (!snapshot.empty) {
-      // Firebase Auth 도입 시 비밀번호는 암호화(Hash)되므로 역추적 및 평문 조회가 불가능합니다.
-      alert(`⚠️ 보안 정책 업데이트\n\n현재 계정 시스템이 안전하게 암호화되어 비밀번호 직접 조회가 불가능합니다.`);
-      switchAuthPanel('login');
-    } else { 
-      showToast("등록되지 않은 아이디입니다."); 
-    }
-  }
-
   function completeInitialLoginFlow() {
     document.getElementById('screen-auth').style.display = 'none';
     document.getElementById('screen-main-app').style.display = 'block';
@@ -1415,6 +1446,15 @@
     updateGlobalPointsDisplay();
     goPage('home');
     showToast(`🏝️ 환영합니다, ${state.user.nickname}님!`);
+
+    // 미션: 접속 유지 타이머 시작
+    clearInterval(sessionTimer);
+    sessionSeconds = 0;
+    sessionTimer = setInterval(() => {
+      sessionSeconds++;
+      if(sessionSeconds === 300) checkMission('play_5m');
+      if(sessionSeconds === 1200) checkMission('play_20m');
+    }, 1000);
   }
 
   function updateMiniProfileHeader() {
@@ -1499,22 +1539,156 @@
   }
 
   // ==========================================
+  // 일일 임무(Mission) 및 출석체크(Attendance) 
+  // ==========================================
+  function openAttendanceModal() {
+    const grid = document.getElementById('attendance-grid');
+    const now = new Date();
+    const todayStr = getLocalDateString(now);
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+    
+    grid.innerHTML = '';
+    for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dObj = new Date(dateStr);
+      const isWeekend = dObj.getDay() === 0 || dObj.getDay() === 6;
+      const isHidden = isHiddenDay(dateStr);
+      
+      let className = "att-day";
+      let inner = `<span>${d}</span>`;
+      
+      if(state.user.attendance && state.user.attendance[dateStr]) {
+        className += " attended"; inner += `<span style="font-size:10px; margin-top:2px;">✔️</span>`;
+      } else if (dateStr === todayStr) {
+        className += " today-ready";
+      }
+      if(isHidden) className += " hidden-day";
+
+      const el = document.createElement('div');
+      el.className = className; el.innerHTML = inner;
+      el.onclick = () => { if(dateStr === todayStr && !state.user.attendance[dateStr]) submitAttendance(dateStr, isWeekend); }
+      grid.appendChild(el);
+    }
+    document.getElementById('attendance-modal').classList.add('open');
+  }
+
+  async function submitAttendance(dateStr, isWeekend) {
+    if(!state.user.attendance) state.user.attendance = {};
+    state.user.attendance[dateStr] = true;
+    const reward = isWeekend ? 10 : 5;
+    state.user.points += reward;
+    
+    await saveUserToDB();
+    updateGlobalPointsDisplay(); openAttendanceModal();
+    showToast(`🎉 출석 완료! ${reward}p 획득`);
+    checkMission('attend');
+  }
+
+  async function checkMission(key, valToAdd = 0) {
+    if(!state.user.dailyMission || !state.user.dailyMission.tasks) return;
+    const status = state.user.dailyMission.tasks[key];
+    if(status > 0) return; // 1(달성), 2(완료)면 패스
+
+    if(key === 'spend_100') {
+      state.user.dailyMission.spendAmount += valToAdd;
+      if(state.user.dailyMission.spendAmount < 100) { await saveUserToDB(); return; }
+    }
+    if(key.startsWith('upload_')) {
+      const req = parseInt(key.split('_')[1]);
+      if(state.user.dailyMission.uploadCount < req) return; 
+    }
+
+    state.user.dailyMission.tasks[key] = 1;
+    await saveUserToDB();
+    showToast(`📜 일일 임무 달성 가능! 확인해보세요.`);
+  }
+
+  function openMissionModal() { renderMissionList(); document.getElementById('mission-modal').classList.add('open'); }
+
+  function renderMissionList() {
+    const list = document.getElementById('mission-list');
+    const tasks = state.user.dailyMission.tasks;
+    
+    const sorted = [...missionsConfig].sort((a,b) => {
+      const weightA = tasks[a.key] === 1 ? -1 : (tasks[a.key] === 2 ? 1 : 0);
+      const weightB = tasks[b.key] === 1 ? -1 : (tasks[b.key] === 2 ? 1 : 0);
+      return weightA - weightB;
+    });
+
+    list.innerHTML = sorted.map(m => {
+      const st = tasks[m.key];
+      let cls = "mission-card", btnCls = "mission-card-btn", btnText = `${m.point}점 획득`, onclick = `onclick="claimMission('${m.key}', ${m.point})"`;
+      if(st === 1) { cls += " ready"; btnText = `수령하기`; }
+      else if(st === 2) { cls += " done"; btnText = `완료됨`; onclick = ""; }
+      else { onclick = "disabled"; btnText = `미달성 (${m.point}점)`; }
+
+      return `<div class="${cls}">
+        <div class="mission-card-info"><h4>${m.title}</h4><p>${m.desc}</p></div>
+        <button class="${btnCls}" ${onclick}>${btnText}</button>
+      </div>`;
+    }).join('');
+
+    renderMissionProgress();
+  }
+
+  function renderMissionProgress() {
+    const score = state.user.dailyMission.score;
+    document.getElementById('mission-progress-fill').style.width = `${Math.min(score, 100)}%`;
+    [30, 70, 100].forEach(t => {
+      const el = document.getElementById(`tier-${t}`);
+      el.className = "tier-circle";
+      if(state.user.dailyMission.claimedTiers.includes(t)) el.classList.add('claimed');
+      else if(score >= t) el.classList.add('ready');
+    });
+  }
+
+  async function claimMission(key, point) {
+    if(state.user.dailyMission.tasks[key] !== 1) return;
+    state.user.dailyMission.tasks[key] = 2;
+    state.user.dailyMission.score = Math.min(state.user.dailyMission.score + point, 100);
+    await saveUserToDB(); renderMissionList();
+    showToast(`✔️ 임무 보상 수령! (현재 진행도: ${state.user.dailyMission.score}점)`);
+  }
+
+  async function claimTierReward(tier) {
+    if(state.user.dailyMission.score < tier) return showToast("아직 점수가 부족합니다.");
+    if(state.user.dailyMission.claimedTiers.includes(tier)) return showToast("이미 수령했습니다.");
+    
+    state.user.dailyMission.claimedTiers.push(tier);
+    const reward = (tier === 100) ? 50 : 20;
+    state.user.points += reward;
+    await saveUserToDB(); renderMissionProgress(); updateGlobalPointsDisplay();
+    showToast(`🎁 누적 점수 보상 수령! ${reward}p 획득`);
+  }
+
+  // ==========================================
   // 8. 촬영 파이프라인 (Firebase Storage)
   // ==========================================
   async function openModal() {
-    if (state.user.remainingAttempts <= 0) return showToast("오늘의 횟수(6회) 소진! 내일 뵙겠습니다.");
+    if (state.user.recordData.cutsDoneToday >= 6) return showToast("오늘의 촬영 횟수(최대 6회)를 모두 소진했습니다! 내일 뵙겠습니다.");
     
     document.getElementById('modal-question').textContent = '💬 ' + dailyMissionPool[new Date().getDay() % dailyMissionPool.length];
     document.getElementById('record-modal').classList.add('open');
     document.getElementById('emotion-section').style.display = 'none';
     document.getElementById('rec-btn').style.display = 'flex';
-    document.getElementById('rec-hint').style.display = 'block';
-    document.getElementById('rec-hint').textContent = `터치하여 5초씩 녹화 (남은 기회 ${state.user.remainingAttempts}회)`;
+    
+    updateRecordGaugeUI();
+    await startCamera();
+  }
 
+  async function startCamera() {
+    if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); }
     try {
-      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode }, audio: true });
       const vid = document.getElementById('cam-video');
       vid.srcObject = cameraStream;
+      
+      // 전면 카메라일 때만 미리보기를 좌우 반전 처리
+      vid.style.transform = currentFacingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
+      
       await vid.play();
       document.getElementById('cam-placeholder').style.display = 'none';
       isCameraConnected = true;
@@ -1524,8 +1698,25 @@
     }
   }
 
+  async function toggleCameraFacing() {
+    currentFacingMode = currentFacingMode === "user" ? "environment" : "user";
+    await startCamera();
+  }
+
+  function updateRecordGaugeUI() {
+    const slots = document.querySelectorAll('.record-gauge-slot');
+    const done = state.user.recordData.cutsDoneToday;
+    
+    slots.forEach((slot, idx) => {
+      slot.className = "record-gauge-slot";
+      if (idx < done) slot.classList.add('used');
+      else if (idx === done) slot.classList.add('active'); // 현재 찍을 차례
+    });
+  }
+
   function toggleRecord() {
-    if (state.recording || state.cutsDone >= 6 || state.user.remainingAttempts <= 0) return;
+    // 기존 remainingAttempts 컷 방식을 유지하면서, 전체 동영상 6번 제한과 연동
+    if (state.recording || state.cutsDone >= 6 || state.user.recordData.cutsDoneToday >= 6) return;
     isCameraConnected ? startActualCut() : simulateRecordFlow();
   }
 
@@ -1551,18 +1742,12 @@
         const url = await snapshot.ref.getDownloadURL();
         tempCutsRecorded.push(url);
         
-        state.user.remainingAttempts -= 1;
-        state.user.points = (state.user.points || 0) + 10;
-        await saveUserToDB();
-        
         document.querySelectorAll('.cut-dot')[state.cutsDone].classList.replace('active', 'done');
         state.cutsDone++; state.recording = false; btn.classList.remove('recording');
 
-        if (state.cutsDone >= 6 || state.user.remainingAttempts <= 0) {
-          document.getElementById('rec-btn').style.display = 'none'; document.getElementById('rec-hint').style.display = 'none';
+        if (state.cutsDone >= 6) {
+          document.getElementById('rec-btn').style.display = 'none';
           document.getElementById('emotion-section').style.display = 'block';
-        } else {
-          document.getElementById('rec-hint').textContent = `터치하여 5초씩 녹화 (남은 기회 ${state.user.remainingAttempts}회)`;
         }
       } catch (err) { showToast("업로드 실패: " + err.message); btn.classList.remove('recording'); state.recording = false; }
     };
@@ -1593,15 +1778,11 @@
         clearInterval(state.timerInterval);
         tempCutsRecorded.push("https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-40439-large.mp4");
         
-        state.user.remainingAttempts -= 1;
-        state.user.points = (state.user.points || 0) + 10;
-        await saveUserToDB();
-
         document.querySelectorAll('.cut-dot')[state.cutsDone].classList.replace('active', 'done');
         state.cutsDone++; state.recording = false; btn.classList.remove('recording');
 
-        if (state.cutsDone >= 6 || state.user.remainingAttempts <= 0) {
-          document.getElementById('rec-btn').style.display = 'none'; document.getElementById('rec-hint').style.display = 'none';
+        if (state.cutsDone >= 6) {
+          document.getElementById('rec-btn').style.display = 'none'; 
           document.getElementById('emotion-section').style.display = 'block';
         }
       }
@@ -1617,12 +1798,24 @@
   async function uploadRecord() {
     const todayStr = getLocalDateString(new Date());
     const emotion = document.querySelector('.emo-btn.selected')?.textContent || "🌱";
+    const hidden = isHiddenDay(todayStr);
     
-    state.history[todayStr] = { emotion: emotion, clips: [...tempCutsRecorded] };
+    // 타임라인 저장 (새 영상을 맨 앞에)
+    if(!state.history[todayStr]) state.history[todayStr] = { emotion, clips: [] };
+    state.history[todayStr].clips = [...tempCutsRecorded]; 
+    
     state.user.streak += 1; state.user.lastRecordedDate = todayStr;
     state.user.score = (state.user.score || 0) + tempCutsRecorded.length * 10;
     state.user.totalVideos = (state.user.totalVideos || 0) + tempCutsRecorded.length;
     
+    // 업로드 보상 로직 (히든데이 2배)
+    const baseReward = hidden ? 20 : 10;
+    state.user.points += baseReward;
+    
+    // 일일 6회 횟수 및 미션 동기화
+    state.user.recordData.cutsDoneToday += 1;
+    state.user.dailyMission.uploadCount += 1;
+
     try {
       await saveUserToDB();
       await db.collection('timeline').doc(`${state.user.code}_${todayStr}`).set({
@@ -1630,7 +1823,18 @@
         clips: tempCutsRecorded, uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
-      closeModal(); goPage('home'); showToast("기록이 안전하게 저장되었습니다! 🌱");
+      checkMission('upload_1'); checkMission('upload_3'); checkMission('upload_5');
+      
+      // 6회 달성 보너스 (20코인 추가)
+      if(state.user.recordData.cutsDoneToday === 6 && !state.user.recordData.bonusClaimed) {
+        state.user.recordData.bonusClaimed = true;
+        state.user.points += 20;
+        await saveUserToDB();
+        setTimeout(() => alert("🎉 축하합니다! 오늘의 촬영 6회를 모두 달성하여 보너스 20p를 획득했습니다!"), 500);
+      }
+
+      closeModal(); goPage('home'); 
+      showToast(`영상 저장 완료! ${baseReward}p 지급${hidden ? ' (히든데이 2배✨)' : ''}`);
     } catch(e) { showToast("기록 저장 중 오류가 발생했습니다."); }
   }
 
@@ -1663,6 +1867,8 @@
       const el = document.createElement('div'); el.className = 'cal-day';
       const dStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       
+      if(isHiddenDay(dStr)) el.classList.add('hidden-day');
+
       if (state.history[dStr]) {
         el.classList.add('has-record');
         el.innerHTML = `<span style="font-size:10px">${d}</span><span style="font-size:14px;margin-top:2px">${state.history[dStr].emotion}</span>`;
@@ -1676,6 +1882,8 @@
   function showTimelineDayClips(dateStr) {
     const record = state.history[dateStr];
     if (!record || !record.clips || record.clips.length === 0) return;
+
+    checkMission('watch_video');
 
     const viewer = document.getElementById('timeline-day-viewer');
     viewer.style.display = "block";
@@ -1749,6 +1957,9 @@
     state.user.points -= price;
     if (!state.user.inventory) state.user.inventory = [];
     state.user.inventory.push(itemId);
+    
+    checkMission('buy_object'); checkMission('spend_100', price); // 미션 연동
+    
     await saveUserToDB(); updateGlobalPointsDisplay(); renderShopItems();
     showToast(`📦 오브제 구매 완료! (차감: ${price}p)`);
   }
@@ -1798,6 +2009,7 @@
 
       if(!state.user.friends) state.user.friends = [];
       state.user.friends.push(fCode); fCodeInput.value = ""; renderFriendsList();
+      checkMission('add_friend');
       showToast(`🤝 "${targetSnap.data().nickname}"님과 친구가 성사되었습니다.`);
     } catch (e) { showToast("친구 추가 중 오류 발생."); }
   }
@@ -1930,7 +2142,8 @@
         const showName = m.isPublic ? m.nickname : (isMe ? `${m.nickname} (나)` : "비공개 아일랜더");
         const avaEl = m.avatar.startsWith("data:image") ? `<img src="${m.avatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />` : m.avatar;
         
-        const hasToday = (m.lastResetDate === todayStr && m.remainingAttempts < 6);
+        // 6회 게이지를 사용하도록 변경됨
+        const hasToday = (m.recordData && m.recordData.date === todayStr && m.recordData.cutsDoneToday > 0);
         if(hasToday) certCount++;
 
         html += `
@@ -1967,6 +2180,8 @@
   // 14. 프로필 상세 모달 & 뷰어 로직
   // ==========================================
   async function openProfileDetail(userCode) {
+    checkMission('view_profile');
+
     const snap = await db.collection('users').doc(userCode).get();
     if (!snap.exists) return;
     const target = snap.data();
@@ -1995,8 +2210,8 @@
   }
   function closeProfileDetailModal() { document.getElementById('profile-detail-modal').classList.remove('open'); }
 
-// ==========================================
-  // 15. DOMContentLoaded & 데몬 (자동 로그인 추가)
+  // ==========================================
+  // 15. DOMContentLoaded & 데몬 (방어코드 통합본)
   // ==========================================
   document.addEventListener("DOMContentLoaded", () => {
     auth.onAuthStateChanged(async (user) => {
@@ -2008,10 +2223,21 @@
           const userData = snapshot.docs[0].data();
           const todayStr = getLocalDateString(new Date());
 
+          if(!userData.attendance) userData.attendance = {};
+          if(!userData.dailyMission || userData.dailyMission.date !== todayStr) {
+            userData.dailyMission = {
+              date: todayStr, score: 0, claimedTiers: [],
+              tasks: { attend: 0, watch_video: 0, view_profile: 0, upload_1: 0, play_5m: 0, upload_3: 0, spend_100: 0, upload_5: 0, add_friend: 0, play_20m: 0, buy_object: 0 },
+              uploadCount: 0, spendAmount: 0
+            };
+          }
+          if(!userData.recordData || userData.recordData.date !== todayStr) {
+            userData.recordData = { date: todayStr, cutsDoneToday: 0, bonusClaimed: false };
+          }
+
           if (userData.lastResetDate !== todayStr) {
-            userData.remainingAttempts = 6;
             userData.lastResetDate = todayStr;
-            await db.collection('users').doc(userData.code).update({ remainingAttempts: 6, lastResetDate: todayStr });
+            await db.collection('users').doc(userData.code).set(userData, {merge: true});
           }
           state.user = userData;
 
