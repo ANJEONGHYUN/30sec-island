@@ -530,6 +530,8 @@
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 24px; cursor: pointer; z-index: 2;
     }
+#island-canvas-wrap { margin: 0 20px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); background: linear-gradient(180deg, #B8DEFF 0%, #7EC7E8 40%, #5BB8D4 100%); position: relative; height: 260px; }
+    #island-canvas { width: 100%; height: 100%; display: block; }
   </style>
 </head>
 <body>
@@ -2205,87 +2207,6 @@
     }
   }
 
-  // [오브제 상점 이미지 100% 활용 실시간 캔버스 드로잉 엔진 개편]
-  function drawIsland() {
-    const wrap = document.getElementById('island-canvas-wrap');
-    if (!wrap) return;
-    const canvas = document.getElementById('island-canvas');
-    const W = wrap.offsetWidth, H = 260;
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext('2d');
-
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#B8DEFF');
-    sky.addColorStop(1, '#5BB8D4');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, H);
-
-    ctx.fillStyle = 'rgba(255,255,255,0.65)';
-    [[60, 40, 25], [160, 50, 18], [W - 80, 45, 22]].forEach(([x, y, r]) => {
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + r * 0.7, y + r * 0.2, r * 0.7, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(x - r * 0.5, y + r * 0.3, r * 0.6, 0, Math.PI * 2); ctx.fill();
-    });
-
-    const sea = ctx.createLinearGradient(0, H * 0.6, 0, H);
-    sea.addColorStop(0, '#5BB8D4');
-    sea.addColorStop(1, '#3DA0C0');
-    ctx.fillStyle = sea;
-    ctx.beginPath();
-    ctx.moveTo(0, H * 0.62);
-    ctx.bezierCurveTo(W * 0.25, H * 0.58, W * 0.75, H * 0.66, W, H * 0.62);
-    ctx.lineTo(W, H);
-    ctx.lineTo(0, H);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = '#F5DFA0';
-    ctx.beginPath();
-    ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#7EC67E';
-    ctx.beginPath();
-    ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (state.user && state.user.placedItems && state.user.placedItems.length > 0) {
-      state.user.placedItems.forEach((itemId, i) => {
-        const item = objectData.find(obj => obj.id === itemId);
-        if (item) {
-          const theta = i * 2.39996; 
-          const radius = Math.min(18 + Math.sqrt(i) * 12, 64); 
-          const x = W / 2 + Math.cos(theta) * radius * 1.5 - 20;
-          const y = H * 0.66 + Math.sin(theta) * radius * 0.5 - 20;
-
-          // 스프라이트 소스 크롭용 XY 축 실시간 환산
-          const srcX = (item.col / 10) * shopSpritesheetImage.width;
-          const srcY = (item.row / 4) * shopSpritesheetImage.height;
-          const srcW = shopSpritesheetImage.width / 10;
-          const srcH = shopSpritesheetImage.height / 4;
-
-          try {
-            // 이모지 수동 출력을 영구 폐지하고 상점 스프라이트 리소스로 100% 정밀 드로잉 처리
-            ctx.drawImage(shopSpritesheetImage, srcX, srcY, srcW, srcH, x, y, 40, 40);
-          } catch(err) {
-            // 스프라이트 이미지 지연 시 폴백용 백업 이모지 드로잉
-            ctx.font = '20px serif';
-            ctx.fillText("🌱", x + 10, y + 20);
-          }
-        }
-      });
-    } else {
-      ['🌱', '🏡', '🌳'].forEach((o, i) => {
-        const x = W / 2 - 40 + i * 40;
-        const y = H * 0.68;
-        ctx.font = '24px serif';
-        ctx.textBaseline = 'middle';
-        ctx.textAlign = 'center';
-        ctx.fillText(o, x, y);
-      });
-    }
-  }
-
   // ──────────────────────────────────────────
   // RECORDER PIPELINE (카메라 하드웨어 안정화 처리 통합)
   // ──────────────────────────────────────────
@@ -2725,6 +2646,47 @@ function switchAuthPanel(panelId) {
       buildRanking();
     }
   });
+// 섬을 그리는 함수 (오브제 배치 로직 포함)
+function drawIsland() {
+  const wrap = document.getElementById('island-canvas-wrap');
+  if (!wrap) return;
+  const canvas = document.getElementById('island-canvas');
+  const W = wrap.offsetWidth, H = 260;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // 1. 섬 배경 및 지형 그리기
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, '#B8DEFF'); sky.addColorStop(1, '#5BB8D4');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  
+  ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
+
+  // 2. 오브제 자동 배치 (배치를 원치 않으시면 이 if문 전체를 지우세요)
+  if (state.user && state.user.placedItems) {
+    state.user.placedItems.forEach((itemId, i) => {
+      const item = objectData.find(obj => obj.id === itemId);
+      if (item) {
+        const angle = (i / state.user.placedItems.length) * Math.PI * 2;
+        const radius = 20 + (i % 4) * 12; 
+        const x = W / 2 + Math.cos(angle) * radius * 2 - 20;
+        const y = H * 0.68 + Math.sin(angle) * radius * 0.8 - 20;
+
+        const srcX = (item.col / 10) * shopSpritesheetImage.width;
+        const srcY = (item.row / 4) * shopSpritesheetImage.height;
+        const srcW = shopSpritesheetImage.width / 10;
+        const srcH = shopSpritesheetImage.height / 4;
+
+        try {
+          ctx.drawImage(shopSpritesheetImage, srcX, srcY, srcW, srcH, x, y, 40, 40);
+        } catch(err) {
+          console.error("이미지 로드 중...");
+        }
+      }
+    });
+  }
+}
 </script>
 </body>
 </html>
