@@ -2664,8 +2664,15 @@ function drawIsland() {
   ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
 
   // 2. 오브제 자동 배치 (배치를 원치 않으시면 이 if문 전체를 지우세요)
+  // 수정된 2번 로직: 식물 아이템만 골라서 자동 배치
   if (state.user && state.user.placedItems) {
-    state.user.placedItems.forEach((itemId, i) => {
+    // 묘목, 나무, 꽃, 벚꽃 등 식물 키워드가 포함된 아이템만 필터링
+    const plantItems = state.user.placedItems.filter(itemId => {
+      const item = objectData.find(obj => obj.id === itemId);
+      return item && (item.name.includes('나무') || item.name.includes('꽃') || item.name.includes('묘목') || item.name.includes('잔디'));
+    });
+
+   plantItems.forEach((itemId, i) => {
       const item = objectData.find(obj => obj.id === itemId);
       if (item) {
         const angle = (i / state.user.placedItems.length) * Math.PI * 2;
