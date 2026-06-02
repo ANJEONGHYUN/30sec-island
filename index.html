@@ -6,6 +6,11 @@
   <title>30초 아일랜드 – 하루 30초, 나의 기록</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
+  
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
   <style>
     :root {
       --sky:       #C8E6FF;
@@ -530,7 +535,7 @@
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 24px; cursor: pointer; z-index: 2;
     }
-#island-canvas-wrap { margin: 0 20px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); background: linear-gradient(180deg, #B8DEFF 0%, #7EC7E8 40%, #5BB8D4 100%); position: relative; height: 260px; }
+    #island-canvas-wrap { margin: 0 20px; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); background: linear-gradient(180deg, #B8DEFF 0%, #7EC7E8 40%, #5BB8D4 100%); position: relative; height: 260px; }
     #island-canvas { width: 100%; height: 100%; display: block; }
   </style>
 </head>
@@ -1018,10 +1023,29 @@
 </nav>
 
 <script>
-  const STORAGE_KEY = "30sec_island_v4_state_master";
+  // ==========================================
+  // 1. Firebase 초기화 및 환경 설정
+  // ==========================================
+  const firebaseConfig = {
+  apiKey: "AIzaSyAG1FFFPm9ro7qOz1odE9wXDDSTAAbMiV0",
+  authDomain: "sec-island.firebaseapp.com",
+  databaseURL: "https://sec-island-default-rtdb.firebaseio.com",
+  projectId: "sec-island",
+  storageBucket: "sec-island.firebasestorage.app",
+  messagingSenderId: "599343149748",
+  appId: "1:599343149748:web:c360d1ebf26f10b08f9de1"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const storage = firebase.storage();
+
+  // ==========================================
+  // 2. 핵심 데이터 상수 및 상태 관리
+  // ==========================================
+  const STORAGE_KEY = "30sec_island_v4_state_master"; // Firebase 마이그레이션으로 인해 식별용으로만 남김
   const PRESET_AVATARS = ['🌳','🏡','⛵','🐬','🌺','🌸','✨','🍄','🐱','🦊','🐯','🐧','🥞','🏕️','🏖️'];
   
-  // 0시 자정 도래 감지용 데일리 7가지 미션 질문 풀 배열 구축
   const dailyMissionPool = [
     "오늘 가장 기억에 남는 장면은 무엇인가요?",
     "과제나 학업 중에 오늘 당신을 가장 뿌듯하게 한 일은 무엇인가요?",
@@ -1072,122 +1096,33 @@
     { "id": "OBJ_040", "name": "올리브영 리얼 힐링 스파 패키지", "rarity": "Legendary (전설)", "price": 7500, "col": 9, "row": 3, "desc": "돌 벽면 디자인과 온천 바닥재 테마가 결합된 야외 힐링 스파 공간 전용 모형입니다." }
   ];
 
-  const rarityPoints = {
-    "Common (일반)": 1,
-    "Rare (희귀)": 3,
-    "Epic (영웅)": 5,
-    "Legendary (전설)": 10
-  };
+  const rarityPoints = { "Common (일반)": 1, "Rare (희귀)": 3, "Epic (영웅)": 5, "Legendary (전설)": 10 };
 
-  const defaultState = {
-    user: null, 
-    objects: [], 
-    recordedToday: false,
-    lastRecordedDate: null,
-    apiKey: "",
-    history: {},
-    rankingTab: 'user', 
-    objectTab: 'shop',
-    globalUsers: [], 
-    onlineParties: []
-  };
-
+  const defaultState = { user: null, recordedToday: false, history: {}, rankingTab: 'user', objectTab: 'shop' };
   let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 30, timerInterval: null };
-  let todayQuestion = "오늘 하루 당신을 미소 짓게 한 것은 무엇인가요?";
-
-  let selectedProfileAvatar = "🌳";
-  let selectedPartyAvatar = "🏆";
-  let isIdCheckedAndValid = false;
-  let checkedAndValidIdString = "";
-  let activeFacingMode = "user";
+  
+  let selectedProfileAvatar = "🌳", selectedPartyAvatar = "🏆";
+  let isIdCheckedAndValid = false, checkedAndValidIdString = "";
   let tempCutsRecorded = [];
   
-  let cameraStream = null;
-  let recMediaRecorder = null;
-  let isCameraConnected = false;
+  let cameraStream = null, recMediaRecorder = null, isCameraConnected = false;
 
-  // 스프라이트시트 이미지 캐싱 객체 선언 (접속 시 레이턴시 없는 화질 구현)
   const shopSpritesheetImage = new Image();
   shopSpritesheetImage.src = 'shop_spritesheet.png';
 
-  // [배치 오브제 스코어 환산 시스템]
+  // [스코어 환산 로직: 인벤토리 아이템 기준]
   function getUserTotalScore(user) {
-    if (!user || !user.placedItems) return 0;
-    return user.placedItems.reduce((sum, itemId) => {
+    if (!user || !user.inventory) return 0;
+    return user.inventory.reduce((sum, itemId) => {
       const obj = objectData.find(o => o.id === itemId);
       if (obj && rarityPoints[obj.rarity]) return sum + rarityPoints[obj.rarity];
       return sum;
     }, 0);
   }
 
-  // [파티원 총합 점수 계산식]
-  function getPartyTotalScore(party) {
-    if (!party || !party.members) return 0;
-    return party.members.reduce((sum, mCode) => {
-      const member = state.globalUsers.find(u => u.code === mCode) || (state.user && state.user.code === mCode ? state.user : null);
-      return sum + (member ? getUserTotalScore(member) : 0);
-    }, 0);
-  }
-
-  function loadState() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        state = { ...state, ...parsed };
-        validateStreak();
-      }
-    } catch (e) {}
-  }
-
-  function saveState() {
-    try {
-      if (state.user) {
-        const uIdx = state.globalUsers.findIndex(u => u.code === state.user.code);
-        if (uIdx !== -1) {
-          state.globalUsers[uIdx] = state.user;
-        } else {
-          state.globalUsers.push(state.user);
-        }
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        user: state.user, globalUsers: state.globalUsers, onlineParties: state.onlineParties, history: state.history, apiKey: state.apiKey
-      }));
-    } catch (e) {}
-  }
-
-  // 0시 자정 리셋 기반 질문 배정 및 Streak 초기화 검증 장치
-  function validateStreak() {
-    if (!state.user) return;
-    const now = new Date();
-    const todayStr = getLocalDateString(now);
-    
-    // 의심점 패치: 요일별 동적 질문 변경 엔진 연동
-    const questionIndex = now.getDay() % dailyMissionPool.length;
-    document.getElementById('question-text').textContent = dailyMissionPool[questionIndex];
-    
-    if (!state.user.lastRecordedDate) {
-      state.recordedToday = false;
-      return;
-    }
-    
-    if (state.user.lastRecordedDate === todayStr) {
-      state.recordedToday = true;
-      return;
-    }
-
-    state.recordedToday = false;
-    const lastDate = new Date(state.user.lastRecordedDate);
-    const diffTime = Math.abs(now - lastDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    // 0시 기준 하루라도 인증 기록이 비어있다면 streak 리셋 트리거
-    if (diffDays > 1) {
-      state.user.streak = 0;
-      saveState();
-    }
-  }
-
+  // ==========================================
+  // 3. 유틸리티 함수 모음
+  // ==========================================
   function getLocalDateString(date) {
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -1198,25 +1133,102 @@
   function generateUserCode() {
     const num = Math.floor(1000 + Math.random() * 9000);
     const chars = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
-    const char = chars[Math.floor(Math.random() * chars.length)];
-    return `ISLAND-${num}-${char}`;
+    return `ISLAND-${num}-${chars[Math.floor(Math.random() * chars.length)]}`;
   }
 
   function generatePartyCode() {
     const num = Math.floor(1000 + Math.random() * 9000);
     const chars = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
-    const char = chars[Math.floor(Math.random() * chars.length)];
-    return `PARTY-${num}-${char}`;
+    return `PARTY-${num}-${chars[Math.floor(Math.random() * chars.length)]}`;
   }
 
-  function switchAuthPanel(panelId) {
-    document.querySelectorAll('.auth-card').forEach(card => card.classList.remove('active'));
-    document.getElementById(`panel-${panelId}`).classList.add('active');
-    if (panelId === 'register') {
-      resetRegisterForm();
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  async function saveUserToDB() {
+    if(state.user) {
+      await db.collection('users').doc(state.user.code).set(state.user, {merge: true});
     }
   }
 
+  // ==========================================
+  // 4. 인증 화면 제어 및 사진 업로드 시스템
+  // ==========================================
+  function switchAuthPanel(panelId) {
+    document.querySelectorAll('.auth-card').forEach(card => card.classList.remove('active'));
+    const targetPanel = document.getElementById('panel-' + panelId);
+    if (targetPanel) targetPanel.classList.add('active');
+    
+    if (panelId === 'register') resetRegisterForm();
+  }
+
+  function setupAvatarPresetGrid(gridId, mode) {
+    const grid = document.getElementById(gridId);
+    if(!grid) return;
+    grid.innerHTML = PRESET_AVATARS.map(ava => `
+      <div class="avatar-item" onclick="selectAvatarElement(this, '${ava}', '${mode}')">${ava}</div>
+    `).join('');
+    
+    const first = grid.querySelector('.avatar-item');
+    if (first) first.classList.add('selected');
+    if (mode === 'profile') selectedProfileAvatar = "🌳";
+    else selectedPartyAvatar = "🏆";
+  }
+
+  function selectAvatarElement(el, ava, mode) {
+    const parent = el.parentElement;
+    parent.querySelectorAll('.avatar-item').forEach(child => child.classList.remove('selected'));
+    el.classList.add('selected');
+    
+    if (mode === 'profile') {
+      selectedProfileAvatar = ava;
+      const prev = document.getElementById('prof-avatar-preview-img');
+      if(prev) prev.style.display = 'none';
+    } else {
+      selectedPartyAvatar = ava;
+      const prev = document.getElementById('party-custom-image-preview');
+      if(prev) prev.style.display = 'none';
+    }
+  }
+
+  function handleProfileImageUpload(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById('prof-avatar-preview-img');
+        if(preview) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+        selectedProfileAvatar = e.target.result;
+        document.querySelectorAll('#prof-avatar-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function handlePartyImageUpload(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById('party-custom-image-preview');
+        if(preview) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+        selectedPartyAvatar = e.target.result;
+        document.querySelectorAll('#create-party-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // ==========================================
+  // 5. Firebase 기반 회원가입 / 로그인 / 찾기
+  // ==========================================
   function resetRegisterForm() {
     document.getElementById('reg-id').value = "";
     document.getElementById('reg-nickname').value = "";
@@ -1230,276 +1242,165 @@
     document.getElementById('reg-id-status').style.display = 'none';
     document.getElementById('reg-pw-warn').style.display = 'none';
     document.getElementById('reg-pw-confirm-warn').style.display = 'none';
-    isIdCheckedAndValid = false;
-    checkedAndValidIdString = "";
+    isIdCheckedAndValid = false; checkedAndValidIdString = "";
     setupAvatarPresetGrid('prof-avatar-preset-grid', 'profile');
   }
 
   function handleIdInputChange() {
-    isIdCheckedAndValid = false;
-    checkedAndValidIdString = "";
+    isIdCheckedAndValid = false; checkedAndValidIdString = "";
     document.getElementById('reg-id-status').style.display = 'none';
     document.getElementById('reg-id').classList.remove('error');
-  }
-
-  function checkIdDuplication() {
-    const idInput = document.getElementById('reg-id');
-    const idVal = idInput.value.trim();
-    const statusEl = document.getElementById('reg-id-status');
-
-    if (!idVal) {
-      showToast("아이디를 입력해 주세요.");
-      return;
-    }
-
-    const regex = /^[a-zA-Z0-9]+$/;
-    if (!regex.test(idVal)) {
-      statusEl.style.display = 'block';
-      statusEl.style.color = '#FF5A42';
-      statusEl.textContent = "❌ 영문 및 숫자 조합만 사용 가능합니다.";
-      idInput.classList.add('error');
-      isIdCheckedAndValid = false;
-      return;
-    }
-
-    const isDuplicate = state.globalUsers.some(u => u.loginId.toLowerCase() === idVal.toLowerCase());
-
-    statusEl.style.display = 'block';
-    if (isDuplicate) {
-      statusEl.style.color = '#FF5A42';
-      statusEl.textContent = "❌ 중복된 아이디입니다.";
-      idInput.classList.add('error');
-      isIdCheckedAndValid = false;
-    } else {
-      statusEl.style.color = '#7EC67E';
-      statusEl.textContent = "✔️ 사용 가능한 아이디입니다.";
-      idInput.classList.remove('error');
-      isIdCheckedAndValid = true;
-      checkedAndValidIdString = idVal;
-    }
   }
 
   function validatePasswordFields() {
     const pwInput = document.getElementById('reg-pw');
     const confirmInput = document.getElementById('reg-pw-confirm');
-    const pwVal = pwInput.value;
-    const confirmVal = confirmInput.value;
+    if (pwInput.value.length >= 8) { pwInput.classList.remove('error'); document.getElementById('reg-pw-warn').style.display = 'none'; }
+    if (confirmInput.value === "" || pwInput.value === confirmInput.value) { confirmInput.classList.remove('error'); document.getElementById('reg-pw-confirm-warn').style.display = 'none'; }
+  }
 
-    if (pwVal.length >= 8) {
-      pwInput.classList.remove('error');
-      document.getElementById('reg-pw-warn').style.display = 'none';
+  async function checkIdDuplication() {
+    const idInput = document.getElementById('reg-id');
+    const idVal = idInput.value.trim().toLowerCase();
+    const statusEl = document.getElementById('reg-id-status');
+
+    if (!idVal) return showToast("아이디를 입력해 주세요.");
+    if (!/^[a-zA-Z0-9]+$/.test(idVal)) {
+      statusEl.style.display = 'block'; statusEl.style.color = '#FF5A42'; statusEl.textContent = "❌ 영문 및 숫자 조합만 가능합니다.";
+      idInput.classList.add('error'); isIdCheckedAndValid = false; return;
     }
-    if (confirmVal === "" || pwVal === confirmVal) {
-      confirmInput.classList.remove('error');
-      document.getElementById('reg-pw-confirm-warn').style.display = 'none';
+
+    statusEl.style.display = 'block';
+    const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
+    if (!snapshot.empty) {
+      statusEl.style.color = '#FF5A42'; statusEl.textContent = "❌ 중복된 아이디입니다.";
+      idInput.classList.add('error'); isIdCheckedAndValid = false;
+    } else {
+      statusEl.style.color = '#7EC67E'; statusEl.textContent = "✔️ 사용 가능한 아이디입니다.";
+      idInput.classList.remove('error'); isIdCheckedAndValid = true; checkedAndValidIdString = idVal;
     }
   }
 
-  function submitRegister() {
-    const idInput = document.getElementById('reg-id');
-    const idVal = idInput.value.trim();
+  async function submitRegister() {
+    const idVal = document.getElementById('reg-id').value.trim().toLowerCase();
     const nickname = document.getElementById('reg-nickname').value.trim();
-    const pwInput = document.getElementById('reg-pw');
-    const pwVal = pwInput.value;
-    const confirmInput = document.getElementById('reg-pw-confirm');
-    const confirmVal = confirmInput.value;
+    const pwVal = document.getElementById('reg-pw').value;
+    const confirmVal = document.getElementById('reg-pw-confirm').value;
     const birthday = document.getElementById('reg-birthday').value;
     const animal = document.getElementById('reg-animal').value.trim();
     const isPublic = document.getElementById('prof-public-toggle').checked;
 
-    if (!isIdCheckedAndValid || idVal !== checkedAndValidIdString) {
-      showToast("아이디 중복 검사를 완료해 주세요.");
-      idInput.classList.add('error');
-      return;
-    }
-    if (!nickname) {
-      showToast("계정 이름을 지정해 주세요.");
-      return;
-    }
-    if (pwVal.length < 8) {
-      pwInput.classList.add('error');
-      document.getElementById('reg-pw-warn').style.display = 'block';
-      showToast("비밀번호는 최소 8자 이상 필요합니다.");
-      return;
-    }
-    if (pwVal !== confirmVal) {
-      confirmInput.classList.add('error');
-      document.getElementById('reg-pw-confirm-warn').style.display = 'block';
-      showToast("비밀번호 확인이 일치하지 않습니다.");
-      return;
-    }
-    if (!birthday) {
-      showToast("생년월일을 선택해 주세요.");
-      return;
-    }
-    if (!animal) {
-      showToast("좋아하는 동물 답변을 입력해 주세요.");
-      return;
-    }
+    if (!isIdCheckedAndValid || idVal !== checkedAndValidIdString) return showToast("중복 검사를 완료해 주세요.");
+    if (!nickname) return showToast("이름을 지정해 주세요.");
+    if (pwVal.length < 8) return showToast("비밀번호는 최소 8자 이상 필요합니다.");
+    if (pwVal !== confirmVal) return showToast("비밀번호 확인이 일치하지 않습니다.");
+    if (!birthday) return showToast("생년월일을 선택해 주세요.");
+    if (!animal) return showToast("좋아하는 동물 답변을 입력해 주세요.");
 
     const userCode = generateUserCode();
-    const newUser = {
-      loginId: idVal,
-      nickname: nickname,
-      pw: pwVal,
-      birthday: birthday,
-      animal: animal,
-      isPublic: isPublic,
-      avatar: selectedProfileAvatar,
-      streak: 0,
-      code: userCode,
-      points: 1000, 
-      inventory: [], 
-      placedItems: [],
-      friends: [],
-      partyCode: null,
-      lastRecordedDate: null
-    };
+    const todayStr = getLocalDateString(new Date());
 
-    state.globalUsers.push(newUser);
-    saveState();
-    showWelcomeToast();
-
-    setTimeout(() => {
-      switchAuthPanel('login');
-      document.getElementById('login-id').value = idVal;
-    }, 2000);
+    try {
+      await db.collection('users').doc(userCode).set({
+        code: userCode, loginId: idVal, pw: pwVal, nickname: nickname,
+        birthday: birthday, animal: animal, isPublic: isPublic,
+        avatar: selectedProfileAvatar, points: 1000, score: 0, streak: 0,
+        remainingAttempts: 6, totalVideos: 0, lastResetDate: todayStr,
+        inventory: [], friends: [], partyCode: null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      showToast("🎉 가입 성공! 1000p 지급 완료!");
+      setTimeout(() => { switchAuthPanel('login'); document.getElementById('login-id').value = idVal; }, 2000);
+    } catch (e) { showToast("가입 처리 중 오류 발생."); }
   }
 
-  function showWelcomeToast() {
-    const t = document.getElementById('toast');
-    t.innerHTML = "🎉 웰컴 포인트! 가입 기념 1000p 지급 완료!";
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
-  }
-
-  function submitLogin() {
-    const idVal = document.getElementById('login-id').value.trim();
-    const pwVal = document.getElementById('login-pw').value;
-
-    if (!idVal || !pwVal) {
-      showToast("아이디와 비밀번호를 모두 입력해 주세요.");
-      return;
-    }
-
-    const matchedUser = state.globalUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
-
-    if (!matchedUser || matchedUser.pw !== pwVal) {
-      showToast("가입 정보가 일치하지 않습니다. 다시 시도해 주세요.");
-      return;
-    }
-
-    state.user = matchedUser;
-    completeInitialLoginFlow();
-  }
-
-  function handleProfileImageUpload(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const preview = document.getElementById('prof-avatar-preview-img');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-        selectedProfileAvatar = e.target.result;
-        document.querySelectorAll('#prof-avatar-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
-      }
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
-  function handlePartyImageUpload(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const preview = document.getElementById('party-custom-image-preview');
-        preview.src = e.target.result;
-        preview.style.display = 'block';
-        selectedPartyAvatar = e.target.result;
-        document.querySelectorAll('#create-party-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
-      }
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
-  function submitFindId() {
+  async function submitFindId() {
     const nickVal = document.getElementById('find-id-nickname').value.trim();
     const animalVal = document.getElementById('find-id-animal').value.trim();
+    if (!nickVal || !animalVal) return showToast("모든 정보를 입력해 주세요.");
 
-    if (!nickVal || !animalVal) {
-      showToast("모든 정보를 입력해 주세요.");
-      return;
-    }
+    const snapshot = await db.collection('users').where('nickname', '==', nickVal).where('animal', '==', animalVal).get();
+    if (!snapshot.empty) {
+      alert(`🎉 일치 성공!\n\n가입 아이디는 [ ${snapshot.docs[0].data().loginId} ] 입니다.`);
+      switchAuthPanel('login'); document.getElementById('login-id').value = snapshot.docs[0].data().loginId;
+    } else { showToast("일치하는 가입 정보가 없습니다."); }
+  }
 
-    const matched = state.globalUsers.find(u => u.nickname === nickVal && u.animal.toLowerCase() === animalVal.toLowerCase());
+  async function submitFindPw() {
+    const idVal = document.getElementById('find-pw-id').value.trim().toLowerCase();
+    if (!idVal) return showToast("아이디를 입력해 주세요.");
 
-    if (matched) {
-      alert(`🎉 계정 일치 성공!\n\n회원님의 가입 아이디는 [ ${matched.loginId} ] 입니다.`);
-      switchAuthPanel('login');
-      document.getElementById('login-id').value = matched.loginId;
-    } else {
-      showToast("일치하는 가입 정보가 없습니다.");
+    const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
+    if (!snapshot.empty) {
+      alert(`🎉 조회 성공!\n\n비밀번호는 [ ${snapshot.docs[0].data().pw} ] 입니다.`);
+      switchAuthPanel('login'); document.getElementById('login-pw').value = snapshot.docs[0].data().pw;
+    } else { showToast("등록되지 않은 아이디입니다."); }
+  }
+
+  async function submitLogin() {
+    const idVal = document.getElementById('login-id').value.trim().toLowerCase();
+    const pwVal = document.getElementById('login-pw').value;
+    if (!idVal || !pwVal) return showToast("정보를 입력해 주세요.");
+
+    try {
+      const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
+      if (snapshot.empty || snapshot.docs[0].data().pw !== pwVal) return showToast("가입 정보가 일치하지 않습니다.");
+
+      const userData = snapshot.docs[0].data();
+      const todayStr = getLocalDateString(new Date());
+
+      // 자정 초기화(6회 제한)
+      if (userData.lastResetDate !== todayStr) {
+        userData.remainingAttempts = 6; userData.lastResetDate = todayStr;
+        await db.collection('users').doc(userData.code).update({ remainingAttempts: 6, lastResetDate: todayStr });
+      }
+      state.user = userData;
+
+      // Firestore 타임라인 데이터 연동
+      const videoSnap = await db.collection('timeline').where('userCode', '==', userData.code).get();
+      state.history = {};
+      videoSnap.forEach(doc => {
+        const v = doc.data();
+        state.history[v.recordedAt] = { emotion: v.emotion, clips: v.clips };
+      });
+
+      completeInitialLoginFlow();
+    } catch (e) { showToast("로그인 오류. 네트워크를 확인하세요."); }
+  }
+
+  function handleLogout() {
+    if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
+      state.user = null; state.history = {};
+      document.getElementById('screen-main-app').style.display = 'none';
+      document.getElementById('bottom-app-nav').style.display = 'none';
+      document.getElementById('screen-auth').style.display = 'flex';
+      document.getElementById('login-id').value = ''; document.getElementById('login-pw').value = '';
     }
   }
 
-  function submitFindPw() {
-    const idVal = document.getElementById('find-pw-id').value.trim();
-
-    if (!idVal) {
-      showToast("아이디를 입력해 주세요.");
-      return;
-    }
-
-    const matched = state.globalUsers.find(u => u.loginId.toLowerCase() === idVal.toLowerCase());
-
-    if (matched) {
-      alert(`🎉 계정 비밀번호 조회 성공!\n\n비밀번호는 [ ${matched.pw} ] 입니다.`);
-      switchAuthPanel('login');
-      document.getElementById('login-pw').value = matched.pw;
-    } else {
-      showToast("등록되어 있지 않은 아이디입니다.");
-    }
-  }
-
-  // 앱 재기동 및 로그인 직후 즉시 렌더 레이턴시 제로 연동 파이프라인
   function completeInitialLoginFlow() {
-    saveState();
     document.getElementById('screen-auth').style.display = 'none';
     document.getElementById('screen-main-app').style.display = 'block';
     document.getElementById('bottom-app-nav').style.display = 'flex';
 
-    updateGlobalPointsDisplay();
     updateMiniProfileHeader();
-
     const currentScore = getUserTotalScore(state.user);
     document.getElementById('stat-streak').textContent = state.user.streak;
     document.getElementById('stat-total').textContent = `${currentScore}점`;
     document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
     document.getElementById('settings-user-code').value = state.user.code;
 
-    // 즉각 동기화 드로잉
-    drawIsland();
-    buildMembers();
-    buildRanking();
-    
+    updateGlobalPointsDisplay();
+    goPage('home');
     showToast(`🏝️ 환영합니다, ${state.user.nickname}님!`);
   }
 
-  // 홈 탭 좌측 상단 미니 프로필 주입 뷰
   function updateMiniProfileHeader() {
     if (!state.user) return;
     const avBox = document.getElementById('home-mini-avatar');
-    const nickBox = document.getElementById('home-mini-nickname');
-    
-    if (state.user.avatar && state.user.avatar.startsWith("data:image")) {
-      avBox.innerHTML = `<img src="${state.user.avatar}" />`;
-    } else {
-      avBox.innerHTML = `<span>${state.user.avatar || '👤'}</span>`;
-    }
-    if (nickBox) nickBox.textContent = state.user.nickname;
-  }
-
-  function openMyProfileModal() {
-    if (state.user) openProfileDetail(state.user.code);
+    if (state.user.avatar && state.user.avatar.startsWith("data:image")) { avBox.innerHTML = `<img src="${state.user.avatar}" />`; }
+    else { avBox.innerHTML = `<span>${state.user.avatar || '👤'}</span>`; }
+    document.getElementById('home-mini-nickname').textContent = state.user.nickname;
   }
 
   function updateGlobalPointsDisplay() {
@@ -1509,966 +1410,180 @@
     document.getElementById('workshop-points-display').textContent = `🪙 ${pts}p`;
   }
 
-  function setupAvatarPresetGrid(gridId, mode) {
-    const grid = document.getElementById(gridId);
-    grid.innerHTML = PRESET_AVATARS.map(ava => `
-      <div class="avatar-item" data-avatar="${ava}" onclick="selectAvatarElement(this, '${ava}', '${mode}')">${ava}</div>
-    `).join('');
-    
-    const first = grid.querySelector('.avatar-item');
-    if (first) first.classList.add('selected');
-    if (mode === 'profile') {
-      selectedProfileAvatar = "🌳";
-    } else {
-      selectedPartyAvatar = "🏆";
-    }
-  }
-
-  function selectAvatarElement(el, ava, mode) {
-    const parent = el.parentElement;
-    parent.querySelectorAll('.avatar-item').forEach(child => child.classList.remove('selected'));
-    el.classList.add('selected');
-    
-    if (mode === 'profile') {
-      selectedProfileAvatar = ava;
-      document.getElementById('prof-avatar-preview-img').style.display = 'none';
-    } else {
-      selectedPartyAvatar = ava;
-      document.getElementById('party-custom-image-preview').style.display = 'none';
-    }
-  }
-
-  // ──────────────────────────────────────────
-  // FRIENDS SYSTEM
-  // ──────────────────────────────────────────
-  function openFriendsModal() {
-    renderFriendsList();
-    document.getElementById('friends-modal').classList.add('open');
-  }
-
-  function closeFriendsModal() {
-    document.getElementById('friends-modal').classList.remove('open');
-  }
-
-  function submitAddFriend() {
-    const fCodeInput = document.getElementById('friend-add-code-input');
-    const fCode = fCodeInput.value.trim();
-
-    if (!fCode) {
-      showToast("친구 코드를 입력해 주세요.");
-      return;
-    }
-
-    if (state.user && fCode === state.user.code) {
-      showToast("자기 자신은 친구로 등록할 수 없습니다.");
-      return;
-    }
-
-    if (!state.user.friends) state.user.friends = [];
-
-    if (state.user.friends.includes(fCode)) {
-      showToast("이미 등록된 친구입니다.");
-      return;
-    }
-
-    const targetUser = state.globalUsers.find(u => u.code === fCode);
-    if (!targetUser) {
-      showToast("입력하신 고유 코드를 가진 유저를 찾지 못했습니다.");
-      return;
-    }
-
-    state.user.friends.push(fCode);
-    
-    if (!targetUser.friends) targetUser.friends = [];
-    if (!targetUser.friends.includes(state.user.code)) {
-      targetUser.friends.push(state.user.code);
-    }
-
-    saveState();
-    fCodeInput.value = "";
-    renderFriendsList();
-    showToast(`🤝 "${targetUser.nickname}"님과 친구가 성사되었습니다.`);
-  }
-
-  function renderFriendsList() {
-    const list = document.getElementById('friends-list-container');
-    if (!list) return;
-
-    if (!state.user || !state.user.friends || state.user.friends.length === 0) {
-      list.innerHTML = `
-        <div style="text-align:center; padding:24px; color:var(--muted); font-size:12px;">
-          아직 추가된 친구가 없습니다. 친구 코드를 등록해 보세요! 🤝
-        </div>`;
-      return;
-    }
-
-    list.innerHTML = state.user.friends.map(fCode => {
-      const friend = state.globalUsers.find(u => u.code === fCode);
-      if (!friend) return '';
-
-      const isPub = friend.isPublic;
-      const fName = isPub ? friend.nickname : "비공개 아일랜더";
-      const fAvatar = isPub ? friend.avatar : "👤";
-      
-      let avaEl = "";
-      if (fAvatar.startsWith("data:image")) {
-        avaEl = `<img src="${fAvatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />`;
-      } else {
-        avaEl = `<span style="font-size:20px;">${fAvatar}</span>`;
-      }
-
-      return `
-        <div class="member-card" style="padding:10px; border-radius:10px;">
-          <div class="member-avatar">${avaEl}</div>
-          <div class="member-info">
-            <div class="name" style="font-size:13px;">${fName}</div>
-            <div class="streak" style="font-size:11px;">🔥 ${isPub ? friend.streak : '-'}일 연속 기록 중</div>
-          </div>
-          <button class="member-action done-today" onclick="openProfileDetail('${friend.code}')" style="padding:4px 8px; font-size:10px;">상세보기</button>
-        </div>`;
-    }).join('');
-  }
-
-  // ──────────────────────────────────────────
-  // SHOP & INVENTORY
-  // ──────────────────────────────────────────
-  function switchObjectTab(type) {
-    state.objectTab = type;
-    document.querySelectorAll('#page-objects .tab-trigger').forEach(t => t.classList.remove('active'));
-    document.getElementById(`obj-tab-${type}`).classList.add('active');
-
-    const shopGrid = document.getElementById('shop');
-    const invGrid = document.getElementById('inventory-view-grid');
-    const titleEl = document.getElementById('object-list-title');
-
-    if (type === 'shop') {
-      titleEl.textContent = "포인트를 활용한 테마 오브제 구매";
-      shopGrid.style.display = "grid";
-      invGrid.style.display = "none";
-      renderShopItems();
-    } else {
-      titleEl.textContent = "보유 중인 테마 오브제 및 섬 배치 (클릭하여 조율)";
-      shopGrid.style.display = "none";
-      invGrid.style.display = "grid";
-      renderInventoryItems();
-    }
-  }
-
-  function renderShopItems() {
-    const grid = document.getElementById('shop');
-    if (!grid) return;
-
-    if (!state.user) return;
-    if (!state.user.inventory) state.user.inventory = [];
-
-    grid.innerHTML = '';
-    objectData.forEach(item => {
-      const isOwned = state.user.inventory.includes(item.id);
-      const posX = (item.col / 10) * 100; 
-      const posY = (item.row / 4) * 100; 
-      const allocatedScore = rarityPoints[item.rarity] || 0;
-
-      const card = document.createElement('div');
-      card.className = 'obj-card';
-
-      const buttonHtml = isOwned 
-        ? `<button class="buy-btn" disabled style="background:#ccc; color:#666;">보유 중</button>`
-        : `<button class="buy-btn" onclick="purchaseObject('${item.id}', ${item.price})">구매</button>`;
-
-      card.innerHTML = `
-        <div>
-          <div class="sprite-wrapper">
-            <div class="object-sprite" style="background-position: ${posX}% ${posY}%;"></div>
-          </div>
-          <div class="obj-rarity">${item.rarity}</div>
-          <div class="obj-title">${item.name}</div>
-          <div class="obj-desc">${item.desc}</div>
-        </div>
-        <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:8px;">
-          <div style="font-size:11px; color:var(--coral); font-weight:700;">배치 점수: +${allocatedScore}점</div>
-          <span style="font-size:13px; font-weight:700; color:var(--sea);">${item.price}p</span>
-          ${buttonHtml}
-        </div>`;
-      
-      grid.appendChild(card);
-    });
-  }
-
-  function purchaseObject(itemId, price) {
-    if (!state.user) return;
-    const currentPoints = state.user.points || 0;
-
-    if (currentPoints < price) {
-      showToast("포인트가 부족합니다. 매일 영상을 기록해 성실 포인트를 모아보세요!");
-      return;
-    }
-
-    state.user.points = currentPoints - price;
-    if (!state.user.inventory) state.user.inventory = [];
-    state.user.inventory.push(itemId);
-
-    saveState();
-    updateGlobalPointsDisplay();
-    renderShopItems();
-    showToast(`📦 오브제 구매가 성공적으로 완료되었습니다. (차감: ${price}p)`);
-  }
-
-  function renderInventoryItems() {
-    const grid = document.getElementById('inventory-view-grid');
-    if (!grid) return;
-
-    if (!state.user) return;
-    if (!state.user.inventory || state.user.inventory.length === 0) {
-      grid.innerHTML = `
-        <div style="grid-column: 1/-1; text-align:center; padding:32px; color:var(--muted); font-size:12px;">
-          인벤토리가 비어있습니다. 상점 탭에서 마음에 드는 오브제를 입양해 보세요! 🪴
-        </div>`;
-      return;
-    }
-
-    if (!state.user.placedItems) state.user.placedItems = [];
-
-    grid.innerHTML = state.user.inventory.map(itemId => {
-      const item = objectData.find(i => i.id === itemId);
-      if (!item) return '';
-
-      const isPlaced = state.user.placedItems.includes(itemId);
-      const posX = (item.col / 10) * 100;
-      const posY = (item.row / 4) * 100;
-
-      return `
-        <div class="inventory-card ${isPlaced ? 'placed' : ''}" onclick="togglePlaceObject('${itemId}')">
-          <div class="inventory-card-sprite-mini" style="background-position: ${posX}% ${posY}%;"></div>
-          <span style="font-size:10px; font-weight:700; text-align:center; margin-top:4px; max-width:90%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</span>
-          ${isPlaced ? `<span class="inventory-card-badge">배치 중</span>` : ''}
-        </div>`;
-    }).join('');
-  }
-
-  function togglePlaceObject(itemId) {
-    if (!state.user) return;
-    if (!state.user.placedItems) state.user.placedItems = [];
-
-    const pIdx = state.user.placedItems.indexOf(itemId);
-    if (pIdx !== -1) {
-      state.user.placedItems.splice(pIdx, 1);
-      showToast("오브제를 섬 대지에서 수거하였습니다.");
-    } else {
-      if (state.user.placedItems.length >= 12) {
-        showToast("섬의 공간이 협소하여 최대 12개까지만 동시에 대지에 수놓을 수 있습니다.");
-        return;
-      }
-      state.user.placedItems.push(itemId);
-      showToast("오브제를 섬 위에 무사히 배치하였습니다!");
-    }
-
-    saveState();
-    renderInventoryItems();
-    drawIsland();
-  }
-
-  // ──────────────────────────────────────────
-  // ONLINE PARTY SYSTEM
-  // ──────────────────────────────────────────
-  function openPartyCreationModal() {
-    setupAvatarPresetGrid('create-party-preset-grid', 'party');
-    document.getElementById('party-create-modal').classList.add('open');
-  }
-
-  function closePartyCreateModal() {
-    document.getElementById('party-create-modal').classList.remove('open');
-  }
-
-  function openPartyJoinModal() {
-    document.getElementById('party-join-modal').classList.add('open');
-  }
-
-  function closePartyJoinModal() {
-    document.getElementById('party-join-modal').classList.remove('open');
-  }
-
-  function submitCreateParty() {
-    if (!state.user) return;
-    const pName = document.getElementById('create-party-name').value.trim();
-    if (!pName) {
-      showToast("파티 이름을 지정해 주세요.");
-      return;
-    }
-
-    const pCode = generatePartyCode();
-    
-    const newParty = {
-      code: pCode,
-      name: pName,
-      image: selectedPartyAvatar,
-      members: [state.user.code]
-    };
-    
-    state.onlineParties.push(newParty);
-    state.user.partyCode = pCode;
-
-    saveState();
-    closePartyCreateModal();
-    renderPartyMainView();
-    showToast(`👥 실시간 온라인 파티 "${pName}"를 개설했습니다.`);
-  }
-
-  function submitJoinParty() {
-    if (!state.user) return;
-    const codeVal = document.getElementById('join-party-code-input').value.trim();
-    if (!codeVal) {
-      showToast("파티 코드를 입력하세요.");
-      return;
-    }
-
-    const match = state.onlineParties.find(p => p.code === codeVal);
-    if (!match) {
-      showToast("일치하는 파티를 찾지 못했습니다. 파티 코드를 확인해 주세요.");
-      return;
-    }
-
-    if (!match.members.includes(state.user.code)) {
-      match.members.push(state.user.code);
-    }
-    
-    state.user.partyCode = codeVal;
-    saveState();
-    closePartyJoinModal();
-    renderPartyMainView();
-    showToast("👥 파티 가입 및 동기화가 완료되었습니다.");
-  }
-
-  // 일일 파티원 인증률 연산 및 관리버튼 출력 고도화
-  function renderPartyMainView() {
-    const gate = document.getElementById('party-gate-view');
-    const mainView = document.getElementById('party-active-view');
-
-    if (!state.user || !state.user.partyCode) {
-      gate.style.display = "grid";
-      mainView.style.display = "none";
-      return;
-    }
-
-    gate.style.display = "none";
-    mainView.style.display = "block";
-
-    const party = state.onlineParties.find(p => p.code === state.user.partyCode);
-    if (!party) {
-      state.user.partyCode = null;
-      saveState();
-      gate.style.display = "grid";
-      mainView.style.display = "none";
-      return;
-    }
-
-    document.getElementById('active-party-name').innerHTML = `${party.image || '🏆'} ${party.name}`;
-    document.getElementById('active-party-code-label').textContent = `파티 코드: ${party.code}`;
-
-    // 당일 백분율(%) 달성 수치 집계 연산
-    const todayStr = getLocalDateString(new Date());
-    const joinedMembers = getPartyJoinedMembers(party);
-    const certifiedCount = joinedMembers.filter(m => m.lastRecordedDate === todayStr).length;
-    const certPercentage = joinedMembers.length > 0 ? Math.round((certifiedCount / joinedMembers.length) * 100) : 0;
-
-    document.getElementById('active-party-score').textContent = `오늘의 달성률: ${certPercentage}%`;
-
-    // 파티장(개설 멤버) 식별 후 해체 버튼 활성화 분기
-    const dissolveBtn = document.getElementById('party-dissolve-btn');
-    if (party.members[0] === state.user.code) {
-      dissolveBtn.style.display = "block";
-    } else {
-      dissolveBtn.style.display = "none";
-    }
-
-    buildMembers();
-  }
-
-  // 파티 탈퇴 프로세스
-  function leaveParty() {
-    if (!state.user || !state.user.partyCode) return;
-    if (!confirm("정말 이 파티를 나가시겠습니까?")) return;
-
-    const party = state.onlineParties.find(p => p.code === state.user.partyCode);
-    if (party) {
-      party.members = party.members.filter(m => m !== state.user.code);
-      if (party.members.length === 0) {
-        state.onlineParties = state.onlineParties.filter(p => p.code !== party.code);
-      }
-    }
-    state.user.partyCode = null;
-    saveState();
-    renderPartyMainView();
-    showToast("👥 파티 탈퇴 처리가 완료되었습니다.");
-  }
-
-  // 파티 해체 프로세스 (방장 전용)
-  function dissolveParty() {
-    if (!state.user || !state.user.partyCode) return;
-    const party = state.onlineParties.find(p => p.code === state.user.partyCode);
-    if (!party) return;
-
-    if (party.members[0] !== state.user.code) {
-      showToast("파티를 개설한 모험가만 해체가 가능합니다.");
-      return;
-    }
-
-    if (!confirm("정말 파티를 강제 해체하시겠습니까? 소속원들의 파티 상태가 전부 소멸됩니다.")) return;
-
-    state.globalUsers.forEach(u => {
-      if (u.partyCode === party.code) u.partyCode = null;
-    });
-    if (state.user.partyCode === party.code) state.user.partyCode = null;
-
-    state.onlineParties = state.onlineParties.filter(p => p.code !== party.code);
-    saveState();
-    renderPartyMainView();
-    showToast("💥 파티가 성공적으로 해체되었습니다.");
-  }
-
-  function getPartyJoinedMembers(party) {
-    const users = [];
-    party.members.forEach(mCode => {
-      if (state.user && mCode === state.user.code) {
-        users.push(state.user);
-      } else {
-        const found = state.globalUsers.find(u => u.code === mCode);
-        if (found) users.push(found);
-      }
-    });
-    return users;
-  }
-
-  // 실시간 영상 촬영 여부에 따른 인증 현황 배지(🟢/⚪) 주입 바인딩
-  function buildMembers() {
-    const list = document.getElementById('member-list');
-    if (!list) return;
-
-    if (!state.user || !state.user.partyCode) {
-      list.innerHTML = "";
-      return;
-    }
-
-    const party = state.onlineParties.find(p => p.code === state.user.partyCode);
-    if (!party) return;
-
-    const membersList = getPartyJoinedMembers(party);
-    const todayStr = getLocalDateString(new Date());
-
-    list.innerHTML = membersList.map(m => {
-      const isMe = state.user && m.code === state.user.code;
-      const showName = m.isPublic ? m.nickname : (isMe ? `${m.nickname} (나)` : "비공개 아일랜더");
-      const displayAvatar = m.isPublic ? m.avatar : "👤";
-      
-      const renderAvatarHtml = displayAvatar.startsWith("data:image") 
-        ? `<img src="${displayAvatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />` 
-        : displayAvatar;
-
-      // 금일 업로드 플래그 매핑용 동적 태그 바인딩
-      const hasUploadedToday = m.lastRecordedDate === todayStr;
-      const certBadge = hasUploadedToday 
-        ? `<span class="party-cert-badge done">🟢 인증 완료</span>` 
-        : `<span class="party-cert-badge yet">⚪ 미인증</span>`;
-
-      return `
-        <div class="member-card" style="cursor:pointer;" onclick="openProfileDetail('${m.code}')">
-          <div class="member-avatar">${renderAvatarHtml}</div>
-          <div class="member-info">
-            <div class="name">${showName} ${certBadge}</div>
-            <div class="streak">총 점수: ${getUserTotalScore(m)}점</div>
-          </div>
-          <button class="member-action done-today" style="font-size:11px;">상세 프로필</button>
-        </div>`;
-    }).join('');
-  }
-
-  // 랭킹창 및 파티원 상세 프로필 공개/비공개 계정 스키마 분기 처리
-  function openProfileDetail(userCode) {
-    let target = null;
-    if (state.user && userCode === state.user.code) {
-      target = state.user;
-    } else {
-      target = state.globalUsers.find(u => u.code === userCode);
-    }
-
-    if (!target) return;
-
-    const isMe = state.user && target.code === state.user.code;
-    const isPub = target.isPublic;
-    
-    // 의심점 5번 패치: 비공개 모험가 정보 열람 제한 및 차단 처리
-    if (!isPub && !isMe) {
-      showToast("🔐 비공개 상태인 아일랜더의 프로필 정보입니다.");
-      return;
-    }
-
-    const nameStr = target.nickname;
-    const codeStr = target.code;
-    const avatarStr = target.avatar || "👤";
-    const birthdayStr = target.birthday || "미지정";
-    
-    const matchedParty = state.onlineParties.find(p => p.code === target.partyCode);
-    const partyNameStr = matchedParty ? matchedParty.name : "파티 없음";
-    
-    const avaContainer = document.getElementById('modal-p-avatar');
-    if (avatarStr.startsWith("data:image")) {
-      avaContainer.innerHTML = `<img src="${avatarStr}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" />`;
-    } else {
-      avaContainer.textContent = avatarStr;
-    }
-
-    document.getElementById('modal-p-nickname').textContent = nameStr;
-    document.getElementById('modal-p-code').textContent = `CODE: ${codeStr}`;
-    document.getElementById('modal-p-birthday').textContent = birthdayStr;
-    document.getElementById('modal-p-partyname').textContent = partyNameStr;
-    document.getElementById('modal-p-streak').textContent = target.streak;
-    document.getElementById('modal-p-total').textContent = `${getUserTotalScore(target)}점`;
-
-    document.getElementById('profile-detail-modal').classList.add('open');
-  }
-
-  function closeProfileDetailModal() {
-    document.getElementById('profile-detail-modal').classList.remove('open');
-  }
-
-  // ──────────────────────────────────────────
-  // LEADERBOARD
-  // ──────────────────────────────────────────
-  function switchRankingTab(type) {
-    state.rankingTab = type;
-    document.querySelectorAll('#page-ranking .tab-trigger').forEach(t => t.classList.remove('active'));
-    document.getElementById(`rank-tab-${type}`).classList.add('active');
-    
-    buildRanking();
-  }
-
-  function buildRanking() {
-    const list = document.getElementById('rank-list');
-    if (!list) return;
-
-    if (state.rankingTab === 'user') {
-      document.getElementById('ranking-list-title').textContent = "주간 개인 누적 배치 점수 랭킹";
-      
-      let activeUsers = [...state.globalUsers];
-      if (state.user) {
-        const hasMe = activeUsers.some(u => u.code === state.user.code);
-        if (!hasMe) {
-          activeUsers.push(state.user);
-        } else {
-          const idx = activeUsers.findIndex(u => u.code === state.user.code);
-          activeUsers[idx] = state.user;
-        }
-      }
-
-      if (activeUsers.length === 0) {
-        list.innerHTML = `
-          <div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">
-            아직 이번 주 기록 랭킹 경쟁자가 없습니다. 🤝
-          </div>`;
-        return;
-      }
-
-      activeUsers.sort((a, b) => getUserTotalScore(b) - getUserTotalScore(a));
-
-      list.innerHTML = activeUsers.map((u, i) => {
-        const isMe = state.user && u.code === state.user.code;
-        const isPub = u.isPublic;
-        
-        const rankName = isPub ? u.nickname : (isMe ? `${u.nickname} (나/비공개)` : `비공개 아일랜더`);
-        const displayAvatar = isPub ? (u.avatar || "👤") : (isMe ? u.avatar : "👤");
-        const rankScore = isPub || isMe ? `${getUserTotalScore(u)}점` : "-";
-
-        let avaEl = "";
-        if (displayAvatar.startsWith("data:image")) {
-          avaEl = `<img src="${displayAvatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;margin-right:6px;" />`;
-        } else {
-          avaEl = `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${displayAvatar}</span>`;
-        }
-
-        return `
-          <div class="rank-item" style="${isMe ? 'border:2px solid var(--coral)' : ''}" onclick="openProfileDetail('${u.code}')">
-            <div class="rank-num ${i < 3 ? 'top3' : ''}">${i + 1}</div>
-            <div class="rank-bar-wrap">
-              <div class="rank-name">${avaEl}${rankName}</div>
-              <div class="rank-bar">
-                <div class="rank-bar-fill" style="width:${Math.min((getUserTotalScore(u) / 50) * 100, 100)}%"></div>
-              </div>
-            </div>
-            <div class="rank-days">${rankScore}</div>
-          </div>`;
-      }).join('');
-
-    } else {
-      document.getElementById('ranking-list-title').textContent = "주간 활성 파티 합산 점수 랭킹";
-      
-      const activeParties = [...state.onlineParties];
-
-      if (activeParties.length === 0) {
-        list.innerHTML = `
-          <div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">
-            활동 중인 온라인 파티가 없습니다. 🏆
-          </div>`;
-        return;
-      }
-
-      activeParties.sort((a, b) => getPartyTotalScore(b) - getPartyTotalScore(a));
-
-      list.innerHTML = activeParties.map((p, i) => {
-        const isMyParty = state.user && p.code === state.user.partyCode;
-        const currentPartyScore = getPartyTotalScore(p);
-        
-        let pAva = "";
-        if (p.image && p.image.startsWith("data:image")) {
-          pAva = `<img src="${p.image}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:inline-block;vertical-align:middle;margin-right:6px;" />`;
-        } else {
-          pAva = `<span style="font-size:18px;margin-right:6px;vertical-align:middle;">${p.image || '🏆'}</span>`;
-        }
-
-        return `
-          <div class="rank-item" style="${isMyParty ? 'border:2px solid var(--sea)' : ''}" onclick="showToast('🏆 파티 합산 스코어: ${currentPartyScore}점')">
-            <div class="rank-num ${i < 3 ? 'top3' : ''}">${i + 1}</div>
-            <div class="rank-bar-wrap">
-              <div class="rank-name">${pAva}${p.name}${isMyParty ? '<span style="color:var(--sea);font-size:11px"> (내 파티)</span>' : ''}</div>
-              <div class="rank-bar">
-                <div class="rank-bar-fill" style="width:${Math.min((currentPartyScore / 150) * 100, 100)}%; background:var(--sea);"></div>
-              </div>
-            </div>
-            <div class="rank-days">${currentPartyScore}점</div>
-          </div>`;
-      }).join('');
-    }
-  }
-
-  function handleLogout() {
-    if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
-      saveState();
-      state.user = null;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
-      location.reload();
-    }
-  }
-
-  function openSettingsModal() {
-    document.getElementById('input-api-key').value = state.apiKey || "";
-    document.getElementById('settings-user-code').value = state.user ? state.user.code : "";
-    document.getElementById('settings-modal').classList.add('open');
-  }
-
-  function closeSettingsModal() {
-    document.getElementById('settings-modal').classList.remove('open');
-  }
-
-  function saveSettings() {
-    const keyVal = document.getElementById('input-api-key').value.trim();
-    state.apiKey = keyVal;
-    saveState();
-    closeSettingsModal();
-    showToast("환경설정이 기기에 성공적으로 동기화되었습니다. 🌱");
-  }
-
+  function openMyProfileModal() { if (state.user) openProfileDetail(state.user.code); }
+
+  // ==========================================
+  // 6. Navigation 및 공통 UI 라우팅
+  // ==========================================
   function goPage(id, btn) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
     
-    const target = document.getElementById('page-' + id);
-    if (target) {
-      target.classList.add('active');
-    }
-
-    if (btn) {
-      btn.classList.add('active');
-    } else {
+    if(btn) btn.classList.add('active');
+    else {
       const bEl = document.getElementById('nav-' + id);
       if (bEl) bEl.classList.add('active');
     }
 
     if (state.user) {
-      const score = getUserTotalScore(state.user);
-      document.getElementById('stat-total').textContent = `${score}점`;
+      document.getElementById('stat-total').textContent = `${getUserTotalScore(state.user)}점`;
       document.getElementById('stat-streak').textContent = state.user.streak;
       document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
-      document.getElementById('home-points-display').textContent = `🪙 ${state.user.points}p`;
-      document.getElementById('workshop-points-display').textContent = `🪙 ${state.user.points}p`;
-      updateMiniProfileHeader();
+      updateGlobalPointsDisplay(); updateMiniProfileHeader();
     }
 
-    if (id === 'home') {
-      drawIsland();
-      updateGlobalPointsDisplay();
-    } else if (id === 'timeline') {
-      buildCalendar();
-      document.getElementById('timeline-day-viewer').style.display = "none"; 
-    } else if (id === 'party') {
-      renderPartyMainView();
-    } else if (id === 'objects') {
-      updateGlobalPointsDisplay();
-      switchObjectTab(state.objectTab);
-    } else if (id === 'ranking') {
-      buildRanking();
+    if (id === 'home') drawIsland();
+    else if (id === 'timeline') { buildCalendar(); document.getElementById('timeline-day-viewer').style.display = "none"; }
+    else if (id === 'party') renderPartyMainView();
+    else if (id === 'objects') switchObjectTab(state.objectTab);
+    else if (id === 'ranking') buildRanking();
+  }
+
+  function openSettingsModal() { document.getElementById('settings-user-code').value = state.user.code; document.getElementById('settings-modal').classList.add('open'); }
+  function closeSettingsModal() { document.getElementById('settings-modal').classList.remove('open'); }
+  function saveSettings() { closeSettingsModal(); showToast("환경설정 완료."); }
+
+  // ==========================================
+  // 7. 섬 정원 드로잉 (자동 배치 시스템)
+  // ==========================================
+  function drawIsland() {
+    const wrap = document.getElementById('island-canvas-wrap');
+    if (!wrap) return;
+    const canvas = document.getElementById('island-canvas');
+    const W = wrap.offsetWidth, H = 260;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#B8DEFF'); sky.addColorStop(1, '#5BB8D4');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    
+    ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
+
+    const totalScore = getUserTotalScore(state.user);
+    const decorCount = Math.min(Math.floor(totalScore / 300) + 3, 12); 
+    const plants = ['🌸', '🌳', '🌺', '🌿', '🌻', '🌷'];
+
+    for (let i = 0; i < decorCount; i++) {
+      const angle = (i / decorCount) * Math.PI * 2 + (Math.PI / 4);
+      const radius = 25 + (i % 3) * 15; 
+      const x = W / 2 + Math.cos(angle) * radius * 1.5;
+      const y = H * 0.68 + Math.sin(angle) * radius * 0.5;
+      ctx.font = '24px serif';
+      ctx.fillText(plants[i % plants.length], x - 12, y + 10);
     }
   }
 
-  // ──────────────────────────────────────────
-  // RECORDER PIPELINE (카메라 하드웨어 안정화 처리 통합)
-  // ──────────────────────────────────────────
-  
-  // 의심점 4번 패치: await 키워드를 안전하게 사용하도록 'async' 비동기 변경 완료
+  // ==========================================
+  // 8. 촬영 파이프라인 (Firebase Storage)
+  // ==========================================
   async function openModal() {
-    if (state.recordedToday) {
-      showToast("내일의 태양이 떠오르면 새로운 영상 슬롯이 다시 해제됩니다! 😊");
-      return;
-    }
-
-    document.getElementById('modal-question').textContent = '💬 ' + todayQuestion;
+    if (state.user.remainingAttempts <= 0) return showToast("오늘의 횟수(6회) 소진! 내일 뵙겠습니다.");
+    
+    document.getElementById('modal-question').textContent = '💬 ' + dailyMissionPool[new Date().getDay() % dailyMissionPool.length];
     document.getElementById('record-modal').classList.add('open');
     document.getElementById('emotion-section').style.display = 'none';
     document.getElementById('rec-btn').style.display = 'flex';
     document.getElementById('rec-hint').style.display = 'block';
+    document.getElementById('rec-hint').textContent = `터치하여 5초씩 녹화 (남은 기회 ${state.user.remainingAttempts}회)`;
 
-    await initCameraSource();
-  }
-
-  async function initCameraSource() {
-    const vid = document.getElementById('cam-video');
-    if (!vid) return;
-    
-    // 1. 중중 점유 충돌 해제: 기존 백그라운드 스트림 자원 완벽히 반환 정지
-    if (cameraStream) {
-      try {
-        cameraStream.getTracks().forEach(track => track.stop());
-      } catch (e) {
-        console.warn("기존 스트림 자원 반환 중 오류 무시:", e);
-      }
-      cameraStream = null;
-    }
-
-    vid.srcObject = null;
-    vid.src = "";
-    vid.muted = true;
-    vid.setAttribute('playsinline', true);
-    
-    resetRecorder();
-    vid.classList.remove('mirrored');
-
-    // 모바일 및 다양한 기기 호환성 래핑 최적화
-    const attemptConstraints = [
-      { video: { facingMode: "user" }, audio: false },
-      { video: { facingMode: { ideal: "user" } } },
-      { video: true }
-    ];
-
-    let success = false;
-    for (let constraints of attemptConstraints) {
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          cameraStream = stream; 
-          vid.srcObject = stream;
-          
-          // 의심점 1번 보강: 강제 play 처리를 통해 블랙 스크린 락 차단
-          await vid.play(); 
-          document.getElementById('cam-placeholder').style.display = 'none';
-          isCameraConnected = true;
-          success = true;
-          break;
-        }
-      } catch (err) {
-        // 의심점 3번 패치: 단순 경고 시스템을 디버깅 10/10급 풀 에러 로그 출력으로 변경
-        console.error("[CAMERA FULL ERROR LOG]", err.name, err.message, err);
-        
-        // 의심점 5번 패치: NotAllowedError 발생 시 브라우저 설정 유도 얼럿 분기 추가
-        if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-          alert("⚠️ 카메라 접근 권한이 거부되었습니다.\n브라우저 주소창 설정을 확인하시거나 HTTPS 환경인지 검증해 주세요.");
-        }
-      }
-    }
-
-    if (!success) {
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+      const vid = document.getElementById('cam-video');
+      vid.srcObject = cameraStream;
+      await vid.play();
+      document.getElementById('cam-placeholder').style.display = 'none';
+      isCameraConnected = true;
+    } catch(err) {
       document.getElementById('cam-placeholder').style.display = 'block';
       isCameraConnected = false;
     }
   }
 
-  function closeModal() {
-    document.getElementById('record-modal').classList.remove('open');
-    if (cameraStream) {
-      try {
-        cameraStream.getTracks().forEach(track => track.stop());
-      } catch(e){}
-      cameraStream = null;
-    }
-    clearInterval(state.timerInterval);
-    resetRecorder();
-  }
-
-  function resetRecorder() {
-    state.recording = false;
-    state.cutsDone = 0;
-    state.timeLeft = 30;
-    recRecordedChunks = [];
-    tempCutsRecorded = []; 
-    if (recMediaRecorder) {
-      try { recMediaRecorder.stop(); } catch(e){}
-      recMediaRecorder = null;
-    }
-    document.getElementById('rec-btn').classList.remove('recording');
-    document.getElementById('timer-label').textContent = '30';
-    document.getElementById('timer-arc').style.strokeDashoffset = '138';
-    document.querySelectorAll('.cut-dot').forEach(d => d.className = 'cut-dot');
-    clearInterval(state.timerInterval);
-  }
-
-  // 순수 하드웨어 active 프로퍼티 검증 체인 동기화
   function toggleRecord() {
-    if (state.cutsDone >= 6) return;
-    
-    const isStreamActive = cameraStream && cameraStream.active;
-
-    if (isCameraConnected && isStreamActive) {
-      if (!state.recording) {
-        startActualCut();
-      }
-    } else {
-      if (!state.recording) {
-        simulateRecordFlow();
-      }
-    }
+    if (state.recording || state.cutsDone >= 6 || state.user.remainingAttempts <= 0) return;
+    isCameraConnected ? startActualCut() : simulateRecordFlow();
   }
 
-function startActualCut() {
-  state.recording = true;
-  const btn = document.getElementById('rec-btn');
-  btn.classList.add('recording');
+  function startActualCut() {
+    state.recording = true;
+    const btn = document.getElementById('rec-btn');
+    btn.classList.add('recording');
+    document.querySelectorAll('.cut-dot')[state.cutsDone].classList.add('active');
 
-  const dot = document.querySelector(`.cut-dot[data-i="${state.cutsDone}"]`);
-  if (dot) {
-    dot.classList.remove('done');
-    dot.classList.add('active');
-  }
-
-  let elapsed = 0;
-  const CUT_DUR = 5; 
-  const CIRC = 138;
-
-  recRecordedChunks = [];
-
-  // MediaRecorder 초기화: 브라우저가 최적의 코덱을 자동으로 선택하게 함
-  try {
+    let recRecordedChunks = [];
     recMediaRecorder = new MediaRecorder(cameraStream);
-  } catch (e) {
-    console.error("MediaRecorder 생성 실패:", e);
-    showToast("녹화 기능을 지원하지 않는 브라우저입니다.");
-    state.recording = false;
-    btn.classList.remove('recording');
-    return;
+    recMediaRecorder.ondataavailable = e => { if (e.data.size > 0) recRecordedChunks.push(e.data); };
+    
+    recMediaRecorder.onstop = async () => {
+      showToast("Firebase Storage 업로드 중...");
+      const blob = new Blob(recRecordedChunks, { type: 'video/mp4' });
+      const todayStr = getLocalDateString(new Date());
+      const fileName = `${todayStr}-${Date.now()}-${state.cutsDone}.mp4`;
+      const storageRef = storage.ref(`videos/${state.user.code}/${fileName}`);
+      
+      try {
+        const snapshot = await storageRef.put(blob);
+        const url = await snapshot.ref.getDownloadURL();
+        tempCutsRecorded.push(url);
+        
+        state.user.remainingAttempts -= 1;
+        state.user.points = (state.user.points || 0) + 10;
+        await saveUserToDB();
+        
+        document.querySelectorAll('.cut-dot')[state.cutsDone].classList.replace('active', 'done');
+        state.cutsDone++; state.recording = false; btn.classList.remove('recording');
+
+        if (state.cutsDone >= 6 || state.user.remainingAttempts <= 0) {
+          document.getElementById('rec-btn').style.display = 'none'; document.getElementById('rec-hint').style.display = 'none';
+          document.getElementById('emotion-section').style.display = 'block';
+        } else {
+          document.getElementById('rec-hint').textContent = `터치하여 5초씩 녹화 (남은 기회 ${state.user.remainingAttempts}회)`;
+        }
+      } catch (err) { showToast("업로드 실패: " + err.message); btn.classList.remove('recording'); state.recording = false; }
+    };
+
+    recMediaRecorder.start();
+    let elapsed = 0;
+    state.timerInterval = setInterval(() => {
+      elapsed += 0.1; const total = state.cutsDone * 5 + elapsed;
+      document.getElementById('timer-arc').style.strokeDashoffset = String(138 * (1 - (total/30)));
+      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total)));
+      if (elapsed >= 5) { clearInterval(state.timerInterval); recMediaRecorder.stop(); }
+    }, 100);
   }
-
-  recMediaRecorder.ondataavailable = (e) => {
-    if (e.data && e.data.size > 0) {
-      recRecordedChunks.push(e.data);
-    }
-  };
-
-  recMediaRecorder.onstop = () => {
-    // MIME 타입이 지정되지 않았다면 기본값(video/webm 등) 사용
-    const mimeType = recMediaRecorder.mimeType || 'video/webm';
-    const singleCutBlob = new Blob(recRecordedChunks, { type: mimeType });
-    const singleCutUrl = URL.createObjectURL(singleCutBlob);
-    tempCutsRecorded.push(singleCutUrl);
-
-    if (state.user) {
-      state.user.points = (state.user.points || 0) + 10;
-      saveState();
-      updateGlobalPointsDisplay();
-      showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
-    }
-  };
-
-  recMediaRecorder.start();
-
-  // 녹화 타이머 로직
-  state.timerInterval = setInterval(() => {
-    elapsed += 0.1;
-    const total_elapsed = state.cutsDone * CUT_DUR + elapsed;
-    const progress = total_elapsed / 30;
-
-    document.getElementById('timer-arc').style.strokeDashoffset = String(CIRC * (1 - progress));
-    document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total_elapsed)));
-
-    if (elapsed >= CUT_DUR) {
-      clearInterval(state.timerInterval);
-      if (recMediaRecorder && recMediaRecorder.state !== "inactive") {
-        recMediaRecorder.stop();
-      }
-      if (dot) {
-        dot.classList.remove('active');
-        dot.classList.add('done');
-      }
-      state.cutsDone++;
-      state.recording = false;
-      btn.classList.remove('recording');
-
-      if (state.cutsDone >= 6) {
-        document.getElementById('timer-label').textContent = '✓';
-        document.getElementById('rec-btn').style.display = 'none';
-        document.getElementById('rec-hint').style.display = 'none';
-        showEmotionSection();
-      }
-    }
-  }, 100);
-}
 
   function simulateRecordFlow() {
     state.recording = true;
     const btn = document.getElementById('rec-btn');
     btn.classList.add('recording');
-
-    const dot = document.querySelector(`.cut-dot[data-i="${state.cutsDone}"]`);
-    if (dot) dot.classList.add('active');
+    document.querySelectorAll('.cut-dot')[state.cutsDone].classList.add('active');
 
     let elapsed = 0;
-    const CUT_DUR = 5;
-    const CIRC = 138;
+    state.timerInterval = setInterval(async () => {
+      elapsed += 0.1; const total = state.cutsDone * 5 + elapsed;
+      document.getElementById('timer-arc').style.strokeDashoffset = String(138 * (1 - (total/30)));
+      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total)));
 
-    state.timerInterval = setInterval(() => {
-      elapsed += 0.1;
-      const total_elapsed = state.cutsDone * CUT_DUR + elapsed;
-      const progress = total_elapsed / 30;
-
-      document.getElementById('timer-arc').style.strokeDashoffset = String(CIRC * (1 - progress));
-      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total_elapsed)));
-
-      if (elapsed >= CUT_DUR) {
+      if (elapsed >= 5) {
         clearInterval(state.timerInterval);
-        if (dot) {
-          dot.classList.remove('active');
-          dot.classList.add('done');
-        }
-        
         tempCutsRecorded.push("https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-40439-large.mp4");
         
-        if (state.user) {
-          state.user.points = (state.user.points || 0) + 10;
-          saveState();
-          updateGlobalPointsDisplay();
-          showToast("🪙 5초 촬영 성공! +10 기록 포인트 획득!");
-        }
+        state.user.remainingAttempts -= 1;
+        state.user.points = (state.user.points || 0) + 10;
+        await saveUserToDB();
 
-        state.cutsDone++;
-        state.recording = false;
-        btn.classList.remove('recording');
+        document.querySelectorAll('.cut-dot')[state.cutsDone].classList.replace('active', 'done');
+        state.cutsDone++; state.recording = false; btn.classList.remove('recording');
 
-        if (state.cutsDone >= 6) {
-          document.getElementById('timer-label').textContent = '✓';
-          document.getElementById('rec-btn').style.display = 'none';
-          document.getElementById('rec-hint').style.display = 'none';
-          showEmotionSection();
+        if (state.cutsDone >= 6 || state.user.remainingAttempts <= 0) {
+          document.getElementById('rec-btn').style.display = 'none'; document.getElementById('rec-hint').style.display = 'none';
+          document.getElementById('emotion-section').style.display = 'block';
         }
       }
     }, 100);
-  }
-
-  function showEmotionSection() {
-    document.getElementById('emotion-section').style.display = 'block';
   }
 
   function selectEmo(btn, emo) {
@@ -2477,58 +1592,60 @@ function startActualCut() {
     document.getElementById('upload-btn').removeAttribute('disabled');
   }
 
-  function uploadRecord() {
-    const now = new Date();
-    const todayStr = getLocalDateString(now);
+  async function uploadRecord() {
+    const todayStr = getLocalDateString(new Date());
+    const emotion = document.querySelector('.emo-btn.selected')?.textContent || "🌱";
     
-    state.history[todayStr] = {
-      emotion: document.querySelector('.emo-btn.selected')?.textContent || "🌱",
-      clips: [...tempCutsRecorded]
-    };
+    state.history[todayStr] = { emotion: emotion, clips: [...tempCutsRecorded] };
+    state.user.streak += 1; state.user.lastRecordedDate = todayStr;
+    state.user.score = (state.user.score || 0) + tempCutsRecorded.length * 10;
+    state.user.totalVideos = (state.user.totalVideos || 0) + tempCutsRecorded.length;
     
-    state.user.streak += 1;
-    state.user.lastRecordedDate = todayStr;
-    state.recordedToday = true;
-    
-    saveState();
-    closeModal();
-    goPage('home');
-    showToast("오늘의 30초 하루 기록이 안전하게 저장되었습니다! 🌱");
+    try {
+      await saveUserToDB();
+      await db.collection('timeline').doc(`${state.user.code}_${todayStr}`).set({
+        userCode: state.user.code, recordedAt: todayStr, emotion: emotion,
+        clips: tempCutsRecorded, uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      closeModal(); goPage('home'); showToast("기록이 안전하게 저장되었습니다! 🌱");
+    } catch(e) { showToast("기록 저장 중 오류가 발생했습니다."); }
   }
 
-  // ──────────────────────────────────────────
-  // CHRONO CALENDAR RENDERING
-  // ──────────────────────────────────────────
+  function closeModal() {
+    document.getElementById('record-modal').classList.remove('open');
+    if (cameraStream) { try { cameraStream.getTracks().forEach(track => track.stop()); } catch(e){} cameraStream = null; }
+    clearInterval(state.timerInterval); state.recording = false; state.cutsDone = 0; tempCutsRecorded = [];
+    document.getElementById('rec-btn').classList.remove('recording');
+    document.getElementById('timer-label').textContent = '30';
+    document.getElementById('timer-arc').style.strokeDashoffset = '138';
+    document.querySelectorAll('.cut-dot').forEach(d => { d.classList.remove('done'); d.classList.remove('active'); });
+  }
+
+  // ==========================================
+  // 9. 타임라인 (달력 뷰어)
+  // ==========================================
   function buildCalendar() {
     const now = new Date();
-    const year = now.getFullYear(), month = now.getMonth();
-    document.getElementById('month-label').textContent = `${year}년 ${month + 1}월`;
-    
+    document.getElementById('month-label').textContent = `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
     const grid = document.getElementById('calendar-grid');
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     grid.innerHTML = '';
 
     for (let i = 0; i < firstDay; i++) {
-      const blank = document.createElement('div');
-      blank.className = 'cal-day';
-      blank.style.opacity = '.2';
-      grid.appendChild(blank);
+      const blank = document.createElement('div'); blank.className = 'cal-day'; blank.style.opacity = '.2'; grid.appendChild(blank);
     }
 
     for (let d = 1; d <= daysInMonth; d++) {
-      const el = document.createElement('div');
-      el.className = 'cal-day';
-      const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const el = document.createElement('div'); el.className = 'cal-day';
+      const dStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       
       if (state.history[dStr]) {
         el.classList.add('has-record');
         el.innerHTML = `<span style="font-size:10px">${d}</span><span style="font-size:14px;margin-top:2px">${state.history[dStr].emotion}</span>`;
         el.onclick = () => showTimelineDayClips(dStr);
-      } else {
-        el.textContent = d;
-      }
-      
+      } else { el.textContent = d; }
       if (d === now.getDate()) el.classList.add('today');
       grid.appendChild(el);
     }
@@ -2539,19 +1656,15 @@ function startActualCut() {
     if (!record || !record.clips || record.clips.length === 0) return;
 
     const viewer = document.getElementById('timeline-day-viewer');
-    const label = document.getElementById('timeline-detail-date-label');
-    const grid = document.getElementById('timeline-clips-grid');
-
     viewer.style.display = "block";
-    label.textContent = `${dateStr} 기록 - 감정 ${record.emotion || '🌱'}`;
+    document.getElementById('timeline-detail-date-label').textContent = `${dateStr} 기록 - 감정 ${record.emotion || '🌱'}`;
 
-    grid.innerHTML = record.clips.map((clipSrc, idx) => `
+    document.getElementById('timeline-clips-grid').innerHTML = record.clips.map((clipSrc, idx) => `
       <div class="clip-card">
         <video id="timeline-video-${idx}" src="${clipSrc}" playsinline></video>
         <div class="clip-play-overlay" onclick="toggleTimelineClipPlay(${idx})">▶️</div>
       </div>
     `).join('');
-    
     viewer.scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -2561,139 +1674,314 @@ function startActualCut() {
     if (vid.paused) {
       document.querySelectorAll('.clip-card video').forEach(v => v.pause());
       document.querySelectorAll('.clip-play-overlay').forEach(o => o.style.display = "flex");
+      vid.play(); overlay.style.display = "none";
+      vid.onended = () => { overlay.style.display = "flex"; }
+    } else { vid.pause(); overlay.style.display = "flex"; }
+  }
 
-      vid.play();
-      overlay.style.display = "none";
-      vid.onended = () => {
-        overlay.style.display = "flex";
-      }
+  // ==========================================
+  // 10. 상점 및 인벤토리 상세 뷰어 통합
+  // ==========================================
+  function switchObjectTab(type) {
+    state.objectTab = type;
+    document.querySelectorAll('#page-objects .tab-trigger').forEach(t => t.classList.remove('active'));
+    document.getElementById(`obj-tab-${type}`).classList.add('active');
+
+    const shopGrid = document.getElementById('shop');
+    const invGrid = document.getElementById('inventory-view-grid');
+    if (type === 'shop') {
+      document.getElementById('object-list-title').textContent = "오브제 구매하기";
+      shopGrid.style.display = "grid"; invGrid.style.display = "none"; renderShopItems();
     } else {
-      vid.pause();
-      overlay.style.display = "flex";
+      document.getElementById('object-list-title').textContent = "내 인벤토리 확인 (클릭 시 상세정보)";
+      shopGrid.style.display = "none"; invGrid.style.display = "grid"; renderInventoryItems();
     }
   }
 
-  function showToast(msg) {
-    const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
+  function renderShopItems() {
+    const grid = document.getElementById('shop');
+    if (!state.user.inventory) state.user.inventory = [];
+    grid.innerHTML = objectData.map(item => {
+      const isOwned = state.user.inventory.includes(item.id);
+      const posX = (item.col / 10) * 100, posY = (item.row / 4) * 100;
+      const btnHtml = isOwned ? `<button class="buy-btn" disabled>보유 중</button>` : `<button class="buy-btn" onclick="purchaseObject('${item.id}', ${item.price})">구매</button>`;
+      return `
+        <div class="obj-card">
+          <div>
+            <div class="sprite-wrapper"><div class="object-sprite" style="background-position: ${posX}% ${posY}%;"></div></div>
+            <div class="obj-rarity">${item.rarity}</div>
+            <div class="obj-title">${item.name}</div>
+            <div class="obj-desc">${item.desc}</div>
+          </div>
+          <div style="margin-top:8px;">
+            <div style="font-size:11px; color:var(--coral); font-weight:700;">+${rarityPoints[item.rarity]}점</div>
+            <span style="font-size:13px; font-weight:700; color:var(--sea);">${item.price}p</span>
+            ${btnHtml}
+          </div>
+        </div>`;
+    }).join('');
   }
 
-  // 백그라운드 데몬 구동 엔진
-  function spawnSystemCoreDaemon() {
-    // 0시 자정 리셋 동기화 감지 디바이스 (1분 주기)
-    setInterval(() => {
-      validateStreak();
-    }, 60000);
-
-    // 1시간 주기 실시간 정산 백그라운드 갱신 타이머
-    setInterval(() => {
-      if (state.user) {
-        buildRanking();
-        console.log("[Daemon Code Sync] 1시간 주기 실시간 개인/파티 랭킹 정산 완료");
-      }
-    }, 3600000);
+  async function purchaseObject(itemId, price) {
+    if (state.user.points < price) return showToast("포인트가 부족합니다.");
+    state.user.points -= price;
+    if (!state.user.inventory) state.user.inventory = [];
+    state.user.inventory.push(itemId);
+    await saveUserToDB(); updateGlobalPointsDisplay(); renderShopItems();
+    showToast(`📦 오브제 구매 완료! (차감: ${price}p)`);
   }
 
-  // ──────────────────────────────────────────
-  // SYSTEM TIMEOUT & LOCAL STORAGE SYNC
-  // ──────────────────────────────────────────
-  document.addEventListener("DOMContentLoaded", () => {
-    loadState();
-    spawnSystemCoreDaemon();
+  function renderInventoryItems() {
+    const grid = document.getElementById('inventory-view-grid');
+    if (!state.user.inventory || state.user.inventory.length === 0) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:32px; color:var(--muted); font-size:12px;">인벤토리가 비어있습니다. 상점 탭에서 마음에 드는 오브제를 입양해 보세요! 🪴</div>`; return;
+    }
+    grid.innerHTML = state.user.inventory.map(itemId => {
+      const item = objectData.find(i => i.id === itemId);
+      if (!item) return '';
+      const posX = (item.col / 10) * 100, posY = (item.row / 4) * 100;
+      return `
+        <div class="inventory-card" onclick="showObjectDetail('${itemId}')">
+          <div class="inventory-card-sprite-mini" style="background-position: ${posX}% ${posY}%;"></div>
+          <span style="font-size:10px; font-weight:700; text-align:center; margin-top:4px; max-width:90%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</span>
+        </div>`;
+    }).join('');
+  }
+
+  function showObjectDetail(itemId) {
+    const item = objectData.find(obj => obj.id === itemId);
+    if (!item) return;
+    alert(`[ ${item.name} ]\n\n등급: ${item.rarity}\n배치 점수: +${rarityPoints[item.rarity] || 0}점\n\n설명: ${item.desc}`);
+  }
+
+  // ==========================================
+  // 11. 친구(Friends) 시스템
+  // ==========================================
+  function openFriendsModal() { document.getElementById('friends-modal').classList.add('open'); renderFriendsList(); }
+  function closeFriendsModal() { document.getElementById('friends-modal').classList.remove('open'); }
+
+  async function submitAddFriend() {
+    const fCodeInput = document.getElementById('friend-add-code-input');
+    const fCode = fCodeInput.value.trim();
+    if (!fCode) return showToast("친구 코드를 입력해 주세요.");
+    if (fCode === state.user.code) return showToast("자기 자신은 친구로 등록할 수 없습니다.");
+    if (state.user.friends && state.user.friends.includes(fCode)) return showToast("이미 등록된 친구입니다.");
+
+    try {
+      const targetSnap = await db.collection('users').doc(fCode).get();
+      if (!targetSnap.exists) return showToast("입력하신 코드를 가진 유저를 찾지 못했습니다.");
+      
+      await db.collection('users').doc(state.user.code).update({ friends: firebase.firestore.FieldValue.arrayUnion(fCode) });
+      await db.collection('users').doc(fCode).update({ friends: firebase.firestore.FieldValue.arrayUnion(state.user.code) });
+
+      if(!state.user.friends) state.user.friends = [];
+      state.user.friends.push(fCode); fCodeInput.value = ""; renderFriendsList();
+      showToast(`🤝 "${targetSnap.data().nickname}"님과 친구가 성사되었습니다.`);
+    } catch (e) { showToast("친구 추가 중 오류 발생."); }
+  }
+
+  async function renderFriendsList() {
+    const list = document.getElementById('friends-list-container');
+    if (!state.user.friends || state.user.friends.length === 0) {
+      list.innerHTML = `<div style="text-align:center; padding:24px; color:var(--muted); font-size:12px;">아직 추가된 친구가 없습니다.</div>`; return;
+    }
+    list.innerHTML = `<div style="text-align:center; padding:24px; font-size:12px;">목록 불러오는 중...</div>`;
     
-    if (!state.user) {
-      document.getElementById('screen-auth').style.display = 'flex';
-      document.getElementById('screen-main-app').style.display = 'none';
-      document.getElementById('bottom-app-nav').style.display = 'none';
-    } else {
-      document.getElementById('screen-auth').style.display = 'none';
-      document.getElementById('screen-main-app').style.display = 'block';
-      document.getElementById('bottom-app-nav').style.display = 'flex';
-
-      document.getElementById('question-text').textContent = dailyMissionPool[new Date().getDay() % dailyMissionPool.length];
-      window.addEventListener('resize', drawIsland);
-      
-      // 미니 프로필 레이아웃 바인딩 수립
-      updateMiniProfileHeader();
-
-      const currentScore = getUserTotalScore(state.user);
-      document.getElementById('stat-streak').textContent = state.user.streak;
-      document.getElementById('stat-total').textContent = `${currentScore}점`;
-      document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
-      document.getElementById('settings-user-code').value = state.user.code;
-
-      updateGlobalPointsDisplay();
-
-// 이 함수가 있어야 버튼을 눌렀을 때 화면이 바뀝니다.
-function switchAuthPanel(panelId) {
-    // 1. 일단 모든 화면(로그인, 회원가입, 아이디 찾기 등)을 다 숨깁니다.
-    document.querySelectorAll('.auth-card').forEach(card => {
-        card.style.display = 'none';
-        card.classList.remove('active');
-    });
-
-    // 2. 사용자가 클릭한 그 화면만 찾아서 보여줍니다.
-    const targetPanel = document.getElementById('panel-' + panelId);
-    if (targetPanel) {
-        targetPanel.style.display = 'block';
-        targetPanel.classList.add('active');
-    }
-}
-      
-      // 즉각 로딩 처리
-      drawIsland();
-      buildMembers();
-      buildRanking();
-    }
-  });
-// 섬을 그리는 함수 (오브제 배치 로직 포함)
-function drawIsland() {
-  const wrap = document.getElementById('island-canvas-wrap');
-  if (!wrap) return;
-  const canvas = document.getElementById('island-canvas');
-  const W = wrap.offsetWidth, H = 260;
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-
-  // 1. 섬 배경 및 지형 그리기
-  const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#B8DEFF'); sky.addColorStop(1, '#5BB8D4');
-  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-  
-  ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
-
-  // 2. 오브제 자동 배치 (배치를 원치 않으시면 이 if문 전체를 지우세요)
-  // 수정된 2번 로직: 식물 아이템만 골라서 자동 배치
-  if (state.user && state.user.placedItems) {
-    // 묘목, 나무, 꽃, 벚꽃 등 식물 키워드가 포함된 아이템만 필터링
-    const plantItems = state.user.placedItems.filter(itemId => {
-      const item = objectData.find(obj => obj.id === itemId);
-      return item && (item.name.includes('나무') || item.name.includes('꽃') || item.name.includes('묘목') || item.name.includes('잔디'));
-    });
-
-   plantItems.forEach((itemId, i) => {
-      const item = objectData.find(obj => obj.id === itemId);
-      if (item) {
-        const angle = (i / state.user.placedItems.length) * Math.PI * 2;
-        const radius = 20 + (i % 4) * 12; 
-        const x = W / 2 + Math.cos(angle) * radius * 2 - 20;
-        const y = H * 0.68 + Math.sin(angle) * radius * 0.8 - 20;
-
-        const srcX = (item.col / 10) * shopSpritesheetImage.width;
-        const srcY = (item.row / 4) * shopSpritesheetImage.height;
-        const srcW = shopSpritesheetImage.width / 10;
-        const srcH = shopSpritesheetImage.height / 4;
-
-        try {
-          ctx.drawImage(shopSpritesheetImage, srcX, srcY, srcW, srcH, x, y, 40, 40);
-        } catch(err) {
-          console.error("이미지 로드 중...");
-        }
+    let html = '';
+    for (const fCode of state.user.friends) {
+      const fSnap = await db.collection('users').doc(fCode).get();
+      if (fSnap.exists) {
+        const friend = fSnap.data();
+        const fName = friend.isPublic ? friend.nickname : "비공개 아일랜더";
+        const avaEl = friend.avatar.startsWith("data:image") ? `<img src="${friend.avatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />` : `<span style="font-size:20px;">${friend.avatar}</span>`;
+        html += `
+          <div class="member-card" style="padding:10px; border-radius:10px;">
+            <div class="member-avatar">${avaEl}</div>
+            <div class="member-info">
+              <div class="name" style="font-size:13px;">${fName}</div>
+              <div class="streak" style="font-size:11px;">🔥 ${friend.isPublic ? friend.streak : '-'}일 연속 기록 중</div>
+            </div>
+            <button class="member-action done-today" onclick="openProfileDetail('${fCode}')" style="padding:4px 8px; font-size:10px;">상세보기</button>
+          </div>`;
       }
-    });
+    }
+    list.innerHTML = html;
   }
-}
+
+  // ==========================================
+  // 12. 랭킹 시스템 (Firestore 연동)
+  // ==========================================
+  function switchRankingTab(type) {
+    document.querySelectorAll('#page-ranking .tab-trigger').forEach(t => t.classList.remove('active'));
+    document.getElementById(`rank-tab-${type}`).classList.add('active');
+    type === 'party' ? document.getElementById('rank-list').innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">파티 랭킹 시스템 집계 중입니다. 🏆</div>` : buildRanking();
+  }
+
+  async function buildRanking() {
+    const list = document.getElementById('rank-list');
+    list.innerHTML = `<div style="text-align:center; padding:48px; font-size:12px;">글로벌 랭킹 동기화 중...</div>`;
+    try {
+      const snap = await db.collection('users').orderBy('score', 'desc').limit(50).get();
+      let html = '', rank = 1;
+      snap.forEach(doc => {
+        const u = doc.data();
+        const isMe = state.user && u.code === state.user.code;
+        const rankName = u.isPublic ? u.nickname : (isMe ? `${u.nickname} (나/비공개)` : `비공개 아일랜더`);
+        const avaEl = (u.isPublic || isMe) ? (u.avatar.startsWith("data:image") ? `<img src="${u.avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" />` : `<span style="font-size:18px;margin-right:6px;">${u.avatar}</span>`) : `<span style="font-size:18px;margin-right:6px;">👤</span>`;
+        const scoreStr = (u.isPublic || isMe) ? `${u.score}점 (총 ${u.totalVideos}컷)` : "-";
+        
+        html += `
+          <div class="rank-item" style="${isMe ? 'border:2px solid var(--coral)' : ''}" onclick="openProfileDetail('${u.code}')">
+            <div class="rank-num ${rank <= 3 ? 'top3' : ''}">${rank++}</div>
+            <div class="rank-bar-wrap">
+              <div class="rank-name">${avaEl}${rankName}</div>
+              <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.min((u.score/500)*100, 100)}%"></div></div>
+            </div>
+            <div class="rank-days">${scoreStr}</div>
+          </div>`;
+      });
+      list.innerHTML = html;
+    } catch(e) { list.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">랭킹을 불러오지 못했습니다.</div>`; }
+  }
+
+  // ==========================================
+  // 13. 파티 시스템 (Firestore 연동)
+  // ==========================================
+  function openPartyCreationModal() { setupAvatarPresetGrid('create-party-preset-grid', 'party'); document.getElementById('party-create-modal').classList.add('open'); }
+  function closePartyCreateModal() { document.getElementById('party-create-modal').classList.remove('open'); }
+  function openPartyJoinModal() { document.getElementById('party-join-modal').classList.add('open'); }
+  function closePartyJoinModal() { document.getElementById('party-join-modal').classList.remove('open'); }
+
+  async function submitCreateParty() {
+    const pName = document.getElementById('create-party-name').value.trim();
+    if (!pName) return showToast("파티 이름을 지정해 주세요.");
+
+    const pCode = generatePartyCode();
+    try {
+      await db.collection('parties').doc(pCode).set({
+        code: pCode, name: pName, image: selectedPartyAvatar,
+        members: [state.user.code], createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      state.user.partyCode = pCode; await saveUserToDB();
+      closePartyCreateModal(); renderPartyMainView(); showToast(`👥 온라인 파티 "${pName}" 개설 완료.`);
+    } catch(e) { showToast("파티 생성 중 오류 발생."); }
+  }
+
+  async function submitJoinParty() {
+    const codeVal = document.getElementById('join-party-code-input').value.trim();
+    if (!codeVal) return showToast("파티 코드를 입력하세요.");
+
+    try {
+      const pRef = db.collection('parties').doc(codeVal);
+      const pSnap = await pRef.get();
+      if (!pSnap.exists) return showToast("일치하는 파티를 찾지 못했습니다.");
+      
+      await pRef.update({ members: firebase.firestore.FieldValue.arrayUnion(state.user.code) });
+      state.user.partyCode = codeVal; await saveUserToDB();
+      closePartyJoinModal(); renderPartyMainView(); showToast("👥 파티 가입 완료.");
+    } catch(e) { showToast("파티 가입 중 오류 발생."); }
+  }
+
+  async function renderPartyMainView() {
+    const gate = document.getElementById('party-gate-view');
+    const mainView = document.getElementById('party-active-view');
+    if (!state.user || !state.user.partyCode) { gate.style.display = "grid"; mainView.style.display = "none"; return; }
+
+    const pSnap = await db.collection('parties').doc(state.user.partyCode).get();
+    if (!pSnap.exists) { state.user.partyCode = null; await saveUserToDB(); renderPartyMainView(); return; }
+    
+    const party = pSnap.data();
+    gate.style.display = "none"; mainView.style.display = "block";
+    document.getElementById('active-party-name').innerHTML = `${party.image.startsWith("data:image") ? `<img src="${party.image}" style="width:24px;border-radius:50%;" />` : party.image} ${party.name}`;
+    document.getElementById('active-party-code-label').textContent = `파티 코드: ${party.code}`;
+    document.getElementById('party-dissolve-btn').style.display = (party.members[0] === state.user.code) ? "block" : "none";
+
+    const list = document.getElementById('member-list');
+    list.innerHTML = "멤버 로딩 중...";
+    let html = '', certCount = 0; const todayStr = getLocalDateString(new Date());
+
+    for (let mCode of party.members) {
+      const uSnap = await db.collection('users').doc(mCode).get();
+      if (uSnap.exists) {
+        const m = uSnap.data();
+        const isMe = m.code === state.user.code;
+        const showName = m.isPublic ? m.nickname : (isMe ? `${m.nickname} (나)` : "비공개 아일랜더");
+        const avaEl = m.avatar.startsWith("data:image") ? `<img src="${m.avatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />` : m.avatar;
+        
+        const hasToday = (m.lastResetDate === todayStr && m.remainingAttempts < 6);
+        if(hasToday) certCount++;
+
+        html += `
+          <div class="member-card" style="cursor:pointer;" onclick="openProfileDetail('${m.code}')">
+            <div class="member-avatar">${avaEl}</div>
+            <div class="member-info">
+              <div class="name">${showName} ${hasToday ? '<span class="party-cert-badge done">🟢 인증 완료</span>' : '<span class="party-cert-badge yet">⚪ 미인증</span>'}</div>
+              <div class="streak">총 점수: ${m.score}점</div>
+            </div>
+            <button class="member-action done-today" style="font-size:11px;">상세</button>
+          </div>`;
+      }
+    }
+    list.innerHTML = html;
+    document.getElementById('active-party-score').textContent = `오늘의 달성률: ${party.members.length > 0 ? Math.round((certCount / party.members.length) * 100) : 0}%`;
+  }
+
+  async function leaveParty() {
+    if(!confirm("파티를 나가시겠습니까?")) return;
+    await db.collection('parties').doc(state.user.partyCode).update({ members: firebase.firestore.FieldValue.arrayRemove(state.user.code) });
+    state.user.partyCode = null; await saveUserToDB(); renderPartyMainView(); showToast("탈퇴 완료.");
+  }
+
+  async function dissolveParty() {
+    if(!confirm("강제 해체 시 모두 탈퇴 처리됩니다.")) return;
+    const pCode = state.user.partyCode;
+    const pSnap = await db.collection('parties').doc(pCode).get();
+    for (let mCode of pSnap.data().members) { await db.collection('users').doc(mCode).update({ partyCode: null }); }
+    await db.collection('parties').doc(pCode).delete();
+    state.user.partyCode = null; await saveUserToDB(); renderPartyMainView(); showToast("파티 해체 완료.");
+  }
+
+  // ==========================================
+  // 14. 프로필 상세 모달 & 뷰어 로직
+  // ==========================================
+  async function openProfileDetail(userCode) {
+    const snap = await db.collection('users').doc(userCode).get();
+    if (!snap.exists) return;
+    const target = snap.data();
+    const isMe = state.user && target.code === state.user.code;
+
+    if (!target.isPublic && !isMe) return showToast("🔐 비공개 상태인 아일랜더의 프로필 정보입니다.");
+
+    const avaContainer = document.getElementById('modal-p-avatar');
+    if (target.avatar.startsWith("data:image")) { avaContainer.innerHTML = `<img src="${target.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" />`; }
+    else { avaContainer.textContent = target.avatar; }
+
+    let pName = "파티 없음";
+    if (target.partyCode) {
+      const pSnap = await db.collection('parties').doc(target.partyCode).get();
+      if(pSnap.exists) pName = pSnap.data().name;
+    }
+
+    document.getElementById('modal-p-nickname').textContent = target.nickname;
+    document.getElementById('modal-p-code').textContent = `CODE: ${target.code}`;
+    document.getElementById('modal-p-birthday').textContent = target.birthday || "-";
+    document.getElementById('modal-p-partyname').textContent = pName;
+    document.getElementById('modal-p-streak').textContent = target.streak;
+    document.getElementById('modal-p-total').textContent = `${target.score}점`;
+
+    document.getElementById('profile-detail-modal').classList.add('open');
+  }
+  function closeProfileDetailModal() { document.getElementById('profile-detail-modal').classList.remove('open'); }
+
+  // ==========================================
+  // 15. DOMContentLoaded & 데몬
+  // ==========================================
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById('screen-auth').style.display = 'flex';
+    document.getElementById('screen-main-app').style.display = 'none';
+    document.getElementById('bottom-app-nav').style.display = 'none';
+  });
+
 </script>
 </body>
 </html>
