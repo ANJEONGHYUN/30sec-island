@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet" />
   
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
@@ -1037,6 +1038,7 @@
 };
 
   firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth(); // 이 줄을 추가합니다.
   const db = firebase.firestore();
   const storage = firebase.storage();
 
@@ -1281,39 +1283,6 @@
     }
   }
 
-  async function submitRegister() {
-    const idVal = document.getElementById('reg-id').value.trim().toLowerCase();
-    const nickname = document.getElementById('reg-nickname').value.trim();
-    const pwVal = document.getElementById('reg-pw').value;
-    const confirmVal = document.getElementById('reg-pw-confirm').value;
-    const birthday = document.getElementById('reg-birthday').value;
-    const animal = document.getElementById('reg-animal').value.trim();
-    const isPublic = document.getElementById('prof-public-toggle').checked;
-
-    if (!isIdCheckedAndValid || idVal !== checkedAndValidIdString) return showToast("중복 검사를 완료해 주세요.");
-    if (!nickname) return showToast("이름을 지정해 주세요.");
-    if (pwVal.length < 8) return showToast("비밀번호는 최소 8자 이상 필요합니다.");
-    if (pwVal !== confirmVal) return showToast("비밀번호 확인이 일치하지 않습니다.");
-    if (!birthday) return showToast("생년월일을 선택해 주세요.");
-    if (!animal) return showToast("좋아하는 동물 답변을 입력해 주세요.");
-
-    const userCode = generateUserCode();
-    const todayStr = getLocalDateString(new Date());
-
-    try {
-      await db.collection('users').doc(userCode).set({
-        code: userCode, loginId: idVal, pw: pwVal, nickname: nickname,
-        birthday: birthday, animal: animal, isPublic: isPublic,
-        avatar: selectedProfileAvatar, points: 1000, score: 0, streak: 0,
-        remainingAttempts: 6, totalVideos: 0, lastResetDate: todayStr,
-        inventory: [], friends: [], partyCode: null,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      showToast("🎉 가입 성공! 1000p 지급 완료!");
-      setTimeout(() => { switchAuthPanel('login'); document.getElementById('login-id').value = idVal; }, 2000);
-    } catch (e) { showToast("가입 처리 중 오류 발생."); }
-  }
-
   async function submitFindId() {
     const nickVal = document.getElementById('find-id-nickname').value.trim();
     const animalVal = document.getElementById('find-id-animal').value.trim();
@@ -1326,55 +1295,19 @@
     } else { showToast("일치하는 가입 정보가 없습니다."); }
   }
 
+// [수정] 비밀번호 조회 로직 (보안 변경)
+  // ==========================================
   async function submitFindPw() {
     const idVal = document.getElementById('find-pw-id').value.trim().toLowerCase();
     if (!idVal) return showToast("아이디를 입력해 주세요.");
 
     const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
     if (!snapshot.empty) {
-      alert(`🎉 조회 성공!\n\n비밀번호는 [ ${snapshot.docs[0].data().pw} ] 입니다.`);
-      switchAuthPanel('login'); document.getElementById('login-pw').value = snapshot.docs[0].data().pw;
-    } else { showToast("등록되지 않은 아이디입니다."); }
-  }
-
-  async function submitLogin() {
-    const idVal = document.getElementById('login-id').value.trim().toLowerCase();
-    const pwVal = document.getElementById('login-pw').value;
-    if (!idVal || !pwVal) return showToast("정보를 입력해 주세요.");
-
-    try {
-      const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
-      if (snapshot.empty || snapshot.docs[0].data().pw !== pwVal) return showToast("가입 정보가 일치하지 않습니다.");
-
-      const userData = snapshot.docs[0].data();
-      const todayStr = getLocalDateString(new Date());
-
-      // 자정 초기화(6회 제한)
-      if (userData.lastResetDate !== todayStr) {
-        userData.remainingAttempts = 6; userData.lastResetDate = todayStr;
-        await db.collection('users').doc(userData.code).update({ remainingAttempts: 6, lastResetDate: todayStr });
-      }
-      state.user = userData;
-
-      // Firestore 타임라인 데이터 연동
-      const videoSnap = await db.collection('timeline').where('userCode', '==', userData.code).get();
-      state.history = {};
-      videoSnap.forEach(doc => {
-        const v = doc.data();
-        state.history[v.recordedAt] = { emotion: v.emotion, clips: v.clips };
-      });
-
-      completeInitialLoginFlow();
-    } catch (e) { showToast("로그인 오류. 네트워크를 확인하세요."); }
-  }
-
-  function handleLogout() {
-    if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
-      state.user = null; state.history = {};
-      document.getElementById('screen-main-app').style.display = 'none';
-      document.getElementById('bottom-app-nav').style.display = 'none';
-      document.getElementById('screen-auth').style.display = 'flex';
-      document.getElementById('login-id').value = ''; document.getElementById('login-pw').value = '';
+      // Firebase Auth 도입 시 비밀번호는 암호화(Hash)되므로 역추적 및 평문 조회가 불가능합니다.
+      alert(`⚠️ 보안 정책 업데이트\n\n현재 계정 시스템이 안전하게 암호화되어 비밀번호 직접 조회가 불가능합니다.`);
+      switchAuthPanel('login');
+    } else { 
+      showToast("등록되지 않은 아이디입니다."); 
     }
   }
 
@@ -1973,15 +1906,43 @@
   }
   function closeProfileDetailModal() { document.getElementById('profile-detail-modal').classList.remove('open'); }
 
-  // ==========================================
-  // 15. DOMContentLoaded & 데몬
+// ==========================================
+  // 15. DOMContentLoaded & 데몬 (자동 로그인 추가)
   // ==========================================
   document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById('screen-auth').style.display = 'flex';
-    document.getElementById('screen-main-app').style.display = 'none';
-    document.getElementById('bottom-app-nav').style.display = 'none';
-  });
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const idVal = user.email.split('@')[0];
+        const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
 
+        if (!snapshot.empty) {
+          const userData = snapshot.docs[0].data();
+          const todayStr = getLocalDateString(new Date());
+
+          if (userData.lastResetDate !== todayStr) {
+            userData.remainingAttempts = 6;
+            userData.lastResetDate = todayStr;
+            await db.collection('users').doc(userData.code).update({ remainingAttempts: 6, lastResetDate: todayStr });
+          }
+          state.user = userData;
+
+          const videoSnap = await db.collection('timeline').where('userCode', '==', userData.code).get();
+          state.history = {};
+          videoSnap.forEach(doc => {
+            const v = doc.data();
+            state.history[v.recordedAt] = { emotion: v.emotion, clips: v.clips };
+          });
+
+          completeInitialLoginFlow(); 
+        }
+      } else {
+        document.getElementById('screen-main-app').style.display = 'none';
+        document.getElementById('bottom-app-nav').style.display = 'none';
+        document.getElementById('screen-auth').style.display = 'flex';
+        switchAuthPanel('login');
+      }
+    });
+  });
 </script>
 </body>
 </html>
