@@ -1,5 +1,4 @@
 
-```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -209,7 +208,7 @@
       background: rgba(43,45,66,0.15); transition: background .3s;
     }
     .cut-dot.done { background: var(--coral); }
-    .cut-dot.active { background: var(--coral); animation: pulse 1s infinite; box-shadow: 0 0 8px var(--coral); }
+    .cut-dot.active { background: var(--coral); animation: pulse 1s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
     .rec-btn {
@@ -219,9 +218,15 @@
       transition: transform .15s; box-shadow: 0 4px 16px rgba(255,127,107,.3);
     }
     .rec-btn:hover { transform: scale(1.06); }
+    .rec-btn:disabled {
+      border-color: #ccc !important; background: #e0e0e0 !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important;
+    }
     .rec-btn .inner {
       width: 40px; height: 40px; border-radius: 50%;
       background: var(--coral); transition: border-radius .2s, transform .2s;
+    }
+    .rec-btn:disabled .inner {
+      background: #999 !important;
     }
     .rec-btn.recording .inner { border-radius: 6px; transform: scale(.75); }
 
@@ -403,7 +408,7 @@
       box-shadow: 0 4px 16px rgba(255,127,107,.35);
     }
     .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,127,107,.5); }
-    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
 
     .btn-secondary {
       padding: 10px 20px; border-radius: var(--radius-sm);
@@ -419,14 +424,23 @@
       padding: 0 20px; margin: 20px 0 10px;
     }
 
+    /* 알림 메시지(Toast) 상승 소멸 애니메이션 */
     .toast {
-      position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-80px);
+      position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(0);
       background: var(--ink); color: white; padding: 12px 24px;
       border-radius: 30px; font-size: 13px; font-weight: 500;
-      z-index: 300; transition: transform .35s cubic-bezier(.4,0,.2,1);
-      white-space: nowrap;
+      z-index: 300; white-space: nowrap;
+      pointer-events: none; opacity: 0;
     }
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.show {
+      animation: riseAndFade 3.5s forwards ease-out;
+    }
+    @keyframes riseAndFade {
+      0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      75% { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-50px); }
+    }
 
     .close-btn {
       position: absolute; top: 16px; right: 16px;
@@ -840,7 +854,6 @@
   <div class="page" id="page-ranking">
     <div class="topbar">
       <h1>🥇 실시간 랭킹</h1>
-      <span class="tier-badge" id="tier-badge-label">🥇 골드</span>
     </div>
 
     <div class="tab-container">
@@ -951,13 +964,6 @@
     <div class="form-group" style="margin-bottom:16px;">
       <label>파티 커버 이미지 (추천 아바타)</label>
       <div class="avatar-grid" id="create-party-preset-grid"></div>
-      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
-        <label class="btn-secondary" style="font-size:11px; padding:6px 10px; cursor:pointer; text-align:center;">
-          내 갤러리 이미지 사용
-          <input type="file" id="party-custom-image-file" style="display:none;" accept="image/*" onchange="handlePartyImageUpload(this)" />
-        </label>
-        <img id="party-custom-image-preview" class="avatar-file-preview" alt="파티 커스텀 프리뷰" />
-      </div>
     </div>
     <button class="btn-primary" onclick="submitCreateParty()">파티 생성하고 멤버 영입하기 🚀</button>
   </div>
@@ -998,9 +1004,10 @@
           <circle class="timer-arc" id="timer-arc" cx="24" cy="24" r="22"/>
         </svg>
       </div>
-      <div class="timer-label" id="timer-label">30</div>
+      <div class="timer-label" id="timer-label">5</div>
     </div>
 
+    <!-- 1개만 강조되어 깜빡이는 단일 실선 진행 UI 적용 -->
     <div class="cut-dots" id="cut-dots">
       <div class="cut-dot" data-i="0"></div><div class="cut-dot" data-i="1"></div><div class="cut-dot" data-i="2"></div>
       <div class="cut-dot" data-i="3"></div><div class="cut-dot" data-i="4"></div><div class="cut-dot" data-i="5"></div>
@@ -1010,6 +1017,12 @@
       <div class="record-gauge-slot" data-i="0"></div><div class="record-gauge-slot" data-i="1"></div><div class="record-gauge-slot" data-i="2"></div>
       <div class="record-gauge-slot" data-i="3"></div><div class="record-gauge-slot" data-i="4"></div><div class="record-gauge-slot" data-i="5"></div>
     </div>
+
+    <!-- 촬영 완료/만료 상태 메세지 알림 영역 -->
+    <p id="rec-hint-warning" style="text-align:center; font-size:11px; color:#FF7F6B; font-weight:700; margin-top:4px; display:none; line-height:1.4;">
+      오늘의 촬영 횟수를 모두 사용했습니다.<br/>촬영 횟수는 매일 00:00에 초기화됩니다.
+    </p>
+
     <p id="rec-hint" style="text-align:center;font-size:12px;color:#aaa;margin-top:6px;font-weight:700;">
       최대 6회 / 남은 횟수: 6회
     </p>
@@ -1179,14 +1192,17 @@
   ];
 
   const defaultState = { user: null, recordedToday: false, history: {}, rankingTab: 'user', objectTab: 'shop' };
-  let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 30, timerInterval: null };
+  let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 5, timerInterval: null };
   
   let selectedProfileAvatar = "🌳", selectedPartyAvatar = "🏆";
   let isIdCheckedAndValid = false, checkedAndValidIdString = "";
   
+  // 카메라 및 구름 애니메이션 전역 변수
   let cameraStream = null, recMediaRecorder = null, isCameraConnected = false, currentFacingMode = "user";
   let sessionTimer = null, sessionSeconds = 0;
   let activeRecordedBlob = null;
+  let cloudOffsetX = 0; // 구름 X 좌표 실시간 연동 변수
+  let animationFrameId = null;
 
   const shopSpritesheetImage = new Image();
   shopSpritesheetImage.src = 'shop_spritesheet.png';
@@ -1224,8 +1240,10 @@
 
   function showToast(msg) {
     const t = document.getElementById('toast');
-    t.textContent = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2000);
+    t.className = 'toast'; 
+    void t.offsetWidth; // 리플로우 트리거
+    t.textContent = msg; 
+    t.classList.add('show');
   }
 
   async function saveUserToDB() {
@@ -1313,8 +1331,6 @@
       if(prev) prev.style.display = 'none';
     } else {
       selectedPartyAvatar = ava;
-      const prev = document.getElementById('party-custom-image-preview');
-      if(prev) prev.style.display = 'none';
     }
   }
 
@@ -1326,19 +1342,6 @@
         if(preview) { preview.src = e.target.result; preview.style.display = 'block'; }
         selectedProfileAvatar = e.target.result;
         document.querySelectorAll('#prof-avatar-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
-      }
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
-  function handlePartyImageUpload(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const preview = document.getElementById('party-custom-image-preview');
-        if(preview) { preview.src = e.target.result; preview.style.display = 'block'; }
-        selectedPartyAvatar = e.target.result;
-        document.querySelectorAll('#create-party-preset-grid .avatar-item').forEach(child => child.classList.remove('selected'));
       }
       reader.readAsDataURL(input.files[0]);
     }
@@ -1430,7 +1433,7 @@
         code: userCode, loginId: idVal, nickname: nickname,
         birthday: birthday, animal: animal, isPublic: isPublic,
         avatar: selectedProfileAvatar, points: 1000, score: 0, streak: 0,
-        remainingAttempts: 6, totalVideos: 0, lastResetDate: todayStr,
+        remainingRecordCount: 6, totalVideos: 0, lastResetDate: todayStr,
         inventory: [], friends: [], partyCode: null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -1557,11 +1560,15 @@
       updateGlobalPointsDisplay(); updateMiniProfileHeader();
     }
 
-    if (id === 'home') drawIsland();
-    else if (id === 'timeline') { buildCalendar(); document.getElementById('timeline-day-viewer').style.display = "none"; }
-    else if (id === 'party') renderPartyMainView();
-    else if (id === 'objects') switchObjectTab(state.objectTab);
-    else if (id === 'ranking') buildRanking();
+    if (id === 'home') {
+      startCanvasLoop();
+    } else {
+      stopCanvasLoop();
+      if (id === 'timeline') { buildCalendar(); document.getElementById('timeline-day-viewer').style.display = "none"; }
+      else if (id === 'party') renderPartyMainView();
+      else if (id === 'objects') switchObjectTab(state.objectTab);
+      else if (id === 'ranking') buildRanking();
+    }
   }
 
   function openSettingsModal() { document.getElementById('settings-user-code').value = state.user.code; document.getElementById('settings-modal').classList.add('open'); }
@@ -1569,8 +1576,25 @@
   function saveSettings() { closeSettingsModal(); showToast("환경설정 완료."); }
 
   // ==========================================
-  // 7. 섬 정원 드로잉 (자동 배치 시스템)
+  // 7. 섬 정원 드로잉 (자동 배치, 태양, 구름 애니메이션, 야자수 추가 및 크기 비율 조정)
   // ==========================================
+  function startCanvasLoop() {
+    stopCanvasLoop();
+    function tick() {
+      cloudOffsetX += 0.15; // 부드러운 유동 이동 속도
+      drawIsland();
+      animationFrameId = requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  function stopCanvasLoop() {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+
   function drawIsland() {
     const wrap = document.getElementById('island-canvas-wrap');
     if (!wrap) return;
@@ -1579,13 +1603,35 @@
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
 
+    // 하늘 그라데이션
     const sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, '#B8DEFF'); sky.addColorStop(1, '#5BB8D4');
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-    
+
+    // 1. 태양 배치 (왼쪽 상단 분위기 강화)
+    ctx.beginPath();
+    const sunGrad = ctx.createRadialGradient(40, 45, 2, 40, 45, 24);
+    sunGrad.addColorStop(0, '#FFF6BD');
+    sunGrad.addColorStop(0.3, '#FFD966');
+    sunGrad.addColorStop(1, 'rgba(255, 127, 107, 0)');
+    ctx.fillStyle = sunGrad;
+    ctx.arc(40, 45, 24, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. 부드럽게 유영하는 구름 애니메이션
+    const clX1 = (50 + cloudOffsetX) % (W + 100) - 50;
+    const clX2 = (220 + cloudOffsetX) % (W + 100) - 50;
+    drawCloudShape(ctx, clX1, 35);
+    drawCloudShape(ctx, clX2, 60);
+
+    // 모래 대지 및 초록 잔디 베이스
     ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
 
+    // 3. 야자수 추가 (섬 왼쪽 모퉁이 정적 묘사)
+    drawPalmTree(ctx, W / 2 - W * 0.16, H * 0.63);
+
+    // 나무(크게 변경), 꽃(작게 변경) 배치 비율 조정
     const totalScore = getUserTotalScore(state.user) + (state.user.totalVideos * 10);
     const decorCount = Math.min(Math.floor(totalScore / 300) + 3, 12); 
     const plants = ['🌸', '🌳', '🌺', '🌿', '🌻', '🌷'];
@@ -1595,9 +1641,45 @@
       const radius = 25 + (i % 3) * 15; 
       const x = W / 2 + Math.cos(angle) * radius * 1.5;
       const y = H * 0.68 + Math.sin(angle) * radius * 0.5;
-      ctx.font = '24px serif';
-      ctx.fillText(plants[i % plants.length], x - 12, y + 10);
+      
+      const p = plants[i % plants.length];
+      if (p === '🌳' || p === '🌿') {
+        ctx.font = '32px serif'; // 나무는 기존보다 크게 그리기
+        ctx.fillText(p, x - 16, y + 12);
+      } else {
+        ctx.font = '16px serif'; // 꽃류는 기존보다 작게 비율 조정
+        ctx.fillText(p, x - 8, y + 6);
+      }
     }
+  }
+
+  function drawCloudShape(ctx, x, y) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.arc(x + 10, y - 6, 14, 0, Math.PI * 2);
+    ctx.arc(x + 22, y, 12, 0, Math.PI * 2);
+    ctx.rect(x, y - 4, 22, 10);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawPalmTree(ctx, x, y) {
+    // 나무 몸통 갈색선
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#8B5A2B';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x - 10, y - 25, x - 5, y - 45);
+    ctx.stroke();
+
+    // 초록색 야자 잎사귀들
+    ctx.fillStyle = '#2E8B57';
+    ctx.beginPath();
+    ctx.ellipse(x - 13, y - 48, 12, 5, -Math.PI / 6, 0, Math.PI * 2);
+    ctx.ellipse(x + 5, y - 48, 12, 5, Math.PI / 6, 0, Math.PI * 2);
+    ctx.ellipse(x - 3, y - 55, 10, 5, -Math.PI / 2, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // ==========================================
@@ -1670,6 +1752,7 @@
 
   function openMissionModal() { renderMissionList(); document.getElementById('mission-modal').classList.add('open'); }
 
+  // 진행 상태 수치가 존재하는 모든 임무에 동적 인디케이터 주입
   function renderMissionList() {
     const list = document.getElementById('mission-list');
     const tasks = state.user.dailyMission.tasks;
@@ -1687,8 +1770,35 @@
       else if(st === 2) { cls += " done"; btnText = `완료됨`; onclick = ""; }
       else { onclick = "disabled"; btnText = `미달성 (${m.point}점)`; }
 
+      // 진행형 임무 현재 진행 가속 표기 계산 로직 추가
+      let progressText = "";
+      const uploadCount = state.user.dailyMission.uploadCount || 0;
+      const spendAmount = state.user.dailyMission.spendAmount || 0;
+      const playMinutes = Math.min(Math.floor(sessionSeconds / 60), 20);
+
+      if (m.key === 'upload_1') {
+        progressText = ` (${Math.min(uploadCount, 1)}/1 완료)`;
+      } else if (m.key === 'upload_3') {
+        progressText = ` (${Math.min(uploadCount, 3)}/3 완료)`;
+      } else if (m.key === 'upload_5') {
+        progressText = ` (${Math.min(uploadCount, 5)}/5 완료)`;
+      } else if (m.key === 'spend_100') {
+        progressText = ` (${Math.min(spendAmount, 100)}/100 사용)`;
+      } else if (m.key === 'play_5m') {
+        progressText = ` (${Math.min(playMinutes, 5)}/5분)`;
+      } else if (m.key === 'play_20m') {
+        progressText = ` (${Math.min(playMinutes, 20)}/20분)`;
+      } else if (m.key === 'add_friend') {
+        const friendsCount = (state.user.friends || []).length;
+        progressText = ` (보유 친구 수: ${friendsCount}명)`;
+      } else if (m.key === 'attend') {
+        const todayStr = getLocalDateString(new Date());
+        const attended = state.user.attendance && state.user.attendance[todayStr];
+        progressText = attended ? " (1/1 완료)" : " (0/1 미완료)";
+      }
+
       return `<div class="${cls}">
-        <div class="mission-card-info"><h4>${m.title}</h4><p>${m.desc}</p></div>
+        <div class="mission-card-info"><h4>${m.title}${progressText}</h4><p>${m.desc}</p></div>
         <button class="${btnCls}" ${onclick}>${btnText}</button>
       </div>`;
     }).join('');
@@ -1727,18 +1837,34 @@
   }
 
   // ==========================================
-  // 8. 촬영 파이프라인 (Firebase Storage)
+  // 8. 촬영 파이프라인 (5초 자동촬영 및 자동 업로드)
   // ==========================================
   async function openModal() {
-    const cutsDone = state.user.recordData.cutsDoneToday || 0;
-    if (cutsDone >= 6) return showToast("오늘의 촬영 횟수(최대 6회)를 모두 소진했습니다! 내일 뵙겠습니다.");
+    const attempts = state.user.remainingRecordCount ?? 6;
     
     document.getElementById('modal-question').textContent = '💬 ' + dailyMissionPool[new Date().getDay() % dailyMissionPool.length];
     document.getElementById('record-modal').classList.add('open');
     document.getElementById('emotion-section').style.display = 'none';
     document.getElementById('rec-btn').style.display = 'flex';
+    document.getElementById('timer-label').textContent = '5';
     
-    state.cutsDone = cutsDone;
+    const recBtn = document.getElementById('rec-btn');
+    const warningText = document.getElementById('rec-hint-warning');
+
+    // 6회 모두 소진 시의 카메라 인터페이스 활성화 및 녹화 비활성 룰 세팅
+    if (attempts <= 0) {
+      recBtn.disabled = true;
+      recBtn.style.pointerEvents = 'none';
+      recBtn.style.opacity = '0.5';
+      warningText.style.display = 'block';
+    } else {
+      recBtn.disabled = false;
+      recBtn.style.pointerEvents = 'auto';
+      recBtn.style.opacity = '1';
+      warningText.style.display = 'none';
+    }
+
+    state.cutsDone = 6 - attempts; // 촬영 완료 횟수 매핑
     updateRecordGaugeUI();
     await startCamera();
   }
@@ -1765,10 +1891,11 @@
   }
 
   function updateRecordGaugeUI() {
-    const currentActiveIndex = state.user.recordData.cutsDoneToday || 0;
-    const remainingAttempts = 6 - currentActiveIndex;
-    document.getElementById('rec-hint').textContent = `최대 6회 / 남은 횟수: ${remainingAttempts}회`;
+    const attempts = state.user.remainingRecordCount ?? 6;
+    const currentActiveIndex = 6 - attempts;
+    document.getElementById('rec-hint').textContent = `남은 횟수: ${attempts} / 6`;
 
+    // 상단 깜빡임이 하나만 직관적으로 표시되도록 진행선 UI 연계 조절
     const dots = document.querySelectorAll('.cut-dot');
     const slots = document.querySelectorAll('.record-gauge-slot');
 
@@ -1776,8 +1903,8 @@
       dot.className = "cut-dot";
       if (idx < currentActiveIndex) {
         dot.classList.add('done');
-      } else if (idx === currentActiveIndex) {
-        dot.classList.add('active');
+      } else if (idx === currentActiveIndex && attempts > 0) {
+        dot.classList.add('active'); // 유일한 현재 촬영 포커스 영역만 애니메이션 부여
       }
     });
 
@@ -1785,7 +1912,7 @@
       slot.className = "record-gauge-slot";
       if (idx < currentActiveIndex) {
         slot.classList.add('used');
-      } else if (idx === currentActiveIndex) {
+      } else if (idx === currentActiveIndex && attempts > 0) {
         slot.classList.add('active');
       }
     });
@@ -1793,8 +1920,8 @@
 
   function toggleRecord() {
     if (state.recording) return;
-    const cutsDone = state.user.recordData.cutsDoneToday || 0;
-    if (cutsDone >= 6) return;
+    const attempts = state.user.remainingRecordCount ?? 6;
+    if (attempts <= 0) return;
     isCameraConnected ? startActualCut() : simulateRecordFlow();
   }
 
@@ -1812,14 +1939,14 @@
       state.recording = false;
       btn.classList.remove('recording');
 
+      // 촬영 즉시 감정 태그 오버레이 화면 개방 후 저장 유도
       document.getElementById('rec-btn').style.display = 'none';
       document.getElementById('emotion-section').style.display = 'block';
     };
 
     recMediaRecorder.start();
     let elapsed = 0;
-    const cutsDone = state.user.recordData.cutsDoneToday || 0;
-    const maxTimeLimit = 30 - (cutsDone * 5); 
+    const maxTimeLimit = 5; // 무조건 5초 고정 타임 적용
 
     state.timerInterval = setInterval(() => {
       elapsed += 0.1;
@@ -1835,8 +1962,7 @@
     btn.classList.add('recording');
 
     let elapsed = 0;
-    const cutsDone = state.user.recordData.cutsDoneToday || 0;
-    const maxTimeLimit = 30 - (cutsDone * 5);
+    const maxTimeLimit = 5;
 
     state.timerInterval = setInterval(async () => {
       elapsed += 0.1;
@@ -1870,11 +1996,11 @@
     const hidden = isHiddenDay(todayStr);
 
     document.getElementById('upload-btn').disabled = true;
-    document.getElementById('upload-btn').textContent = "업로드 가동 중... 🌱";
+    document.getElementById('upload-btn').textContent = "아일랜드 대지에 정착 중... 🌱";
 
     try {
-      const cutsDone = state.user.recordData.cutsDoneToday || 0;
-      const indexSuffix = cutsDone + "_" + Date.now();
+      const currentDone = 6 - (state.user.remainingRecordCount ?? 6);
+      const indexSuffix = currentDone + "_" + Date.now();
       
       const thumbBlob = await generateVideoThumbnail(activeRecordedBlob);
       let thumbUrl = "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?w=200";
@@ -1934,13 +2060,9 @@
       state.user.totalVideos = (state.user.totalVideos || 0) + 1;
       state.user.points += baseReward;
       
-      state.user.recordData.cutsDoneToday += 1;
+      // 촬영 횟수 실시간 차감 처리 동기화
+      state.user.remainingRecordCount = Math.max((state.user.remainingRecordCount ?? 6) - 1, 0);
       state.user.dailyMission.uploadCount += 1;
-
-      if (state.user.recordData.cutsDoneToday === 6 && !state.user.recordData.bonusClaimed) {
-        state.user.recordData.bonusClaimed = true;
-        state.user.points += 20;
-      }
 
       await saveUserToDB();
 
@@ -1950,7 +2072,7 @@
 
       closeModal();
       goPage('home');
-      showToast(`기록 저장 완료! ${baseReward}p 지급 완료!`);
+      showToast(`기록 저장 완료! ${baseReward}p 획득!`);
     } catch(err) {
       console.error(err);
       showToast("오류 발생: " + err.message);
@@ -1964,7 +2086,7 @@
     if (cameraStream) { try { cameraStream.getTracks().forEach(track => track.stop()); } catch(e){} cameraStream = null; }
     clearInterval(state.timerInterval); state.recording = false; activeRecordedBlob = null;
     document.getElementById('rec-btn').classList.remove('recording');
-    document.getElementById('timer-label').textContent = '30';
+    document.getElementById('timer-label').textContent = '5';
     document.getElementById('timer-arc').style.strokeDashoffset = '138';
     document.querySelectorAll('.cut-dot').forEach(d => { d.className = 'cut-dot'; });
   }
@@ -2361,7 +2483,7 @@
   }
 
   // ==========================================
-  // 13. 파티 시스템 (Firestore 연동)
+  // 13. 파티 시스템 (갤러리 업로드 완전히 거세 및 프리셋 연동)
   // ==========================================
   function openPartyCreationModal() { setupAvatarPresetGrid('create-party-preset-grid', 'party'); document.getElementById('party-create-modal').classList.add('open'); }
   function closePartyCreateModal() { document.getElementById('party-create-modal').classList.remove('open'); }
@@ -2467,7 +2589,7 @@
   }
 
   // ==========================================
-  // 14. 프로필 상세 모달 & 뷰어 로직 (파티레벨 정보 추가)
+  // 14. 프로필 상세 모달 & 뷰어 로직
   // ==========================================
   async function openProfileDetail(userCode) {
     checkMission('view_profile');
@@ -2518,6 +2640,7 @@
 
           if(!userData.attendance) userData.attendance = {};
           
+          // 일일 초기화 (매일 00:00 KST / 로컬 기준 촬영 횟수 6회 자동 복구 및 업로드 초기화)
           if(!userData.dailyMission || userData.dailyMission.date !== todayStr) {
             userData.dailyMission = {
               date: todayStr, score: 0, claimedTiers: [],
@@ -2527,6 +2650,7 @@
           }
           if(!userData.recordData || userData.recordData.date !== todayStr) {
             userData.recordData = { date: todayStr, cutsDoneToday: 0, bonusClaimed: false };
+            userData.remainingRecordCount = 6; // 일일 초기화 기준에 따라 촬영 횟수 6회 복구
           }
 
           if (userData.lastResetDate !== todayStr) {
