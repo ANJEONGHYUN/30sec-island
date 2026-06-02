@@ -637,7 +637,7 @@
       <input type="checkbox" id="prof-public-toggle" checked style="width:20px; height:20px; accent-color:var(--sea);" />
     </div>
 
-    <button class="btn-primary" style="margin-bottom:12px;" onclick="submitRegister()">계정 생성 완료 🌱</button>
+	    <button class="btn-primary" style="margin-bottom:12px;" onclick="submitRegister()">계정 생성 완료 🌱</button>
     <button class="btn-secondary" onclick="switchAuthPanel('login')">로그인 화면으로 가기</button>
   </div>
 
@@ -1228,9 +1228,10 @@
     }
   }
 
-  // ==========================================
+// ==========================================
   // 5. Firebase 기반 회원가입 / 로그인 / 찾기
   // ==========================================
+
   function resetRegisterForm() {
     document.getElementById('reg-id').value = "";
     document.getElementById('reg-nickname').value = "";
@@ -1273,13 +1274,65 @@
     }
 
     statusEl.style.display = 'block';
-    const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
-    if (!snapshot.empty) {
-      statusEl.style.color = '#FF5A42'; statusEl.textContent = "❌ 중복된 아이디입니다.";
-      idInput.classList.add('error'); isIdCheckedAndValid = false;
-    } else {
-      statusEl.style.color = '#7EC67E'; statusEl.textContent = "✔️ 사용 가능한 아이디입니다.";
-      idInput.classList.remove('error'); isIdCheckedAndValid = true; checkedAndValidIdString = idVal;
+    try {
+      const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
+      if (!snapshot.empty) {
+        statusEl.style.color = '#FF5A42'; statusEl.textContent = "❌ 중복된 아이디입니다.";
+        idInput.classList.add('error'); isIdCheckedAndValid = false;
+      } else {
+        statusEl.style.color = '#7EC67E'; statusEl.textContent = "✔️ 사용 가능한 아이디입니다.";
+        idInput.classList.remove('error'); isIdCheckedAndValid = true; checkedAndValidIdString = idVal;
+      }
+    } catch (err) {
+      console.error("중복 체크 실패:", err);
+      showToast("데이터베이스 연결 에러. Firebase 설정을 확인하세요.");
+    }
+  }
+
+  async function submitRegister() {
+    const idVal = document.getElementById('reg-id').value.trim().toLowerCase();
+    const nickname = document.getElementById('reg-nickname').value.trim();
+    const pwVal = document.getElementById('reg-pw').value;
+    const confirmVal = document.getElementById('reg-pw-confirm').value;
+    const birthday = document.getElementById('reg-birthday').value;
+    const animal = document.getElementById('reg-animal').value.trim();
+    const isPublic = document.getElementById('prof-public-toggle').checked;
+
+    if (!isIdCheckedAndValid || idVal !== checkedAndValidIdString) return showToast("중복 검사를 완료해 주세요.");
+    if (!nickname) return showToast("이름을 지정해 주세요.");
+    if (pwVal.length < 8) return showToast("비밀번호는 최소 8자 이상 필요합니다.");
+    if (pwVal !== confirmVal) return showToast("비밀번호 확인이 일치하지 않습니다.");
+    if (!birthday) return showToast("생년월일을 선택해 주세요.");
+    if (!animal) return showToast("좋아하는 동물 답변을 입력해 주세요.");
+
+    // Firebase Auth용 가상 이메일 조합
+    const dummyEmail = idVal + "@secisland.app";
+    const userCode = generateUserCode();
+    const todayStr = getLocalDateString(new Date());
+
+    try {
+      // 1. Firebase Auth에 실제 계정 생성
+      await auth.createUserWithEmailAndPassword(dummyEmail, pwVal);
+
+      // 2. Firestore에 유저 정보 저장
+      await db.collection('users').doc(userCode).set({
+        code: userCode, loginId: idVal, nickname: nickname,
+        birthday: birthday, animal: animal, isPublic: isPublic,
+        avatar: selectedProfileAvatar, points: 1000, score: 0, streak: 0,
+        remainingAttempts: 6, totalVideos: 0, lastResetDate: todayStr,
+        inventory: [], friends: [], partyCode: null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      showToast("🎉 가입 성공! 1000p 지급 완료!");
+      
+      // 자동 로그인 방지 및 화면 전환
+      await auth.signOut();
+      setTimeout(() => { switchAuthPanel('login'); document.getElementById('login-id').value = idVal; }, 2000);
+    } catch (e) { 
+      console.error("회원가입 실패:", e);
+      if(e.code === 'auth/email-already-in-use') showToast("이미 가입된 아이디입니다.");
+      else showToast("가입 처리 중 오류 발생: " + e.message); 
     }
   }
 
@@ -1293,6 +1346,42 @@
       alert(`🎉 일치 성공!\n\n가입 아이디는 [ ${snapshot.docs[0].data().loginId} ] 입니다.`);
       switchAuthPanel('login'); document.getElementById('login-id').value = snapshot.docs[0].data().loginId;
     } else { showToast("일치하는 가입 정보가 없습니다."); }
+  }
+
+  async function submitFindPw() {
+    const idVal = document.getElementById('find-pw-id').value.trim().toLowerCase();
+    if (!idVal) return showToast("아이디를 입력해 주세요.");
+
+    const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
+    if (!snapshot.empty) {
+      alert(`⚠️ 보안 정책 업데이트\n\n현재 계정 시스템이 안전하게 암호화되어 비밀번호 직접 조회가 불가능합니다.`);
+      switchAuthPanel('login');
+    } else { 
+      showToast("등록되지 않은 아이디입니다."); 
+    }
+  }
+
+  async function submitLogin() {
+    const idVal = document.getElementById('login-id').value.trim().toLowerCase();
+    const pwVal = document.getElementById('login-pw').value;
+    if (!idVal || !pwVal) return showToast("정보를 입력해 주세요.");
+
+    const dummyEmail = idVal + "@secisland.app";
+    try {
+      await auth.signInWithEmailAndPassword(dummyEmail, pwVal);
+    } catch (e) { 
+      console.error("로그인 실패:", e);
+      showToast("가입 정보가 일치하지 않거나 없는 계정입니다."); 
+    }
+  }
+
+  async function handleLogout() {
+    if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
+      await auth.signOut();
+      state.user = null; state.history = {};
+      document.getElementById('login-id').value = ''; 
+      document.getElementById('login-pw').value = '';
+    }
   }
 
 // [수정] 비밀번호 조회 로직 (보안 변경)
