@@ -1,3 +1,5 @@
+
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -89,31 +91,32 @@
 
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 56px 20px 16px;
+      padding: 56px 20px 16px; gap: 8px; flex-wrap: nowrap;
     }
-    .topbar h1 { font-family: 'Gowun Batang', serif; font-size: 22px; color: var(--ink); }
-    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .topbar h1 { font-family: 'Gowun Batang', serif; font-size: 22px; color: var(--ink); white-space: nowrap; }
+    .topbar-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .topbar .badge {
       background: var(--coral); color: white; font-size: 11px;
-      padding: 4px 10px; border-radius: 20px; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px; font-weight: 700; white-space: nowrap;
     }
     .btn-settings {
       background: var(--glass); border: 1px solid rgba(255,255,255,0.6);
       border-radius: 50%; width: 32px; height: 32px; display: flex;
       align-items: center; justify-content: center; cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px; flex-shrink: 0;
     }
 
     .user-mini-profile {
       display: flex; align-items: center; gap: 8px; background: var(--glass);
       padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.5);
       cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: transform 0.2s;
+      flex-shrink: 0; max-width: 140px; overflow: hidden;
     }
     .user-mini-profile:hover { transform: scale(1.03); }
-    .user-mini-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: white; }
+    .user-mini-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: white; flex-shrink: 0; }
     .user-mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
     .user-mini-avatar span { font-size: 15px; }
-    .user-mini-name { font-size: 12px; font-weight: 700; color: var(--ink); }
+    .user-mini-name { font-size: 12px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     #island-canvas-wrap {
       margin: 0 20px;
@@ -205,8 +208,8 @@
       width: 36px; height: 6px; border-radius: 3px;
       background: rgba(43,45,66,0.15); transition: background .3s;
     }
-    .cut-dot.done { background: var(--sea); }
-    .cut-dot.active { background: var(--coral); animation: pulse 1s infinite; }
+    .cut-dot.done { background: var(--coral); }
+    .cut-dot.active { background: var(--coral); animation: pulse 1s infinite; box-shadow: 0 0 8px var(--coral); }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
     .rec-btn {
@@ -324,12 +327,12 @@
       font-size: 20px; flex-shrink: 0; overflow: hidden;
     }
     .member-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .member-info { flex: 1; }
-    .member-info .name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .member-info { flex: 1; min-width: 0; }
+    .member-info .name { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .member-info .streak { font-size: 12px; color: var(--muted); }
 
     .party-cert-badge {
-      font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 6px;
+      font-size: 11px; font-weight: 500; padding: 2px 6px; border-radius: 6px; white-space: nowrap;
     }
     .party-cert-badge.done { background: rgba(126,198,126,0.2); color: #4CAF50; }
     .party-cert-badge.yet { background: rgba(0,0,0,0.05); color: var(--muted); }
@@ -363,8 +366,8 @@
       color: var(--ink); flex-shrink: 0;
     }
     .rank-num.top3 { background: linear-gradient(135deg, #FFD700,#FFA500); color: white; }
-    .rank-bar-wrap { flex: 1; }
-    .rank-name { font-size: 13px; font-weight: 700; display: flex; align-items: center; }
+    .rank-bar-wrap { flex: 1; min-width: 0; }
+    .rank-name { font-size: 13px; font-weight: 700; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .rank-bar {
       height: 6px; background: rgba(91,184,212,.2);
       border-radius: 3px; margin-top: 4px; overflow: hidden;
@@ -484,22 +487,19 @@
     .buy-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 
     .inventory-grid {
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 20px;
+      display: flex; overflow-x: auto; flex-wrap: nowrap; gap: 12px; padding: 10px 20px 24px;
+      -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory;
     }
     .inventory-card {
-      background: white; border-radius: 12px; aspect-ratio: 1;
+      background: white; border-radius: 12px; width: 100px; height: 100px; flex-shrink: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       position: relative; border: 2px solid transparent; cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 4px; scroll-snap-align: start;
     }
     .inventory-card.placed { border-color: var(--island); }
     .inventory-card-sprite-mini {
-      width: 48px;
-      height: 48px;
-      background-image: url('shop_spritesheet.png');
-      background-size: 1040% 480%;
-      background-repeat: no-repeat;
-      transform: scale(0.8);
+      width: 48px; height: 48px; background-image: url('shop_spritesheet.png');
+      background-size: 1040% 480%; background-repeat: no-repeat; transform: scale(0.8);
     }
     .inventory-card-badge {
       position: absolute; bottom: 4px; right: 4px; background: var(--island);
@@ -511,6 +511,7 @@
       border-radius: 20px; padding: 6px 14px; display: inline-flex;
       align-items: center; gap: 6px; font-weight: 700; font-size: 13px;
       border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      flex-shrink: 0; white-space: nowrap;
     }
 
     .timeline-detail-box {
@@ -525,19 +526,18 @@
       background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 9/16;
       position: relative; display: flex; align-items: center; justify-content: center;
     }
-    .clip-card video { width: 100%; height: 100%; object-fit: cover; }
+    .clip-card img.thumb { width: 100%; height: 100%; object-fit: cover; }
     .clip-play-overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.3);
+      position: absolute; inset: 0; background: rgba(0,0,0,0.35);
       display: flex; align-items: center; justify-content: center;
       color: white; font-size: 24px; cursor: pointer; z-index: 2;
     }
 
-    /* ───────── 출석체크 & 일일 임무 UI (신규 추가) ───────── */
     .btn-action-icon {
       background: var(--glass); border: 1px solid rgba(255,255,255,0.6);
       border-radius: 50%; width: 32px; height: 32px; display: flex;
       align-items: center; justify-content: center; cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px; margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05); font-size: 14px; margin-top: 8px; flex-shrink: 0;
     }
     .mission-progress-bar {
       display: flex; justify-content: space-between; position: relative; margin: 20px 0; padding: 0 10px;
@@ -585,7 +585,6 @@
     .att-day.hidden-day { border: 2px solid #FFD700; background: #FFFDF0; color: #B8860B; font-weight: 700; }
     .att-day.hidden-day.attended { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; border: none; }
 
-    /* 카메라 추가 스타일 */
     .cam-controls { position: absolute; bottom: 16px; right: 16px; z-index: 10; }
     .btn-cam-swap {
       background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.3);
@@ -594,9 +593,18 @@
     }
     .record-gauge-container { display: flex; gap: 6px; justify-content: center; margin-top: 12px; margin-bottom: 4px; }
     .record-gauge-slot { width: 20px; height: 6px; border-radius: 3px; background: #ddd; transition: all 0.3s; }
+    .record-gauge-slot.used { background: #FF5A42; }
     .record-gauge-slot.active { background: #FF5A42; animation: blink 1s infinite; box-shadow: 0 0 6px rgba(255,90,66,0.6); }
-    .record-gauge-slot.used { background: #FF5A42; opacity: 0.25; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    #timeline-player-overlay {
+      display: none; position: fixed; inset: 0; z-index: 350;
+      background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    #timeline-player-overlay video {
+      width: 100%; max-width: 480px; aspect-ratio: 9/16; background: #000;
+    }
   </style>
 </head>
 <body>
@@ -712,12 +720,12 @@
       <div class="points-counter" id="home-points-display">🪙 0p</div>
       
       <div class="topbar-actions" style="display:flex; flex-direction:column; align-items:flex-end;">
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div style="display:flex; gap:6px; align-items:center;">
           <span class="badge" id="streak-badge">🔥 1일 연속</span>
           <button class="btn-settings" onclick="openFriendsModal()" style="font-size:16px;" aria-label="친구 창 열기">👥</button>
           <button class="btn-settings" onclick="openSettingsModal()" aria-label="설정 창 열기">⚙️</button>
         </div>
-        <div style="display:flex; gap:8px; margin-top:8px;">
+        <div style="display:flex; gap:6px; margin-top:8px;">
           <button class="btn-action-icon" onclick="openAttendanceModal()" aria-label="출석체크">📅</button>
           <button class="btn-action-icon" onclick="openMissionModal()" aria-label="일일 임무">📜</button>
         </div>
@@ -789,7 +797,17 @@
         <button class="badge-rank-link" onclick="goPage('ranking')">파티 랭킹 🏆</button>
         <h2 id="active-party-name">파티명</h2>
         <p id="active-party-code-label" style="font-size:12px; opacity:0.85; margin-top:4px;">파티 코드: PARTY-XXXX-B</p>
-        <div id="active-party-score" style="font-size:32px; font-weight:700; margin-top:12px;">오늘의 달성률: 0%</div>
+        <div id="active-party-score" style="font-size:20px; font-weight:700; margin-top:12px;">오늘의 달성률: 0%</div>
+        
+        <div id="active-party-level-wrap" style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
+            <span id="active-party-level-label">Lv.1</span>
+            <span id="active-party-exp-text">0 / 100 EXP</span>
+          </div>
+          <div style="height:6px; background:rgba(255,255,255,0.25); border-radius:3px; overflow:hidden;">
+            <div id="active-party-exp-fill" style="height:100%; width:0%; background:#FFF; border-radius:3px; transition:width 0.4s ease;"></div>
+          </div>
+        </div>
       </div>
 
       <p class="section-title">파티원 목록 (실시간 영상 인증 현황)</p>
@@ -989,11 +1007,11 @@
     </div>
 
     <div class="record-gauge-container" id="record-gauge">
-      <div class="record-gauge-slot"></div><div class="record-gauge-slot"></div><div class="record-gauge-slot"></div>
-      <div class="record-gauge-slot"></div><div class="record-gauge-slot"></div><div class="record-gauge-slot"></div>
+      <div class="record-gauge-slot" data-i="0"></div><div class="record-gauge-slot" data-i="1"></div><div class="record-gauge-slot" data-i="2"></div>
+      <div class="record-gauge-slot" data-i="3"></div><div class="record-gauge-slot" data-i="4"></div><div class="record-gauge-slot" data-i="5"></div>
     </div>
-    <p id="rec-hint" style="text-align:center;font-size:11px;color:#aaa;margin-top:6px">
-      오늘 업로드 가능 횟수 (최대 6회)
+    <p id="rec-hint" style="text-align:center;font-size:12px;color:#aaa;margin-top:6px;font-weight:700;">
+      최대 6회 / 남은 횟수: 6회
     </p>
 
     <button class="rec-btn" id="rec-btn" onclick="toggleRecord()">
@@ -1013,7 +1031,7 @@
 
       <div class="ai-box">
         <div class="ai-label" id="ai-analysis-header">✦ Gemini 감정 요약서</div>
-        <div class="ai-text loading" id="ai-analysis">영상과 답변 내용을 분석하고 있습니다...</div>
+        <div class="ai-text" id="ai-analysis">영상을 성공적으로 기록하셨습니다. 감정을 골라 저장을 누르세요!</div>
       </div>
 
       <button class="btn-primary" style="margin-top:16px" id="upload-btn" onclick="uploadRecord()" disabled>
@@ -1021,6 +1039,11 @@
       </button>
     </div>
   </div>
+</div>
+
+<div id="timeline-player-overlay" onclick="closeTimelinePlayer()">
+  <video id="timeline-player-video" controls autoplay playsinline onclick="event.stopPropagation()"></video>
+  <button class="btn-primary" style="width:auto; margin-top:16px; padding:10px 24px;" onclick="closeTimelinePlayer()">닫기</button>
 </div>
 
 <nav id="bottom-app-nav" style="display:none;">
@@ -1160,11 +1183,10 @@
   
   let selectedProfileAvatar = "🌳", selectedPartyAvatar = "🏆";
   let isIdCheckedAndValid = false, checkedAndValidIdString = "";
-  let tempCutsRecorded = [];
   
-  // 카메라 전역 상태
   let cameraStream = null, recMediaRecorder = null, isCameraConnected = false, currentFacingMode = "user";
   let sessionTimer = null, sessionSeconds = 0;
+  let activeRecordedBlob = null;
 
   const shopSpritesheetImage = new Image();
   shopSpritesheetImage.src = 'shop_spritesheet.png';
@@ -1179,7 +1201,7 @@
   }
 
   // ==========================================
-  // 3. 유틸리티 함수 모음
+  // 3. 유틸리티 및 계산 함수 모음
   // ==========================================
   function getLocalDateString(date) {
     const yyyy = date.getFullYear();
@@ -1208,6 +1230,7 @@
 
   async function saveUserToDB() {
     if(state.user) {
+      state.user.score = getUserTotalScore(state.user) + (state.user.totalVideos * 10);
       await db.collection('users').doc(state.user.code).set(state.user, {merge: true});
     }
   }
@@ -1217,6 +1240,43 @@
     if(d.getDay() !== 5) return false;
     const dateNum = d.getDate();
     return (dateNum >= 8 && dateNum <= 14) || (dateNum >= 22 && dateNum <= 28);
+  }
+
+  function getExpNeededForLevel(lvl) {
+    if (lvl >= 1 && lvl <= 5) return 100;
+    if (lvl >= 6 && lvl <= 10) return 300;
+    if (lvl >= 11 && lvl <= 15) return 1000;
+    if (lvl >= 16 && lvl <= 20) return 2000;
+    if (lvl >= 21 && lvl <= 25) return 5000;
+    if (lvl >= 26 && lvl <= 30) return 7000;
+    return Infinity;
+  }
+
+  async function generateVideoThumbnail(videoBlob) {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(videoBlob);
+      video.muted = true;
+      video.playsInline = true;
+      video.currentTime = 0.5;
+      
+      video.onseeked = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 180;
+          canvas.height = 320;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            resolve(blob);
+          }, 'image/jpeg', 0.8);
+        } catch (e) {
+          resolve(null);
+        }
+      };
+      video.onerror = () => resolve(null);
+      video.load();
+    });
   }
 
   // ==========================================
@@ -1437,17 +1497,18 @@
     document.getElementById('bottom-app-nav').style.display = 'flex';
 
     updateMiniProfileHeader();
-    const currentScore = getUserTotalScore(state.user);
+    const currentScore = getUserTotalScore(state.user) + (state.user.totalVideos * 10);
     document.getElementById('stat-streak').textContent = state.user.streak;
     document.getElementById('stat-total').textContent = `${currentScore}점`;
     document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
     document.getElementById('settings-user-code').value = state.user.code;
 
     updateGlobalPointsDisplay();
+    claimHourlyRankingRewards();
+
     goPage('home');
     showToast(`🏝️ 환영합니다, ${state.user.nickname}님!`);
 
-    // 미션: 접속 유지 타이머 시작
     clearInterval(sessionTimer);
     sessionSeconds = 0;
     sessionTimer = setInterval(() => {
@@ -1489,7 +1550,8 @@
     }
 
     if (state.user) {
-      document.getElementById('stat-total').textContent = `${getUserTotalScore(state.user)}점`;
+      const totalScore = getUserTotalScore(state.user) + (state.user.totalVideos * 10);
+      document.getElementById('stat-total').textContent = `${totalScore}점`;
       document.getElementById('stat-streak').textContent = state.user.streak;
       document.getElementById('streak-badge').textContent = `🔥 ${state.user.streak}일 연속`;
       updateGlobalPointsDisplay(); updateMiniProfileHeader();
@@ -1524,7 +1586,7 @@
     ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
 
-    const totalScore = getUserTotalScore(state.user);
+    const totalScore = getUserTotalScore(state.user) + (state.user.totalVideos * 10);
     const decorCount = Math.min(Math.floor(totalScore / 300) + 3, 12); 
     const plants = ['🌸', '🌳', '🌺', '🌿', '🌻', '🌷'];
 
@@ -1590,7 +1652,7 @@
   async function checkMission(key, valToAdd = 0) {
     if(!state.user.dailyMission || !state.user.dailyMission.tasks) return;
     const status = state.user.dailyMission.tasks[key];
-    if(status > 0) return; // 1(달성), 2(완료)면 패스
+    if(status > 0) return;
 
     if(key === 'spend_100') {
       state.user.dailyMission.spendAmount += valToAdd;
@@ -1668,13 +1730,15 @@
   // 8. 촬영 파이프라인 (Firebase Storage)
   // ==========================================
   async function openModal() {
-    if (state.user.recordData.cutsDoneToday >= 6) return showToast("오늘의 촬영 횟수(최대 6회)를 모두 소진했습니다! 내일 뵙겠습니다.");
+    const cutsDone = state.user.recordData.cutsDoneToday || 0;
+    if (cutsDone >= 6) return showToast("오늘의 촬영 횟수(최대 6회)를 모두 소진했습니다! 내일 뵙겠습니다.");
     
     document.getElementById('modal-question').textContent = '💬 ' + dailyMissionPool[new Date().getDay() % dailyMissionPool.length];
     document.getElementById('record-modal').classList.add('open');
     document.getElementById('emotion-section').style.display = 'none';
     document.getElementById('rec-btn').style.display = 'flex';
     
+    state.cutsDone = cutsDone;
     updateRecordGaugeUI();
     await startCamera();
   }
@@ -1685,10 +1749,7 @@
       cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode }, audio: true });
       const vid = document.getElementById('cam-video');
       vid.srcObject = cameraStream;
-      
-      // 전면 카메라일 때만 미리보기를 좌우 반전 처리
       vid.style.transform = currentFacingMode === "user" ? "scaleX(-1)" : "scaleX(1)";
-      
       await vid.play();
       document.getElementById('cam-placeholder').style.display = 'none';
       isCameraConnected = true;
@@ -1704,19 +1765,36 @@
   }
 
   function updateRecordGaugeUI() {
+    const currentActiveIndex = state.user.recordData.cutsDoneToday || 0;
+    const remainingAttempts = 6 - currentActiveIndex;
+    document.getElementById('rec-hint').textContent = `최대 6회 / 남은 횟수: ${remainingAttempts}회`;
+
+    const dots = document.querySelectorAll('.cut-dot');
     const slots = document.querySelectorAll('.record-gauge-slot');
-    const done = state.user.recordData.cutsDoneToday;
-    
+
+    dots.forEach((dot, idx) => {
+      dot.className = "cut-dot";
+      if (idx < currentActiveIndex) {
+        dot.classList.add('done');
+      } else if (idx === currentActiveIndex) {
+        dot.classList.add('active');
+      }
+    });
+
     slots.forEach((slot, idx) => {
       slot.className = "record-gauge-slot";
-      if (idx < done) slot.classList.add('used');
-      else if (idx === done) slot.classList.add('active'); // 현재 찍을 차례
+      if (idx < currentActiveIndex) {
+        slot.classList.add('used');
+      } else if (idx === currentActiveIndex) {
+        slot.classList.add('active');
+      }
     });
   }
 
   function toggleRecord() {
-    // 기존 remainingAttempts 컷 방식을 유지하면서, 전체 동영상 6번 제한과 연동
-    if (state.recording || state.cutsDone >= 6 || state.user.recordData.cutsDoneToday >= 6) return;
+    if (state.recording) return;
+    const cutsDone = state.user.recordData.cutsDoneToday || 0;
+    if (cutsDone >= 6) return;
     isCameraConnected ? startActualCut() : simulateRecordFlow();
   }
 
@@ -1724,41 +1802,30 @@
     state.recording = true;
     const btn = document.getElementById('rec-btn');
     btn.classList.add('recording');
-    document.querySelectorAll('.cut-dot')[state.cutsDone].classList.add('active');
 
     let recRecordedChunks = [];
     recMediaRecorder = new MediaRecorder(cameraStream);
     recMediaRecorder.ondataavailable = e => { if (e.data.size > 0) recRecordedChunks.push(e.data); };
     
     recMediaRecorder.onstop = async () => {
-      showToast("Firebase Storage 업로드 중...");
-      const blob = new Blob(recRecordedChunks, { type: 'video/mp4' });
-      const todayStr = getLocalDateString(new Date());
-      const fileName = `${todayStr}-${Date.now()}-${state.cutsDone}.mp4`;
-      const storageRef = storage.ref(`videos/${state.user.code}/${fileName}`);
-      
-      try {
-        const snapshot = await storageRef.put(blob);
-        const url = await snapshot.ref.getDownloadURL();
-        tempCutsRecorded.push(url);
-        
-        document.querySelectorAll('.cut-dot')[state.cutsDone].classList.replace('active', 'done');
-        state.cutsDone++; state.recording = false; btn.classList.remove('recording');
+      activeRecordedBlob = new Blob(recRecordedChunks, { type: 'video/mp4' });
+      state.recording = false;
+      btn.classList.remove('recording');
 
-        if (state.cutsDone >= 6) {
-          document.getElementById('rec-btn').style.display = 'none';
-          document.getElementById('emotion-section').style.display = 'block';
-        }
-      } catch (err) { showToast("업로드 실패: " + err.message); btn.classList.remove('recording'); state.recording = false; }
+      document.getElementById('rec-btn').style.display = 'none';
+      document.getElementById('emotion-section').style.display = 'block';
     };
 
     recMediaRecorder.start();
     let elapsed = 0;
+    const cutsDone = state.user.recordData.cutsDoneToday || 0;
+    const maxTimeLimit = 30 - (cutsDone * 5); 
+
     state.timerInterval = setInterval(() => {
-      elapsed += 0.1; const total = state.cutsDone * 5 + elapsed;
-      document.getElementById('timer-arc').style.strokeDashoffset = String(138 * (1 - (total/30)));
-      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total)));
-      if (elapsed >= 5) { clearInterval(state.timerInterval); recMediaRecorder.stop(); }
+      elapsed += 0.1;
+      document.getElementById('timer-arc').style.strokeDashoffset = String(138 * (1 - (elapsed/maxTimeLimit)));
+      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(maxTimeLimit - elapsed)));
+      if (elapsed >= maxTimeLimit) { clearInterval(state.timerInterval); recMediaRecorder.stop(); }
     }, 100);
   }
 
@@ -1766,25 +1833,25 @@
     state.recording = true;
     const btn = document.getElementById('rec-btn');
     btn.classList.add('recording');
-    document.querySelectorAll('.cut-dot')[state.cutsDone].classList.add('active');
 
     let elapsed = 0;
+    const cutsDone = state.user.recordData.cutsDoneToday || 0;
+    const maxTimeLimit = 30 - (cutsDone * 5);
+
     state.timerInterval = setInterval(async () => {
-      elapsed += 0.1; const total = state.cutsDone * 5 + elapsed;
-      document.getElementById('timer-arc').style.strokeDashoffset = String(138 * (1 - (total/30)));
-      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(30 - total)));
+      elapsed += 0.1;
+      document.getElementById('timer-arc').style.strokeDashoffset = String(138 * (1 - (elapsed/maxTimeLimit)));
+      document.getElementById('timer-label').textContent = String(Math.max(0, Math.ceil(maxTimeLimit - elapsed)));
 
-      if (elapsed >= 5) {
+      if (elapsed >= maxTimeLimit) {
         clearInterval(state.timerInterval);
-        tempCutsRecorded.push("https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-40439-large.mp4");
-        
-        document.querySelectorAll('.cut-dot')[state.cutsDone].classList.replace('active', 'done');
-        state.cutsDone++; state.recording = false; btn.classList.remove('recording');
+        const response = await fetch("https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-40439-large.mp4");
+        activeRecordedBlob = await response.blob();
+        state.recording = false;
+        btn.classList.remove('recording');
 
-        if (state.cutsDone >= 6) {
-          document.getElementById('rec-btn').style.display = 'none'; 
-          document.getElementById('emotion-section').style.display = 'block';
-        }
+        document.getElementById('rec-btn').style.display = 'none'; 
+        document.getElementById('emotion-section').style.display = 'block';
       }
     }, 100);
   }
@@ -1796,56 +1863,110 @@
   }
 
   async function uploadRecord() {
+    if (!activeRecordedBlob) return showToast("정상적으로 촬영된 영상 파일이 없습니다.");
+    
     const todayStr = getLocalDateString(new Date());
     const emotion = document.querySelector('.emo-btn.selected')?.textContent || "🌱";
     const hidden = isHiddenDay(todayStr);
-    
-    // 타임라인 저장 (새 영상을 맨 앞에)
-    if(!state.history[todayStr]) state.history[todayStr] = { emotion, clips: [] };
-    state.history[todayStr].clips = [...tempCutsRecorded]; 
-    
-    state.user.streak += 1; state.user.lastRecordedDate = todayStr;
-    state.user.score = (state.user.score || 0) + tempCutsRecorded.length * 10;
-    state.user.totalVideos = (state.user.totalVideos || 0) + tempCutsRecorded.length;
-    
-    // 업로드 보상 로직 (히든데이 2배)
-    const baseReward = hidden ? 20 : 10;
-    state.user.points += baseReward;
-    
-    // 일일 6회 횟수 및 미션 동기화
-    state.user.recordData.cutsDoneToday += 1;
-    state.user.dailyMission.uploadCount += 1;
+
+    document.getElementById('upload-btn').disabled = true;
+    document.getElementById('upload-btn').textContent = "업로드 가동 중... 🌱";
 
     try {
-      await saveUserToDB();
-      await db.collection('timeline').doc(`${state.user.code}_${todayStr}`).set({
-        userCode: state.user.code, recordedAt: todayStr, emotion: emotion,
-        clips: tempCutsRecorded, uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-
-      checkMission('upload_1'); checkMission('upload_3'); checkMission('upload_5');
+      const cutsDone = state.user.recordData.cutsDoneToday || 0;
+      const indexSuffix = cutsDone + "_" + Date.now();
       
-      // 6회 달성 보너스 (20코인 추가)
-      if(state.user.recordData.cutsDoneToday === 6 && !state.user.recordData.bonusClaimed) {
-        state.user.recordData.bonusClaimed = true;
-        state.user.points += 20;
-        await saveUserToDB();
-        setTimeout(() => alert("🎉 축하합니다! 오늘의 촬영 6회를 모두 달성하여 보너스 20p를 획득했습니다!"), 500);
+      const thumbBlob = await generateVideoThumbnail(activeRecordedBlob);
+      let thumbUrl = "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?w=200";
+      
+      if (thumbBlob) {
+        const thumbRef = storage.ref(`thumbnails/${state.user.code}/${todayStr}-${indexSuffix}.jpg`);
+        const thumbSnap = await thumbRef.put(thumbBlob);
+        thumbUrl = await thumbSnap.ref.getDownloadURL();
       }
 
-      closeModal(); goPage('home'); 
-      showToast(`영상 저장 완료! ${baseReward}p 지급${hidden ? ' (히든데이 2배✨)' : ''}`);
-    } catch(e) { showToast("기록 저장 중 오류가 발생했습니다."); }
+      const videoRef = storage.ref(`videos/${state.user.code}/${todayStr}-${indexSuffix}.mp4`);
+      const videoSnap = await videoRef.put(activeRecordedBlob);
+      const videoUrl = await videoSnap.ref.getDownloadURL();
+
+      const baseReward = hidden ? 20 : 10;
+      const nowTime = new Date().toTimeString().split(' ')[0];
+
+      const videoDocumentData = {
+        userId: state.user.code,
+        videoUrl: videoUrl,
+        thumbnailUrl: thumbUrl,
+        uploadTime: nowTime,
+        uploadDate: todayStr,
+        coinReward: baseReward,
+        hiddenDayBonus: hidden,
+        emotion: emotion,
+        uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      
+      await db.collection('videos').add(videoDocumentData);
+
+      const timelineDocRef = db.collection('timeline').doc(`${state.user.code}_${todayStr}`);
+      const timelineSnap = await timelineDocRef.get();
+      let existClips = [];
+      let existThumbs = [];
+      
+      if (timelineSnap.exists) {
+        const data = timelineSnap.data();
+        if (Array.isArray(data.clips)) existClips = data.clips;
+        if (Array.isArray(data.thumbnails)) existThumbs = data.thumbnails;
+      }
+      
+      existClips.push(videoUrl);
+      existThumbs.push(thumbUrl);
+
+      await timelineDocRef.set({
+        userCode: state.user.code,
+        recordedAt: todayStr,
+        emotion: emotion,
+        clips: existClips,
+        thumbnails: existThumbs,
+        uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      state.user.streak += 1;
+      state.user.lastRecordedDate = todayStr;
+      state.user.totalVideos = (state.user.totalVideos || 0) + 1;
+      state.user.points += baseReward;
+      
+      state.user.recordData.cutsDoneToday += 1;
+      state.user.dailyMission.uploadCount += 1;
+
+      if (state.user.recordData.cutsDoneToday === 6 && !state.user.recordData.bonusClaimed) {
+        state.user.recordData.bonusClaimed = true;
+        state.user.points += 20;
+      }
+
+      await saveUserToDB();
+
+      checkMission('upload_1');
+      checkMission('upload_3');
+      checkMission('upload_5');
+
+      closeModal();
+      goPage('home');
+      showToast(`기록 저장 완료! ${baseReward}p 지급 완료!`);
+    } catch(err) {
+      console.error(err);
+      showToast("오류 발생: " + err.message);
+      document.getElementById('upload-btn').disabled = false;
+      document.getElementById('upload-btn').textContent = "아일랜드에 기록 저장하기 🌱";
+    }
   }
 
   function closeModal() {
     document.getElementById('record-modal').classList.remove('open');
     if (cameraStream) { try { cameraStream.getTracks().forEach(track => track.stop()); } catch(e){} cameraStream = null; }
-    clearInterval(state.timerInterval); state.recording = false; state.cutsDone = 0; tempCutsRecorded = [];
+    clearInterval(state.timerInterval); state.recording = false; activeRecordedBlob = null;
     document.getElementById('rec-btn').classList.remove('recording');
     document.getElementById('timer-label').textContent = '30';
     document.getElementById('timer-arc').style.strokeDashoffset = '138';
-    document.querySelectorAll('.cut-dot').forEach(d => { d.classList.remove('done'); d.classList.remove('active'); });
+    document.querySelectorAll('.cut-dot').forEach(d => { d.className = 'cut-dot'; });
   }
 
   // ==========================================
@@ -1879,9 +2000,9 @@
     }
   }
 
-  function showTimelineDayClips(dateStr) {
+  async function showTimelineDayClips(dateStr) {
     const record = state.history[dateStr];
-    if (!record || !record.clips || record.clips.length === 0) return;
+    if (!record) return;
 
     checkMission('watch_video');
 
@@ -1889,24 +2010,63 @@
     viewer.style.display = "block";
     document.getElementById('timeline-detail-date-label').textContent = `${dateStr} 기록 - 감정 ${record.emotion || '🌱'}`;
 
-    document.getElementById('timeline-clips-grid').innerHTML = record.clips.map((clipSrc, idx) => `
-      <div class="clip-card">
-        <video id="timeline-video-${idx}" src="${clipSrc}" playsinline></video>
-        <div class="clip-play-overlay" onclick="toggleTimelineClipPlay(${idx})">▶️</div>
-      </div>
-    `).join('');
+    const clipsGrid = document.getElementById('timeline-clips-grid');
+    clipsGrid.innerHTML = "영상 목록을 동기화 중...";
+
+    try {
+      const querySnap = await db.collection('videos')
+        .where('userId', '==', state.user.code)
+        .where('uploadDate', '==', dateStr)
+        .orderBy('uploadTime', 'asc')
+        .get();
+
+      if (querySnap.empty) {
+        clipsGrid.innerHTML = record.clips.map((clipSrc, idx) => {
+          const tSrc = (record.thumbnails && record.thumbnails[idx]) || "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?w=200";
+          return `
+            <div class="clip-card" onclick="playTimelineVideo('${clipSrc}')">
+              <img class="thumb" src="${tSrc}" />
+              <div class="clip-play-overlay">▶️</div>
+            </div>`;
+        }).join('');
+      } else {
+        let html = "";
+        querySnap.forEach(doc => {
+          const v = doc.data();
+          html += `
+            <div class="clip-card" onclick="playTimelineVideo('${v.videoUrl}')">
+              <img class="thumb" src="${v.thumbnailUrl}" />
+              <div class="clip-play-overlay">▶️</div>
+            </div>`;
+        });
+        clipsGrid.innerHTML = html;
+      }
+    } catch (e) {
+      console.error(e);
+      clipsGrid.innerHTML = record.clips.map((clipSrc, idx) => {
+        const tSrc = (record.thumbnails && record.thumbnails[idx]) || "https://images.unsplash.com/photo-1518173946687-a4c8a383392e?w=200";
+        return `
+          <div class="clip-card" onclick="playTimelineVideo('${clipSrc}')">
+            <img class="thumb" src="${tSrc}" />
+            <div class="clip-play-overlay">▶️</div>
+          </div>`;
+      }).join('');
+    }
     viewer.scrollIntoView({ behavior: 'smooth' });
   }
 
-  function toggleTimelineClipPlay(idx) {
-    const vid = document.getElementById(`timeline-video-${idx}`);
-    const overlay = vid.parentElement.querySelector('.clip-play-overlay');
-    if (vid.paused) {
-      document.querySelectorAll('.clip-card video').forEach(v => v.pause());
-      document.querySelectorAll('.clip-play-overlay').forEach(o => o.style.display = "flex");
-      vid.play(); overlay.style.display = "none";
-      vid.onended = () => { overlay.style.display = "flex"; }
-    } else { vid.pause(); overlay.style.display = "flex"; }
+  function playTimelineVideo(url) {
+    const overlay = document.getElementById('timeline-player-overlay');
+    const player = document.getElementById('timeline-player-video');
+    player.src = url;
+    overlay.style.display = "flex";
+  }
+
+  function closeTimelinePlayer() {
+    const overlay = document.getElementById('timeline-player-overlay');
+    const player = document.getElementById('timeline-player-video');
+    player.pause();
+    overlay.style.display = "none";
   }
 
   // ==========================================
@@ -1923,8 +2083,8 @@
       document.getElementById('object-list-title').textContent = "오브제 구매하기";
       shopGrid.style.display = "grid"; invGrid.style.display = "none"; renderShopItems();
     } else {
-      document.getElementById('object-list-title').textContent = "내 인벤토리 확인 (클릭 시 상세정보)";
-      shopGrid.style.display = "none"; invGrid.style.display = "grid"; renderInventoryItems();
+      document.getElementById('object-list-title').textContent = "내 인벤토리 (좌우 스크롤 스와이프 가능 🪴)";
+      shopGrid.style.display = "none"; invGrid.style.display = "flex"; renderInventoryItems();
     }
   }
 
@@ -1958,7 +2118,7 @@
     if (!state.user.inventory) state.user.inventory = [];
     state.user.inventory.push(itemId);
     
-    checkMission('buy_object'); checkMission('spend_100', price); // 미션 연동
+    checkMission('buy_object'); checkMission('spend_100', price);
     
     await saveUserToDB(); updateGlobalPointsDisplay(); renderShopItems();
     showToast(`📦 오브제 구매 완료! (차감: ${price}p)`);
@@ -1967,7 +2127,7 @@
   function renderInventoryItems() {
     const grid = document.getElementById('inventory-view-grid');
     if (!state.user.inventory || state.user.inventory.length === 0) {
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:32px; color:var(--muted); font-size:12px;">인벤토리가 비어있습니다. 상점 탭에서 마음에 드는 오브제를 입양해 보세요! 🪴</div>`; return;
+      grid.innerHTML = `<div style="text-align:center; padding:32px; color:var(--muted); font-size:12px; width:100%;">인벤토리가 비어있습니다. 상점 탭에서 오브제를 입양해 보세요! 🪴</div>`; return;
     }
     grid.innerHTML = state.user.inventory.map(itemId => {
       const item = objectData.find(i => i.id === itemId);
@@ -2043,12 +2203,12 @@
   }
 
   // ==========================================
-  // 12. 랭킹 시스템 (Firestore 연동)
+  // 12. 랭킹 시스템 및 개인 랭킹 정산 보상
   // ==========================================
   function switchRankingTab(type) {
     document.querySelectorAll('#page-ranking .tab-trigger').forEach(t => t.classList.remove('active'));
     document.getElementById(`rank-tab-${type}`).classList.add('active');
-    type === 'party' ? document.getElementById('rank-list').innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">파티 랭킹 시스템 집계 중입니다. 🏆</div>` : buildRanking();
+    type === 'party' ? buildPartyRanking() : buildRanking();
   }
 
   async function buildRanking() {
@@ -2069,13 +2229,135 @@
             <div class="rank-num ${rank <= 3 ? 'top3' : ''}">${rank++}</div>
             <div class="rank-bar-wrap">
               <div class="rank-name">${avaEl}${rankName}</div>
-              <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.min((u.score/500)*100, 100)}%"></div></div>
+              <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.min((u.score/1500)*100, 100)}%"></div></div>
             </div>
             <div class="rank-days">${scoreStr}</div>
           </div>`;
       });
       list.innerHTML = html;
     } catch(e) { list.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">랭킹을 불러오지 못했습니다.</div>`; }
+  }
+
+  async function claimHourlyRankingRewards() {
+    if (!state.user) return;
+    const todayStr = getLocalDateString(new Date());
+    if (state.user.lastRankRewardClaimedDate === todayStr) return;
+
+    try {
+      const snap = await db.collection('users').orderBy('score', 'desc').limit(3).get();
+      let myRank = -1;
+      let idx = 0;
+      
+      snap.forEach(doc => {
+        if (doc.data().code === state.user.code) {
+          myRank = idx + 1;
+        }
+        idx++;
+      });
+
+      if (myRank !== -1) {
+        let rewardCoins = 0;
+        if (myRank === 1) rewardCoins = 50;
+        else if (myRank === 2) rewardCoins = 30;
+        else if (myRank === 3) rewardCoins = 10;
+
+        if (rewardCoins > 0) {
+          state.user.points += rewardCoins;
+          state.user.lastRankRewardClaimedDate = todayStr;
+          await saveUserToDB();
+          alert(`🏆 축하합니다! 어제 랭킹 ${myRank}위를 달성하여 랭킹 보상 코인 ${rewardCoins}p를 수령하셨습니다!`);
+          updateGlobalPointsDisplay();
+        }
+      } else {
+        state.user.lastRankRewardClaimedDate = todayStr;
+        await saveUserToDB();
+      }
+    } catch (e) {
+      console.warn("개인 랭킹 보상 연산 중 에러: ", e);
+    }
+  }
+
+  async function buildPartyRanking() {
+    const list = document.getElementById('rank-list');
+    list.innerHTML = `<div style="text-align:center; padding:48px; font-size:12px;">파티 대항전 집계 중...</div>`;
+    
+    try {
+      const partiesSnap = await db.collection('parties').get();
+      let partyRankArray = [];
+
+      for (let pDoc of partiesSnap.docs) {
+        const party = pDoc.data();
+        let totalScore = 0;
+        
+        for (let mCode of party.members) {
+          const mSnap = await db.collection('users').doc(mCode).get();
+          if (mSnap.exists) {
+            const mu = mSnap.data();
+            totalScore += (getUserTotalScore(mu) + (mu.totalVideos * 10));
+          }
+        }
+        partyRankArray.push({ code: party.code, name: party.name, image: party.image, score: totalScore, level: party.level || 1, exp: party.exp || 0 });
+      }
+
+      partyRankArray.sort((a, b) => b.score - a.score);
+
+      const todayStr = getLocalDateString(new Date());
+      let index = 1;
+      let html = "";
+
+      for (let item of partyRankArray) {
+        let earnedExp = 10;
+        if (index === 1) earnedExp = 50;
+        else if (index === 2) earnedExp = 40;
+        else if (index === 3) earnedExp = 30;
+        else if (index === 4) earnedExp = 20;
+
+        const partyRef = db.collection('parties').doc(item.code);
+        const latestDocSnap = await partyRef.get();
+        
+        if (latestDocSnap.exists) {
+          const lData = latestDocSnap.data();
+          if (lData.lastExpClaimedDate !== todayStr) {
+            let currentLvl = lData.level || 1;
+            let currentExp = (lData.exp || 0) + earnedExp;
+            
+            while (currentLvl < 30 && currentExp >= getExpNeededForLevel(currentLvl)) {
+              currentExp -= getExpNeededForLevel(currentLvl);
+              currentLvl++;
+            }
+
+            await partyRef.update({
+              level: currentLvl,
+              exp: currentExp,
+              lastExpClaimedDate: todayStr
+            });
+
+            item.level = currentLvl;
+            item.exp = currentExp;
+          }
+        }
+
+        const isMyParty = state.user && state.user.partyCode === item.code;
+        const avaHtml = item.image.startsWith("data:image") ? `<img src="${item.image}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" />` : `<span style="font-size:18px;margin-right:6px;">${item.image}</span>`;
+
+        html += `
+          <div class="rank-item" style="${isMyParty ? 'border:2px solid var(--sea)' : ''}">
+            <div class="rank-num ${index <= 3 ? 'top3' : ''}">${index}</div>
+            <div class="rank-bar-wrap">
+              <div class="rank-name" style="font-weight:700;">${avaHtml}${item.name} <span style="color:var(--coral); font-size:11px; margin-left:6px;">Lv.${item.level}</span></div>
+              <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.min((item.score/5000)*100, 100)}%"></div></div>
+            </div>
+            <div class="rank-days">${item.score}점</div>
+          </div>`;
+          
+        index++;
+      }
+
+      list.innerHTML = html;
+    } catch (e) {
+      console.error(e);
+      list.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:12px;">파티 랭킹을 집계하지 못했습니다.</div>`;
+    }
   }
 
   // ==========================================
@@ -2094,7 +2376,8 @@
     try {
       await db.collection('parties').doc(pCode).set({
         code: pCode, name: pName, image: selectedPartyAvatar,
-        members: [state.user.code], createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        members: [state.user.code], level: 1, exp: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       state.user.partyCode = pCode; await saveUserToDB();
       closePartyCreateModal(); renderPartyMainView(); showToast(`👥 온라인 파티 "${pName}" 개설 완료.`);
@@ -2126,9 +2409,17 @@
     
     const party = pSnap.data();
     gate.style.display = "none"; mainView.style.display = "block";
-    document.getElementById('active-party-name').innerHTML = `${party.image.startsWith("data:image") ? `<img src="${party.image}" style="width:24px;border-radius:50%;" />` : party.image} ${party.name}`;
+    document.getElementById('active-party-name').innerHTML = `${party.image.startsWith("data:image") ? `<img src="${party.image}" style="width:24px;border-radius:50%;" />` : party.image} ${party.name} <span style="font-size:12px; opacity:0.8; margin-left:6px;">Lv.${party.level || 1}</span>`;
     document.getElementById('active-party-code-label').textContent = `파티 코드: ${party.code}`;
     document.getElementById('party-dissolve-btn').style.display = (party.members[0] === state.user.code) ? "block" : "none";
+
+    const lvl = party.level || 1;
+    const exp = party.exp || 0;
+    const limitExp = getExpNeededForLevel(lvl);
+    
+    document.getElementById('active-party-level-label').textContent = `길드 레벨 : Lv.${lvl}`;
+    document.getElementById('active-party-exp-text').textContent = `${exp} / ${limitExp} EXP`;
+    document.getElementById('active-party-exp-fill').style.width = `${Math.min((exp / limitExp) * 100, 100)}%`;
 
     const list = document.getElementById('member-list');
     list.innerHTML = "멤버 로딩 중...";
@@ -2142,7 +2433,6 @@
         const showName = m.isPublic ? m.nickname : (isMe ? `${m.nickname} (나)` : "비공개 아일랜더");
         const avaEl = m.avatar.startsWith("data:image") ? `<img src="${m.avatar}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" />` : m.avatar;
         
-        // 6회 게이지를 사용하도록 변경됨
         const hasToday = (m.recordData && m.recordData.date === todayStr && m.recordData.cutsDoneToday > 0);
         if(hasToday) certCount++;
 
@@ -2177,7 +2467,7 @@
   }
 
   // ==========================================
-  // 14. 프로필 상세 모달 & 뷰어 로직
+  // 14. 프로필 상세 모달 & 뷰어 로직 (파티레벨 정보 추가)
   // ==========================================
   async function openProfileDetail(userCode) {
     checkMission('view_profile');
@@ -2196,7 +2486,10 @@
     let pName = "파티 없음";
     if (target.partyCode) {
       const pSnap = await db.collection('parties').doc(target.partyCode).get();
-      if(pSnap.exists) pName = pSnap.data().name;
+      if(pSnap.exists) {
+        const pData = pSnap.data();
+        pName = `${pData.name} Lv.${pData.level || 1}`;
+      }
     }
 
     document.getElementById('modal-p-nickname').textContent = target.nickname;
@@ -2224,6 +2517,7 @@
           const todayStr = getLocalDateString(new Date());
 
           if(!userData.attendance) userData.attendance = {};
+          
           if(!userData.dailyMission || userData.dailyMission.date !== todayStr) {
             userData.dailyMission = {
               date: todayStr, score: 0, claimedTiers: [],
@@ -2239,13 +2533,14 @@
             userData.lastResetDate = todayStr;
             await db.collection('users').doc(userData.code).set(userData, {merge: true});
           }
+          
           state.user = userData;
 
           const videoSnap = await db.collection('timeline').where('userCode', '==', userData.code).get();
           state.history = {};
           videoSnap.forEach(doc => {
             const v = doc.data();
-            state.history[v.recordedAt] = { emotion: v.emotion, clips: v.clips };
+            state.history[v.recordedAt] = { emotion: v.emotion, clips: v.clips, thumbnails: v.thumbnails || [] };
           });
 
           completeInitialLoginFlow(); 
