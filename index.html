@@ -1303,15 +1303,16 @@
 <script>
   // ==========================================
   // 0. Firebase 설정 및 초기화 (긴급 연동 가동)
-  // ==========================================
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAG1FFFPm9ro7qOz1odE9wXDDSTAAbMiV0",
+  authDomain: "sec-island.firebaseapp.com",
+  databaseURL: "https://sec-island-default-rtdb.firebaseio.com",
+  projectId: "sec-island",
+  storageBucket: "sec-island.firebasestorage.app",
+  messagingSenderId: "599343149748",
+  appId: "1:599343149748:web:c360d1ebf26f10b08f9de1"
+};
 
   // 프로젝트 초기화 1회 준수 조건 충족
   if (!firebase.apps.length) {
