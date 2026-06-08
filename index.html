@@ -122,7 +122,7 @@
       border-radius: 24px;
       overflow: hidden;
       box-shadow: var(--shadow);
-      background: linear-gradient(180deg, #B8DEFF 0%, #7EC7E8 40%, #5BB8D4 100%);
+      background: linear-gradient(180deg, #E3F4F4 0%, #D2E9E9 50%, #C4DFDF 100%);
       position: relative; height: 260px;
     }
     #island-canvas { width: 100%; height: 100%; display: block; }
@@ -935,12 +935,12 @@
     <h3 id="modal-p-nickname" style="font-family:'Gowun Batang',serif; font-size:22px; margin-bottom:4px;">이름</h3>
     <p id="modal-p-code" style="font-size:11px; color:var(--muted); margin-bottom:16px;">CODE: ISLAND-XXXX</p>
     
-    <div style="background:var(--cream); padding:12px; border-radius:12px; font-size:13px; text-align:left; margin-bottom:20px; display:flex; flex-direction:column; gap:6px; border:1px solid rgba(43,45,66,0.06);">
+    <div id="modal-p-public-fields" style="background:var(--cream); padding:12px; border-radius:12px; font-size:13px; text-align:left; margin-bottom:20px; display:flex; flex-direction:column; gap:6px; border:1px solid rgba(43,45,66,0.06);">
       <div>🎂 <strong>생년월일:</strong> <span id="modal-p-birthday">-</span></div>
       <div>🏆 <strong>소속 파티:</strong> <span id="modal-p-partyname">파티 없음</span></div>
     </div>
     
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+    <div id="modal-p-stats-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
       <div style="background:var(--cream); padding:12px; border-radius:12px;">
         <div style="font-size:22px; font-weight:700; color:var(--sea);" id="modal-p-streak">0</div>
         <div style="font-size:11px; color:var(--muted);">연속 기록 일수</div>
@@ -961,6 +961,10 @@
       <label>파티 이름</label>
       <input type="text" id="create-party-name" class="form-control" placeholder="파티명 입력" />
     </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>파티 한 줄 소개</label>
+      <input type="text" id="create-party-desc" class="form-control" placeholder="파티에 대한 짤막한 설명을 작성해보세요" value="함께 30초 갓생 기록할 모험가들!" />
+    </div>
     <div class="form-group" style="margin-bottom:16px;">
       <label>파티 커버 이미지 (추천 아바타)</label>
       <div class="avatar-grid" id="create-party-preset-grid"></div>
@@ -978,6 +982,36 @@
       <input type="text" id="join-party-code-input" class="form-control" style="text-align:center; font-weight:700; font-size:16px; letter-spacing:0.05em;" placeholder="PARTY-XXXX-X" />
     </div>
     <button class="btn-primary" onclick="submitJoinParty()">코드로 파티원 합류하기 👥</button>
+  </div>
+</div>
+
+<!-- 신규 추가: 파티 상세 정보 모달 -->
+<div class="modal-overlay" id="party-detail-modal">
+  <div class="modal-sheet" style="padding-bottom: 30px;">
+    <button class="close-btn" onclick="closePartyDetailModal()">✕</button>
+    <div style="text-align:center; margin-top:20px;">
+      <div id="party-det-avatar" style="font-size:48px; margin-bottom:8px;">🏆</div>
+      <h3 id="party-det-name" style="font-family:'Gowun Batang',serif; font-size:24px; color:var(--ink); font-weight:700;">파티명</h3>
+      <p id="party-det-code" style="font-size:11px; color:var(--muted); margin-top:2px;">CODE: PARTY-XXXX-B</p>
+      <p id="party-det-desc" style="font-size:13px; color:var(--muted); padding:10px 20px; font-style:italic;">"파티 소개 메시지"</p>
+    </div>
+
+    <div style="margin:16px 20px; background:var(--cream); padding:14px; border-radius:16px; border:1px solid rgba(43,45,66,0.06);">
+      <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:700; margin-bottom:6px;">
+        <span id="party-det-level">길드 레벨: Lv.1</span>
+        <span id="party-det-exp-text">0 / 100 EXP</span>
+      </div>
+      <div style="height:6px; background:rgba(0,0,0,0.08); border-radius:3px; overflow:hidden; margin-bottom:8px;">
+        <div id="party-det-exp-fill" style="height:100%; width:0%; background:var(--sea); border-radius:3px; transition:width 0.4s;"></div>
+      </div>
+      <div style="font-size:12px; color:var(--ink); font-weight:500; display:flex; justify-content:space-between; margin-top:8px;">
+        <span>👑 파티장: <strong id="party-det-leader-name">-</strong></span>
+        <span>👥 인원 수: <strong id="party-det-member-count">0명</strong></span>
+      </div>
+    </div>
+
+    <p class="section-title">소속 파티원 목록</p>
+    <div id="party-det-members-list" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin:0 20px;"></div>
   </div>
 </div>
 
@@ -1191,6 +1225,35 @@
     { key: 'buy_object', title: '오브제 1회 구매', desc: '상점에서 아무 오브제나 구매하세요.', point: 80 }
   ];
 
+  // 🌲 신규 정의: 3D 섬 자동 성장을 위한 25개의 미적 고정 그리드 배치 테이블 (깊이 Y축 정렬 처리 완료)
+  const FIXED_GROWTH_SLOTS = [
+    { dx: 0.0, dy: -0.80, defaultPlant: '🌳', scale: 34 },   // 1. 뒤 중앙 나무
+    { dx: -0.4, dy: -0.70, defaultPlant: '🌳', scale: 32 },  // 2. 뒤 좌측 나무
+    { dx: 0.4, dy: -0.70, defaultPlant: '🎋', scale: 24 },   // 3. 뒤 우측 수풀
+    { dx: -0.7, dy: -0.45, defaultPlant: '🌴', scale: 32 },  // 4. 뒤 극좌 야자수
+    { dx: 0.7, dy: -0.45, defaultPlant: '🌴', scale: 32 },   // 5. 뒤 극우 야자수
+    { dx: -0.2, dy: -0.55, defaultPlant: '🌿', scale: 24 },  // 6. 중간 뒤 좌 관목
+    { dx: 0.2, dy: -0.55, defaultPlant: '🌵', scale: 22 },   // 7. 중간 뒤 우 열대식물
+    { dx: -0.5, dy: -0.25, defaultPlant: '☘️', scale: 18 },  // 8. 중간 좌 작은 덤불
+    { dx: 0.5, dy: -0.25, defaultPlant: '🍀', scale: 16 },  // 9. 중간 우 덩굴식물
+    { dx: 0.0, dy: -0.20, defaultPlant: '🌸', scale: 16 },  // 10. 중앙 야생화
+    { dx: -0.3, dy: 0.00, defaultPlant: '🌱', scale: 14 },   // 11. 앞 중간 좌 잔디
+    { dx: 0.3, dy: 0.00, defaultPlant: '🌻', scale: 16 },   // 12. 앞 중간 우 야생화
+    { dx: -0.1, dy: 0.20, defaultPlant: '🌺', scale: 15 },  // 13. 전방 좌 꽃
+    { dx: 0.1, dy: 0.20, defaultPlant: '🌱', scale: 14 },   // 14. 전방 우 잔디
+    { dx: -0.4, dy: 0.35, defaultPlant: '☘️', scale: 17 },  // 15. 전방 좌 덤불
+    { dx: 0.4, dy: 0.35, defaultPlant: '🌿', scale: 21 },   // 16. 전방 우 관목
+    { dx: -0.2, dy: 0.50, defaultPlant: '🌱', scale: 14 },   // 17. 앞 극좌 잔디
+    { dx: 0.2, dy: 0.50, defaultPlant: '🌱', scale: 14 },    // 18. 앞 극우 잔디
+    { dx: -0.6, dy: 0.10, defaultPlant: '🍀', scale: 16 },  // 19. 좌측 측면 덩굴
+    { dx: 0.6, dy: 0.10, defaultPlant: '🌵', scale: 18 },   // 20. 우측 측면 열대
+    { dx: 0.0, dy: 0.65, defaultPlant: '🌸', scale: 15 },   // 21. 정중앙 전방 꽃
+    { dx: -0.15, dy: -0.30, defaultPlant: '🌻', scale: 16 }, // 22. 안쪽 중간 좌 해바라기
+    { dx: 0.15, dy: -0.30, defaultPlant: '🌺', scale: 16 },  // 23. 안쪽 중간 우 꽃
+    { dx: -0.35, dy: -0.50, defaultPlant: '🌳', scale: 28 }, // 24. 중간 좌 사잇나무
+    { dx: 0.35, dy: -0.50, defaultPlant: '🎋', scale: 22 }   // 25. 중간 우 사잇수풀
+  ];
+
   const defaultState = { user: null, recordedToday: false, history: {}, rankingTab: 'user', objectTab: 'shop' };
   let state = { ...defaultState, recording: false, cutsDone: 0, timeLeft: 5, timerInterval: null };
   
@@ -1267,6 +1330,17 @@
     if (lvl >= 16 && lvl <= 20) return 2000;
     if (lvl >= 21 && lvl <= 25) return 5000;
     if (lvl >= 26 && lvl <= 30) return 7000;
+    return Infinity;
+  }
+
+  // 파티 경험치 코인 구매 누진 비용 수식 정의
+  function getExpPurchaseCost(lvl) {
+    if (lvl >= 1 && lvl <= 5) return 150;
+    if (lvl >= 6 && lvl <= 10) return 400;
+    if (lvl >= 11 && lvl <= 15) return 1000;
+    if (lvl >= 16 && lvl <= 20) return 2500;
+    if (lvl >= 21 && lvl <= 25) return 6000;
+    if (lvl >= 26 && lvl <= 30) return 15000;
     return Infinity;
   }
 
@@ -1435,6 +1509,8 @@
         avatar: selectedProfileAvatar, points: 1000, score: 0, streak: 0,
         remainingRecordCount: 6, totalVideos: 0, lastResetDate: todayStr,
         inventory: [], friends: [], partyCode: null,
+        purchasedObjects: [], // v2 구매 오브제 배열 명세화
+        islandVersion: 2,     // v2 성장형 섬 정원 적용 낙인
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
@@ -1489,6 +1565,8 @@
     if (confirm("정말로 아일랜드 로그아웃을 진행할까요?")) {
       await auth.signOut();
       state.user = null; state.history = {};
+      localStorage.removeItem('island_lastActiveAt');
+      localStorage.removeItem('island_loginAt');
       document.getElementById('login-id').value = ''; 
       document.getElementById('login-pw').value = '';
     }
@@ -1576,12 +1654,12 @@
   function saveSettings() { closeSettingsModal(); showToast("환경설정 완료."); }
 
   // ==========================================
-  // 7. 섬 정원 드로잉 (자동 배치, 태양, 구름 애니메이션, 야자수 추가 및 크기 비율 조정)
+  // 7. 섬 정원 드로잉 (3D 입체화 피처, 소프트 조명, 극좌표 충돌 배제 랜덤 배치 정착 레이어)
   // ==========================================
   function startCanvasLoop() {
     stopCanvasLoop();
     function tick() {
-      cloudOffsetX += 0.15; // 부드러운 유동 이동 속도
+      cloudOffsetX += 0.12; 
       drawIsland();
       animationFrameId = requestAnimationFrame(tick);
     }
@@ -1595,6 +1673,34 @@
     }
   }
 
+  // 🔄 v1 구유저 데이터의 마이그레이션을 위한 지능형 변환기 (무손실 안전 기법)
+  async function performMigrationToV2() {
+    if (!state.user) return;
+    if (state.user.islandVersion !== 2) {
+      console.log("🛠️ v2 섬 시스템 마이그레이션 기동...");
+      
+      const legacyInventory = state.user.inventory || [];
+      const currentPurchased = state.user.purchasedObjects || [];
+      
+      // 누락된 품목을 신규 명세 배열로 취합
+      legacyInventory.forEach(item => {
+        if (!currentPurchased.includes(item)) {
+          currentPurchased.push(item);
+        }
+      });
+      
+      state.user.purchasedObjects = currentPurchased;
+      state.user.islandVersion = 2; // 마이그레이션 낙인 완료
+      
+      await db.collection('users').doc(state.user.code).set({
+        purchasedObjects: currentPurchased,
+        islandVersion: 2
+      }, { merge: true });
+      
+      console.log("🎉 v2 마이그레이션 완료! 손실 없이 구조가 이전되었습니다.");
+    }
+  }
+
   function drawIsland() {
     const wrap = document.getElementById('island-canvas-wrap');
     if (!wrap) return;
@@ -1603,82 +1709,118 @@
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
 
-    // 하늘 그라데이션
+    // 하늘 파스텔 그라데이션 리디자인
     const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#B8DEFF'); sky.addColorStop(1, '#5BB8D4');
+    sky.addColorStop(0, '#E3F4F4'); sky.addColorStop(0.5, '#D2E9E9'); sky.addColorStop(1, '#C4DFDF');
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
 
-    // 1. 태양 배치 (왼쪽 상단 분위기 강화)
+    // 1. 해 이미지 리디자인 (눈부시지 않은 정적인 감성 파스텔 톤)
     ctx.beginPath();
-    const sunGrad = ctx.createRadialGradient(40, 45, 2, 40, 45, 24);
-    sunGrad.addColorStop(0, '#FFF6BD');
-    sunGrad.addColorStop(0.3, '#FFD966');
-    sunGrad.addColorStop(1, 'rgba(255, 127, 107, 0)');
+    const sunGrad = ctx.createRadialGradient(50, 50, 0, 50, 50, 30);
+    sunGrad.addColorStop(0, 'rgba(255, 230, 153, 0.95)');
+    sunGrad.addColorStop(0.5, 'rgba(255, 246, 189, 0.5)');
+    sunGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
     ctx.fillStyle = sunGrad;
-    ctx.arc(40, 45, 24, 0, Math.PI * 2);
+    ctx.arc(50, 50, 30, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. 부드럽게 유영하는 구름 애니메이션
-    const clX1 = (50 + cloudOffsetX) % (W + 100) - 50;
-    const clX2 = (220 + cloudOffsetX) % (W + 100) - 50;
-    drawCloudShape(ctx, clX1, 35);
-    drawCloudShape(ctx, clX2, 60);
+    // 2. 부드러운 구름 레이어
+    const clX1 = (40 + cloudOffsetX) % (W + 120) - 60;
+    const clX2 = (240 + cloudOffsetX * 0.8) % (W + 120) - 60;
+    drawCloudShape(ctx, clX1, 35, 0.85);
+    drawCloudShape(ctx, clX2, 65, 0.6);
 
-    // 모래 대지 및 초록 잔디 베이스
-    ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, W * 0.28, H * 0.14, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.68, W * 0.22, H * 0.09, 0, 0, Math.PI * 2); ctx.fill();
+    // 공통 파라미터 산출
+    const cx = W / 2, cy = H * 0.68;
+    const rxSand = W * 0.28, rySand = H * 0.14;
+    const rxGrass = W * 0.22, ryGrass = H * 0.09;
 
-    // 3. 야자수 추가 (섬 왼쪽 모퉁이 정적 묘사)
-    drawPalmTree(ctx, W / 2 - W * 0.16, H * 0.63);
+    // 3. 3D 입체화 공중부양 대지 디자인
+    // 모래사장 3D 층면 (그림자/밑면부)
+    ctx.fillStyle = '#DEC38B'; ctx.beginPath(); ctx.ellipse(cx, cy + 8, rxSand, rySand, 0, 0, Math.PI * 2); ctx.fill();
+    // 모래사장 상면
+    ctx.fillStyle = '#F5DFA0'; ctx.beginPath(); ctx.ellipse(cx, cy, rxSand, rySand, 0, 0, Math.PI * 2); ctx.fill();
 
-    // 나무(크게 변경), 꽃(작게 변경) 배치 비율 조정
-    const totalScore = getUserTotalScore(state.user) + (state.user.totalVideos * 10);
-    const decorCount = Math.min(Math.floor(totalScore / 300) + 3, 12); 
-    const plants = ['🌸', '🌳', '🌺', '🌿', '🌻', '🌷'];
+    // 잔디밭 3D 층면 (그림자/밑면부)
+    ctx.fillStyle = '#62A362'; ctx.beginPath(); ctx.ellipse(cx, cy - 2 + 5, rxGrass, ryGrass, 0, 0, Math.PI * 2); ctx.fill();
+    // 잔디밭 상면
+    ctx.fillStyle = '#7EC67E'; ctx.beginPath(); ctx.ellipse(cx, cy - 2, rxGrass, ryGrass, 0, 0, Math.PI * 2); ctx.fill();
 
-    for (let i = 0; i < decorCount; i++) {
-      const angle = (i / decorCount) * Math.PI * 2 + (Math.PI / 4);
-      const radius = 25 + (i % 3) * 15; 
-      const x = W / 2 + Math.cos(angle) * radius * 1.5;
-      const y = H * 0.68 + Math.sin(angle) * radius * 0.5;
+    // 4. 왼쪽 외곽 해안가 고정 야자수 렌더링
+    drawPalmTree(ctx, cx - rxSand * 0.75, cy - 5);
+
+    // 5. Y축 기반 등각 정렬(Isometric depth sort) 및 자동 성장형 3D 섬 정원 드로잉
+    if (state.user) {
+      // 섬 데코 성장 스코어 연산 (총 비디오점수 가산 + 구매 오브제 가중치)
+      const totalScore = getUserTotalScore(state.user) + (state.user.totalVideos * 10);
+      const purchasedCount = (state.user.purchasedObjects || []).length;
       
-      const p = plants[i % plants.length];
-      if (p === '🌳' || p === '🌿') {
-        ctx.font = '32px serif'; // 나무는 기존보다 크게 그리기
-        ctx.fillText(p, x - 16, y + 12);
-      } else {
-        ctx.font = '16px serif'; // 꽃류는 기존보다 작게 비율 조정
-        ctx.fillText(p, x - 8, y + 6);
-      }
+      // 단계 산출 공식 (최대 25단계 고정 캡 적용)
+      const activeSlotsCount = Math.min(25, Math.floor(totalScore / 150) + purchasedCount + 3);
+
+      // Y축 좌표 순 정렬 처리하여 원근 렌더링 충돌 회피 보장
+      const activeSlots = FIXED_GROWTH_SLOTS.slice(0, activeSlotsCount).sort((a, b) => a.dy - b.dy);
+
+      activeSlots.forEach((slot, index) => {
+        const px = cx + slot.dx * rxGrass;
+        const py = (cy - 2) + slot.dy * ryGrass;
+
+        // 구매한 아틀리에 리얼 오브제가 순번에 맞춰 이모지 대신 고유 렌더링되도록 스왑
+        const mappedObject = state.user.purchasedObjects && state.user.purchasedObjects[index];
+
+        if (mappedObject && mappedObject.startsWith("OBJ_")) {
+          const item = objectData.find(o => o.id === mappedObject);
+          if (item && shopSpritesheetImage.complete && shopSpritesheetImage.naturalWidth > 0) {
+            const sw = shopSpritesheetImage.naturalWidth / 10.4;
+            const sh = shopSpritesheetImage.naturalHeight / 4.8;
+            const sx = item.col * sw;
+            const sy = item.row * sh;
+            const isGrand = item.rarity.includes("Legendary") || item.rarity.includes("Epic");
+            const rw = isGrand ? 46 : 32;
+            const rh = isGrand ? 46 : 32;
+            ctx.drawImage(shopSpritesheetImage, sx, sy, sw, sh, px - rw / 2, py - rh + 4, rw, rh);
+          }
+        } else {
+          // 확장 자연 구조물 이모지 드로잉 (각 슬롯 사양에 최적화된 스케일)
+          const plant = slot.defaultPlant;
+          const isBig = plant === '🌳' || plant === '🌴' || plant === '🎋';
+          
+          if (isBig) {
+            ctx.font = `${slot.scale}px serif`;
+            ctx.fillText(plant, px - slot.scale / 2, py + (slot.scale * 0.25));
+          } else {
+            ctx.font = `${slot.scale}px serif`;
+            ctx.fillText(plant, px - slot.scale / 2, py + (slot.scale * 0.25));
+          }
+        }
+      });
     }
   }
 
-  function drawCloudShape(ctx, x, y) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+  function drawCloudShape(ctx, x, y, alpha) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
     ctx.beginPath();
-    ctx.arc(x, y, 12, 0, Math.PI * 2);
-    ctx.arc(x + 10, y - 6, 14, 0, Math.PI * 2);
-    ctx.arc(x + 22, y, 12, 0, Math.PI * 2);
-    ctx.rect(x, y - 4, 22, 10);
+    ctx.arc(x, y, 14, 0, Math.PI * 2);
+    ctx.arc(x + 12, y - 7, 16, 0, Math.PI * 2);
+    ctx.arc(x + 24, y, 14, 0, Math.PI * 2);
+    ctx.rect(x, y - 5, 24, 12);
     ctx.closePath();
     ctx.fill();
   }
 
   function drawPalmTree(ctx, x, y) {
-    // 나무 몸통 갈색선
     ctx.lineWidth = 5;
     ctx.strokeStyle = '#8B5A2B';
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(x - 10, y - 25, x - 5, y - 45);
+    ctx.quadraticCurveTo(x - 12, y - 25, x - 7, y - 48);
     ctx.stroke();
 
-    // 초록색 야자 잎사귀들
     ctx.fillStyle = '#2E8B57';
     ctx.beginPath();
-    ctx.ellipse(x - 13, y - 48, 12, 5, -Math.PI / 6, 0, Math.PI * 2);
-    ctx.ellipse(x + 5, y - 48, 12, 5, Math.PI / 6, 0, Math.PI * 2);
-    ctx.ellipse(x - 3, y - 55, 10, 5, -Math.PI / 2, 0, Math.PI * 2);
+    ctx.ellipse(x - 15, y - 51, 14, 5, -Math.PI / 6, 0, Math.PI * 2);
+    ctx.ellipse(x + 7, y - 51, 14, 5, Math.PI / 6, 0, Math.PI * 2);
+    ctx.ellipse(x - 4, y - 58, 12, 5, -Math.PI / 2, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -2212,9 +2354,9 @@
 
   function renderShopItems() {
     const grid = document.getElementById('shop');
-    if (!state.user.inventory) state.user.inventory = [];
+    if (!state.user.purchasedObjects) state.user.purchasedObjects = [];
     grid.innerHTML = objectData.map(item => {
-      const isOwned = state.user.inventory.includes(item.id);
+      const isOwned = state.user.purchasedObjects.includes(item.id);
       const posX = (item.col / 10) * 100, posY = (item.row / 4) * 100;
       const btnHtml = isOwned ? `<button class="buy-btn" disabled>보유 중</button>` : `<button class="buy-btn" onclick="purchaseObject('${item.id}', ${item.price})">구매</button>`;
       return `
@@ -2237,21 +2379,26 @@
   async function purchaseObject(itemId, price) {
     if (state.user.points < price) return showToast("포인트가 부족합니다.");
     state.user.points -= price;
+    
+    if (!state.user.purchasedObjects) state.user.purchasedObjects = [];
+    state.user.purchasedObjects.push(itemId);
+    
+    // 호환성용 inventory 배열도 동시 기록 유지
     if (!state.user.inventory) state.user.inventory = [];
     state.user.inventory.push(itemId);
-    
+
     checkMission('buy_object'); checkMission('spend_100', price);
     
     await saveUserToDB(); updateGlobalPointsDisplay(); renderShopItems();
-    showToast(`📦 오브제 구매 완료! (차감: ${price}p)`);
+    showToast(`📦 오브제 구매 완료! 아일랜드의 새로운 자리에 배치되었습니다. (차감: ${price}p)`);
   }
 
   function renderInventoryItems() {
     const grid = document.getElementById('inventory-view-grid');
-    if (!state.user.inventory || state.user.inventory.length === 0) {
+    if (!state.user.purchasedObjects || state.user.purchasedObjects.length === 0) {
       grid.innerHTML = `<div style="text-align:center; padding:32px; color:var(--muted); font-size:12px; width:100%;">인벤토리가 비어있습니다. 상점 탭에서 오브제를 입양해 보세요! 🪴</div>`; return;
     }
-    grid.innerHTML = state.user.inventory.map(itemId => {
+    grid.innerHTML = state.user.purchasedObjects.map(itemId => {
       const item = objectData.find(i => i.id === itemId);
       if (!item) return '';
       const posX = (item.col / 10) * 100, posY = (item.row / 4) * 100;
@@ -2399,10 +2546,55 @@
     }
   }
 
+  // 🧹 신규 추가: 파티 자동 정리 시스템 (방치된 파티 및 유령 파티 영구 데이터 수거 Pruning)
+  async function performPartyPruning() {
+    try {
+      const partiesSnap = await db.collection('parties').get();
+      for (let pDoc of partiesSnap.docs) {
+        const party = pDoc.data();
+        let isOrphan = false;
+
+        // 조건 1 & 2 판정: 파티원이 없거나 방장이 존재하지 않을 시 자동 삭제
+        if (!party.members || party.members.length === 0) {
+          isOrphan = true;
+        } else {
+          // 첫 번째 멤버를 파티장(Leader)으로 상정하고 유효성 감사 진행
+          const leaderCode = party.members[0];
+          const leaderSnap = await db.collection('users').doc(leaderCode).get();
+          if (!leaderSnap.exists) {
+            isOrphan = true;
+          }
+        }
+
+        if (isOrphan) {
+          console.warn(`🧹 방치된 파티 감지 [${party.name}] - 자동 정리에 들어갑니다.`);
+          
+          // 해당 파티에 잘못 남겨진 유저들의 파티 링크를 복구 정리
+          if (party.members && party.members.length > 0) {
+            for (let mCode of party.members) {
+              const uSnap = await db.collection('users').doc(mCode).get();
+              if (uSnap.exists) {
+                await db.collection('users').doc(mCode).update({ partyCode: null });
+              }
+            }
+          }
+
+          // Firestore에서 파티 실 데이터 삭제
+          await db.collection('parties').doc(pDoc.id).delete();
+        }
+      }
+    } catch (e) {
+      console.error("파티 가비지 컬렉션 처리 중 예외 발생:", e);
+    }
+  }
+
   async function buildPartyRanking() {
     const list = document.getElementById('rank-list');
     list.innerHTML = `<div style="text-align:center; padding:48px; font-size:12px;">파티 대항전 집계 중...</div>`;
     
+    // 랭킹 집계 시작 전 선제적으로 클린업 가동하여 정합성 보장
+    await performPartyPruning();
+
     try {
       const partiesSnap = await db.collection('parties').get();
       let partyRankArray = [];
@@ -2463,7 +2655,7 @@
         const avaHtml = item.image.startsWith("data:image") ? `<img src="${item.image}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-right:6px;" />` : `<span style="font-size:18px;margin-right:6px;">${item.image}</span>`;
 
         html += `
-          <div class="rank-item" style="${isMyParty ? 'border:2px solid var(--sea)' : ''}">
+          <div class="rank-item" style="${isMyParty ? 'border:2px solid var(--sea)' : ''}" onclick="openPartyDetailModal('${item.code}')">
             <div class="rank-num ${index <= 3 ? 'top3' : ''}">${index}</div>
             <div class="rank-bar-wrap">
               <div class="rank-name" style="font-weight:700;">${avaHtml}${item.name} <span style="color:var(--coral); font-size:11px; margin-left:6px;">Lv.${item.level}</span></div>
@@ -2483,7 +2675,7 @@
   }
 
   // ==========================================
-  // 13. 파티 시스템 (갤러리 업로드 완전히 거세 및 프리셋 연동)
+  // 13. 파티 시스템 및 코인 경험치 구매 충전 파이프라인
   // ==========================================
   function openPartyCreationModal() { setupAvatarPresetGrid('create-party-preset-grid', 'party'); document.getElementById('party-create-modal').classList.add('open'); }
   function closePartyCreateModal() { document.getElementById('party-create-modal').classList.remove('open'); }
@@ -2492,12 +2684,13 @@
 
   async function submitCreateParty() {
     const pName = document.getElementById('create-party-name').value.trim();
+    const pDesc = document.getElementById('create-party-desc').value.trim() || "함께 30초 갓생 기록할 모험가들!";
     if (!pName) return showToast("파티 이름을 지정해 주세요.");
 
     const pCode = generatePartyCode();
     try {
       await db.collection('parties').doc(pCode).set({
-        code: pCode, name: pName, image: selectedPartyAvatar,
+        code: pCode, name: pName, image: selectedPartyAvatar, description: pDesc,
         members: [state.user.code], level: 1, exp: 0,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
@@ -2543,6 +2736,34 @@
     document.getElementById('active-party-exp-text').textContent = `${exp} / ${limitExp} EXP`;
     document.getElementById('active-party-exp-fill').style.width = `${Math.min((exp / limitExp) * 100, 100)}%`;
 
+    // ⚡ 코인 기반 길드 경험치 즉시 충전 모듈 동적 UI 연동 
+    let buyContainer = document.getElementById('party-exp-purchase-container');
+    if (!buyContainer) {
+      buyContainer = document.createElement('div');
+      buyContainer.id = 'party-exp-purchase-container';
+      buyContainer.style.cssText = "margin-top:14px; background:rgba(255,255,255,0.18); padding:10px 12px; border-radius:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; border: 1px solid rgba(255,255,255,0.15);";
+      document.getElementById('active-party-level-wrap').appendChild(buyContainer);
+    }
+
+    const currentCost = getExpPurchaseCost(lvl);
+    if (lvl >= 30) {
+      buyContainer.innerHTML = `
+        <div style="text-align:left;">
+          <div style="font-size:11px; font-weight:700; color:#fff;">⚡ 길드 경험치 즉시 충전</div>
+          <div style="font-size:10px; opacity:0.9; color:#FFE699;">🎉 축하합니다! 이미 최대 레벨입니다!</div>
+        </div>
+        <button class="check-btn" style="background:#ccc; color:#666; border:none; cursor:not-allowed;" disabled>최대 레벨</button>
+      `;
+    } else {
+      buyContainer.innerHTML = `
+        <div style="text-align:left;">
+          <div style="font-size:11px; font-weight:700; color:#fff;">⚡ 길드 경험치 즉시 충전</div>
+          <div style="font-size:10px; opacity:0.85; color:#f0f0f0;">비용: <strong style="color:#FFE699;">${currentCost}p</strong> (+50 EXP 충전)</div>
+        </div>
+        <button class="check-btn" onclick="purchasePartyExp()" style="background:#FFF; color:var(--sea); border:none; border-radius:12px; padding:6px 12px; font-weight:700; font-size:11px; cursor:pointer;">충전하기</button>
+      `;
+    }
+
     const list = document.getElementById('member-list');
     list.innerHTML = "멤버 로딩 중...";
     let html = '', certCount = 0; const todayStr = getLocalDateString(new Date());
@@ -2573,6 +2794,46 @@
     document.getElementById('active-party-score').textContent = `오늘의 달성률: ${party.members.length > 0 ? Math.round((certCount / party.members.length) * 100) : 0}%`;
   }
 
+  // 개인 코인을 소모하여 파티 성장을 가속시키는 트랜잭션 함수
+  async function purchasePartyExp() {
+    if (!state.user || !state.user.partyCode) return showToast("소속된 파티가 존재하지 않습니다.");
+    
+    try {
+      const pRef = db.collection('parties').doc(state.user.partyCode);
+      const pSnap = await pRef.get();
+      if (!pSnap.exists) return showToast("파티를 찾을 수 없습니다.");
+      
+      const party = pSnap.data();
+      let lvl = party.level || 1;
+      if (lvl >= 30) return showToast("최대 레벨에 도달하여 더 이상 구매할 수 없습니다.");
+      
+      const cost = getExpPurchaseCost(lvl);
+      if (state.user.points < cost) return showToast(`경험치 구매에 필요한 코인이 부족합니다. (필요: ${cost}p / 현재: ${state.user.points}p)`);
+      
+      // 트랜잭션 안전 차감
+      state.user.points -= cost;
+      
+      let currentExp = (party.exp || 0) + 50; // 기본 50 EXP 주입
+      while (lvl < 30 && currentExp >= getExpNeededForLevel(lvl)) {
+        currentExp -= getExpNeededForLevel(lvl);
+        lvl++;
+      }
+      
+      await pRef.update({
+        level: lvl,
+        exp: currentExp
+      });
+      
+      await saveUserToDB();
+      updateGlobalPointsDisplay();
+      await renderPartyMainView();
+      showToast(`⚡ 파티 경험치 구매 완료! ${cost}p가 소비되어 길드가 성장했습니다!`);
+    } catch(err) {
+      console.error(err);
+      showToast("경험치 충전 처리 중 에러가 발생했습니다.");
+    }
+  }
+
   async function leaveParty() {
     if(!confirm("파티를 나가시겠습니까?")) return;
     await db.collection('parties').doc(state.user.partyCode).update({ members: firebase.firestore.FieldValue.arrayRemove(state.user.code) });
@@ -2589,7 +2850,83 @@
   }
 
   // ==========================================
-  // 14. 프로필 상세 모달 & 뷰어 로직
+  // 14. 파티 상세조회 모달 시스템 구현
+  // ==========================================
+  async function openPartyDetailModal(partyCode) {
+    try {
+      const pSnap = await db.collection('parties').doc(partyCode).get();
+      if (!pSnap.exists) return showToast("파티 정보를 찾을 수 없습니다.");
+      
+      const party = pSnap.data();
+      const modal = document.getElementById('party-detail-modal');
+
+      const avatarEl = document.getElementById('party-det-avatar');
+      if (party.image.startsWith("data:image")) {
+        avatarEl.innerHTML = `<img src="${party.image}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;" />`;
+      } else {
+        avatarEl.innerHTML = party.image || '🏆';
+      }
+
+      document.getElementById('party-det-name').textContent = party.name;
+      document.getElementById('party-det-code').textContent = `CODE: ${party.code}`;
+      document.getElementById('party-det-desc').textContent = `"${party.description || '함께 성장해 나가는 갓생 파티'}"`;
+      
+      const lvl = party.level || 1;
+      const exp = party.exp || 0;
+      const limitExp = getExpNeededForLevel(lvl);
+      document.getElementById('party-det-level').textContent = `길드 레벨: Lv.${lvl}`;
+      document.getElementById('party-det-exp-text').textContent = `${exp} / ${limitExp} EXP`;
+      document.getElementById('party-det-exp-fill').style.width = `${Math.min((exp / limitExp) * 100, 100)}%`;
+      document.getElementById('party-det-member-count').textContent = `${party.members.length}명`;
+
+      // 첫 번째 인원을 파티장(👑)으로 지정 처리
+      const leaderCode = party.members[0];
+      const leaderSnap = await db.collection('users').doc(leaderCode).get();
+      let leaderName = "탈퇴한 유저";
+      if (leaderSnap.exists) {
+        leaderName = leaderSnap.data().nickname;
+      }
+      document.getElementById('party-det-leader-name').textContent = leaderName;
+
+      // 파티원 목록 구성
+      const listContainer = document.getElementById('party-det-members-list');
+      listContainer.innerHTML = `<div style="text-align:center; padding:12px; font-size:12px;">멤버 목록 분석 중...</div>`;
+      
+      let html = "";
+      for (const mCode of party.members) {
+        const mSnap = await db.collection('users').doc(mCode).get();
+        if (mSnap.exists) {
+          const user = mSnap.data();
+          const isLeader = mCode === leaderCode;
+          const displayNick = user.isPublic ? user.nickname : "비공개 아일랜더";
+          const avaEl = user.avatar.startsWith("data:image") ? `<img src="${user.avatar}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" />` : `<span style="font-size:18px">${user.avatar}</span>`;
+          
+          html += `
+            <div class="member-card" style="padding:10px; border-radius:12px; cursor:pointer;" onclick="openProfileDetail('${mCode}')">
+              <div class="member-avatar">${avaEl}</div>
+              <div class="member-info">
+                <div class="name" style="font-size:13px; font-weight:700;">
+                  ${isLeader ? '👑 ' : ''}${displayNick}
+                </div>
+                <div class="streak" style="font-size:11px;">누적 점수: ${user.isPublic ? user.score : '-'}점</div>
+              </div>
+            </div>`;
+        }
+      }
+      listContainer.innerHTML = html;
+      modal.classList.add('open');
+    } catch(e) {
+      console.error(e);
+      showToast("파티 조회 중 오류가 발생했습니다.");
+    }
+  }
+
+  function closePartyDetailModal() {
+    document.getElementById('party-detail-modal').classList.remove('open');
+  }
+
+  // ==========================================
+  // 15. 프로필 상세 모달 & 뷰어 로직 (비공개 보호 하이딩 필터 적용)
   // ==========================================
   async function openProfileDetail(userCode) {
     checkMission('view_profile');
@@ -2599,11 +2936,33 @@
     const target = snap.data();
     const isMe = state.user && target.code === state.user.code;
 
-    if (!target.isPublic && !isMe) return showToast("🔐 비공개 상태인 아일랜더의 프로필 정보입니다.");
-
     const avaContainer = document.getElementById('modal-p-avatar');
-    if (target.avatar.startsWith("data:image")) { avaContainer.innerHTML = `<img src="${target.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" />`; }
-    else { avaContainer.textContent = target.avatar; }
+    if (target.avatar.startsWith("data:image")) { 
+      avaContainer.innerHTML = `<img src="${target.avatar}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;" />`; 
+    } else { 
+      avaContainer.textContent = target.avatar; 
+    }
+
+    // 🔒 비공개 처리: 프로필 비공개 ON 상태이면서 내가 아닌 타인인 경우 핵심 정보 차단 
+    if (!target.isPublic && !isMe) {
+      document.getElementById('modal-p-nickname').textContent = "비공개 아일랜더";
+      document.getElementById('modal-p-code').textContent = `CODE: 🔐 PRIVATE`;
+      
+      // 보호막 인터페이스 렌더링
+      document.getElementById('modal-p-public-fields').innerHTML = `
+        <div style="text-align:center; color:var(--muted); font-size:12px; padding:10px 0;">
+          🔒 비공개 설정된 아일랜더입니다.<br/>공개된 기본 정보 외 상세 프로필은 열람이 차단됩니다.
+        </div>
+      `;
+      document.getElementById('modal-p-stats-grid').style.display = 'none';
+      document.getElementById('profile-detail-modal').classList.add('open');
+      return;
+    }
+
+    // 공개 유저 프로필 렌더링
+    document.getElementById('modal-p-stats-grid').style.display = 'grid';
+    document.getElementById('modal-p-nickname').textContent = target.nickname;
+    document.getElementById('modal-p-code').textContent = `CODE: ${target.code}`;
 
     let pName = "파티 없음";
     if (target.partyCode) {
@@ -2614,23 +2973,73 @@
       }
     }
 
-    document.getElementById('modal-p-nickname').textContent = target.nickname;
-    document.getElementById('modal-p-code').textContent = `CODE: ${target.code}`;
-    document.getElementById('modal-p-birthday').textContent = target.birthday || "-";
-    document.getElementById('modal-p-partyname').textContent = pName;
+    document.getElementById('modal-p-public-fields').innerHTML = `
+      <div>🎂 <strong>생년월일:</strong> <span id="modal-p-birthday">${target.birthday || "-"}</span></div>
+      <div>🏆 <strong>소속 파티:</strong> <span id="modal-p-partyname">${pName}</span></div>
+    `;
+
     document.getElementById('modal-p-streak').textContent = target.streak;
     document.getElementById('modal-p-total').textContent = `${target.score}점`;
 
     document.getElementById('profile-detail-modal').classList.add('open');
   }
+
   function closeProfileDetailModal() { document.getElementById('profile-detail-modal').classList.remove('open'); }
 
   // ==========================================
-  // 15. DOMContentLoaded & 데몬 (방어코드 통합본)
+  // 16. 1시간 자동 로그아웃 감시 및 유저 활동 추적기
+  // ==========================================
+  function recordUserActivity() {
+    localStorage.setItem('island_lastActiveAt', Date.now().toString());
+  }
+
+  window.addEventListener('click', recordUserActivity);
+  window.addEventListener('keydown', recordUserActivity);
+  window.addEventListener('touchstart', recordUserActivity);
+
+  async function checkInactivityLogout() {
+    if (!auth.currentUser) return;
+    
+    const lastActive = parseInt(localStorage.getItem('island_lastActiveAt') || '0');
+    if (lastActive > 0) {
+      const gap = Date.now() - lastActive;
+      const oneHour = 3600000; // 1시간 타임 리미트
+      
+      if (gap >= oneHour) {
+        alert("🔒 1시간 이상 비활성화되어 계정 안전을 위해 자동 로그아웃 처리되었습니다.");
+        localStorage.removeItem('island_lastActiveAt');
+        localStorage.removeItem('island_loginAt');
+        await auth.signOut();
+        state.user = null; state.history = {};
+        location.reload();
+      }
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      checkInactivityLogout();
+    }
+  });
+
+  // ==========================================
+  // 17. DOMContentLoaded & 데몬 (방어코드 통합본)
   // ==========================================
   document.addEventListener("DOMContentLoaded", () => {
     auth.onAuthStateChanged(async (user) => {
       if (user) {
+        const lastActive = parseInt(localStorage.getItem('island_lastActiveAt') || '0');
+        const gap = Date.now() - lastActive;
+        const oneHour = 3600000;
+        
+        if (lastActive > 0 && gap >= oneHour) {
+          alert("🔒 장시간 비활동으로 자동 로그아웃되었습니다.");
+          localStorage.removeItem('island_lastActiveAt');
+          localStorage.removeItem('island_loginAt');
+          await auth.signOut();
+          return;
+        }
+
         const idVal = user.email.split('@')[0];
         const snapshot = await db.collection('users').where('loginId', '==', idVal).get();
 
@@ -2660,12 +3069,18 @@
           
           state.user = userData;
 
+          // 🔄 마이그레이션 기동: v1 구식 데이터를 안전하게 최신 v2 자동 성장형으로 이전
+          await performMigrationToV2();
+
           const videoSnap = await db.collection('timeline').where('userCode', '==', userData.code).get();
           state.history = {};
           videoSnap.forEach(doc => {
             const v = doc.data();
             state.history[v.recordedAt] = { emotion: v.emotion, clips: v.clips, thumbnails: v.thumbnails || [] };
           });
+
+          localStorage.setItem('island_loginAt', Date.now().toString());
+          recordUserActivity();
 
           completeInitialLoginFlow(); 
         }
@@ -2676,6 +3091,8 @@
         switchAuthPanel('login');
       }
     });
+
+    setInterval(checkInactivityLogout, 30000);
   });
 </script>
 </body>
